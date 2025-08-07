@@ -1,10 +1,15 @@
 # FFB for ICR2 – BETA 0.1  
 **USE AT YOUR OWN RISK**
 
-This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II**.  
-It reads telemetry directly from memory and applies realistic force feedback to supported racing wheels.
+This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
 
 This app works by reading memory from the game (speed, tire loads, etc.) and uses that to send DirectInput force effects to your wheel.
+
+Its all a lot of guesswork and workarounds bandaided together but it feels ok!
+
+This is my first ever big program, so I am sure it could be done better in almost every aspect, let me know if theres an obvious mistake!
+
+Big thanks to SK and Eric H for all their help in bringing this to life.
 
 ---
 
