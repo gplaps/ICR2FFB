@@ -1,49 +1,84 @@
-#FFB for ICR2 BETA 0.1 USE AT YOUR OWN RISK
+# FFB for ICR2 – BETA 0.1  
+**USE AT YOUR OWN RISK**
 
+This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II**.  
+It reads telemetry directly from memory and applies realistic force feedback to supported racing wheels.
 
-This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II**. It reads telemetry directly from memory and tries to apply realistic force feedback to supported racing wheels.
+This app works by reading memory from the game (speed, tire loads, etc.) and uses that to send DirectInput force effects to your wheel.
 
-This app works by reading memory from the game for speed and tire positions, and uses that to send direct input to wheels to approximate force feedback
+---
 
+## DISCLAIMER – USE AT YOUR OWN RISK
 
-PLEASE USE AT YOUR OWN RISK
-	- I have tried to make sure it can't break your wheel or you, but no guarantees! I have been using it without any issues but I can't promise it will work on all systems/devices!
+I have tried to ensure this software is safe and non-destructive, but **no guarantees**.  
+I’ve been using it without issues on my own hardware, but your mileage may vary.
 
-	Installation
-	1. Download the app
-	2. Open the ffb.ini and edit the following:
-		a. "Device" - This should match exactly your device name as you see it in "Game Controllers" in windows
-		b. "Game" - This can either by 'indycar' or 'cart' depending on what your exe is called (maybe other words too)
-		c. "Version" - this can either be "REND32A" for rendition or "DOS4G" for regular dos (sorry no windy yet)
-		d. "Force" - This controls the force scale, i have it set to 25% to start PLEASE BE CAREFUL I have tried to make my code to not send a massive input to the wheel but you can never be too careful
-	3. Start the app and open the game, after a moment you should see the window start populating some telemetry. You may need to run the app in admin mode to get it to work since it needs to be able to scan the memory of Indycar.exe
+---
 
-If at any point you want to change a setting you can do so by closing the app, making the change and then reopening the program. It can be closed and reopened while ICR2 is running, just be careful since the effect will start after it starts collecting data (probably pause the game first)
+## Installation
 
+1. **Download** the app.
+2. **Open `ffb.ini`** and edit the following:
+    - `Device` — Must match your device name **exactly** as seen in Windows "Game Controllers".
+    - `Game` — Set to either `indycar` or `cart` depending on your executable name.
+    - `Version` — Set to `REND32A` for Rendition builds, or `DOS4G` for standard DOS builds.  
+      _(Windy not supported yet.)_
+    - `Force` — Controls force scale (default is 25%).  
+      **Be careful** — although the code limits input, always test with low force first.
 
-#Version Stuff
-Betas
-#0.1 25-8-7
-	- Sent to Git
+3. **Run the app**, then launch the game.  
+   After a moment, the window should begin showing telemetry.
 
-Alphas
-#0.7 25-8-7
-	- Made the app detect Dosbox in general, should find all versions now
-	- Redid slip calculations to give better sense of oversteer
-	- Updated the display refresh so the app doesn't flicker as it runs (as much)
-	- Redid all the error logging and created a "log.txt" which collects everything
-#0.6 25-8-7
-	- Added 'invert' toggle to the ini
-	- Added fix for defining 'direction' logic in forces for hopeful compatibility in Moza wheels
-#0.5 25-8-6
-	- Massive code cleanup and notes
-	- Increased polling rate to 60hz, this should improve the feel or responsiveness quite a lot
-	- Added EXEs to make sure we're all using the same thing
-#0.4 25-8-6
-	- Made a ReadMe!
-	- Moved the version history to here!
-	- Installing Visual Studio is no longer required
-	- The program should no longer apply force until Telemetry is being read from the game
-#0.3 25-8-5 Better slip calculation to make more detail in the constant force
-#0.2 25-8-5 Corrected using DOS4G
-#0.1 25-8-5 first version
+> You may need to run the app in **Admin mode** so it can access IndyCar II’s memory.
+
+---
+
+## Changing Settings
+
+You can close the app, edit `ffb.ini`, and reopen it while ICR2 is still running.  
+To avoid sudden force application, **pause the game first** before restarting the app.
+
+---
+
+## Version History
+
+### Betas
+
+**0.1 (2025-08-07)**  
+- Initial beta pushed to Git
+
+---
+
+### Alphas
+
+**0.7 (2025-08-07)**  
+- App now detects all DOSBox versions, not just specific titles  
+- Improved slip calculations for oversteer detection  
+- Reduced display flicker while running  
+- Full error logging to `log.txt`
+
+**0.6 (2025-08-07)**  
+- Added `invert` toggle to `ffb.ini`  
+- Improved force direction compatibility (e.g. for Moza wheels)
+
+**0.5 (2025-08-06)**  
+- Major code cleanup and comments  
+- Increased polling rate to 60 Hz  
+- Added example EXEs to unify setups
+
+**0.4 (2025-08-06)**  
+- Created this README  
+- Moved version history here  
+- No longer requires Visual Studio  
+- Forces only apply after telemetry starts
+
+**0.3 (2025-08-05)**  
+- Improved slip calculation for more detailed constant force
+
+**0.2 (2025-08-05)**  
+- Corrected support for `DOS4G` executables
+
+**0.1 (2025-08-05)**  
+- First working version
+
+---
