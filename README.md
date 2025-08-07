@@ -22,7 +22,7 @@ I’ve been using it without issues on my own hardware, but your mileage may var
 
 ## Installation
 
-1. **Download** the app.
+1. **Download** the app. Get the latest version from Releases
 2. **Open `ffb.ini`** and edit the following:
     - `Device` — Must match your device name **exactly** as seen in Windows "Game Controllers".
     - `Game` — Set to either `indycar` or `cart` depending on your executable name.
