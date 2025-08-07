@@ -10,7 +10,7 @@ This app works by reading memory from the game (speed, tire loads, etc.) and use
 
 ## DISCLAIMER – USE AT YOUR OWN RISK
 
-I have tried to ensure this software is safe and non-destructive, but **no guarantees**.  
+I have tried my best to make sure this app can't hurt you or your wheel but **no guarantees**.  
 I’ve been using it without issues on my own hardware, but your mileage may vary.
 
 ---
