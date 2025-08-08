@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.3 Don't forget to update this down below
+// Beta 0.4 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -18,6 +18,7 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
+#include <sstream>
 
 // === Windows & DirectInput ===
 #include <windows.h>
@@ -99,6 +100,50 @@ std::mutex displayMutex;
 TelemetryDisplayData displayData;
 std::atomic<double> currentSpeed = 0.0;
 
+// Check Admin rights
+bool IsRunningAsAdmin() {
+    BOOL isAdmin = FALSE;
+    PSID administratorsGroup = NULL;
+
+    SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &administratorsGroup)) {
+
+        CheckTokenMembership(NULL, administratorsGroup, &isAdmin);
+        FreeSid(administratorsGroup);
+    }
+
+    return isAdmin == TRUE;
+}
+
+void RestartAsAdmin() {
+    // Get the current executable path
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+
+    // Use ShellExecuteW to restart with "runas" (admin prompt)
+    HINSTANCE result = ShellExecuteW(
+        NULL,                    // Parent window
+        L"runas",               // Operation (request admin)
+        exePath,                // Program to run
+        NULL,                   // Command line arguments
+        NULL,                   // Working directory
+        SW_SHOWNORMAL           // Show window normally
+    );
+
+    // Check if the restart was successful
+    if ((intptr_t)result > 32) {
+        // Success - the new admin instance is starting, exit this one
+        std::wcout << L"[INFO] Restarting with administrator privileges..." << std::endl;
+        exit(0);
+    }
+    else {
+        // Failed - user probably clicked "No" on UAC prompt
+        std::wcout << L"[ERROR] Failed to restart as administrator." << std::endl;
+        std::wcout << L"[ERROR] Please right-click the program and select 'Run as administrator'" << std::endl;
+    }
+}
+
 // Console drawing stuff
 // little function to help with display refreshing
 // moves cursor to top without refreshing the screen
@@ -134,6 +179,105 @@ void HideConsoleCursor() {
     GetConsoleCursorInfo(hOut, &cursorInfo);
     cursorInfo.bVisible = FALSE;
     SetConsoleCursorInfo(hOut, &cursorInfo);
+}
+
+// New display
+
+void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForceValue) {
+    // Move cursor to top and set up formatting
+    MoveCursorToTop();
+    std::cout << std::fixed << std::setprecision(2);
+    std::wcout << std::fixed << std::setprecision(2);  // Also set for wide cout
+
+    // Define console width
+    const int CONSOLE_WIDTH = 80;
+
+    // Helper lambda to pad lines
+    auto padLine = [CONSOLE_WIDTH](const std::wstring& text) {
+        std::wstring padded = text;
+        if (padded.length() < CONSOLE_WIDTH) {
+            padded.append(CONSOLE_WIDTH - padded.length(), L' ');
+        }
+        else if (padded.length() > CONSOLE_WIDTH) {
+            padded = padded.substr(0, CONSOLE_WIDTH);  // Truncate if too long
+        }
+        return padded;
+        };
+
+    // Header section
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.4 BETA") << L"\n";
+    std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
+    std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
+
+    std::wostringstream ss;
+    ss << std::fixed << std::setprecision(2);  // Set formatting for stringstream too
+    ss << L"Master Force Scale: " << masterForceValue << L"%";
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";  // Empty line
+
+    // Raw data section
+    std::wcout << padLine(L"      == Raw Data ==") << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"dLat: " << std::setw(10) << displayData.dlat << L"   dLong: " << std::setw(10) << displayData.dlong;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Centerline Rotation: " << std::setw(8) << displayData.rotation_deg << L" deg";
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Speed: " << std::setw(8) << displayData.speed_mph << L" mph";
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Steering Raw: " << std::setw(10) << displayData.steering_raw;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Steering Lock Degree: " << std::setw(8) << displayData.steering_deg;
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    // Tire loads section
+    std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+    std::wcout << padLine(L"Front Left      Front Right") << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << displayData.tireload_lf << L"           " << std::setw(10) << displayData.tireload_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    // Calculated data section
+    std::wcout << padLine(L"      == Calculated Data (probably wrong) ==") << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Direction Value: " << displayData.directionVal;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Slip: " << displayData.slipAngleDeg;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Lateral G: " << displayData.lateralG << L" G";
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Force Magnitude: " << displayData.forceMagnitude;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    std::wcout << padLine(L"----------------------------------------") << L"\n";
+    std::wcout << padLine(L"Log:") << L"\n";
 }
 
 // Logging stuff - Keeps messages for future debugging!
@@ -426,6 +570,39 @@ void ProcessLoop() {
 // Where it all happens
 int main() {
     
+    if (!IsRunningAsAdmin()) {
+        std::wcout << L"===============================================" << std::endl;
+        std::wcout << L"    ICR2 FFB Program - Admin Rights Required" << std::endl;
+        std::wcout << L"===============================================" << std::endl;
+        std::wcout << L"" << std::endl;
+        std::wcout << L"This program requires administrator privileges to:" << std::endl;
+        std::wcout << L"  - Access DirectInput force feedback devices" << std::endl;
+        std::wcout << L"  - Control console display properly" << std::endl;
+        std::wcout << L"  - Ensure reliable wheel communication" << std::endl;
+        std::wcout << L"" << std::endl;
+        std::wcout << L"Would you like to restart as administrator? (y/n): ";
+
+        wchar_t response;
+        std::wcin >> response;
+
+        if (response == L'y' || response == L'Y') {
+            RestartAsAdmin();
+            // If we get here, the restart failed
+            std::wcout << L"Press any key to exit..." << std::endl;
+            std::cin.get();
+            return 1;
+        }
+        else {
+            std::wcout << L"" << std::endl;
+            std::wcout << L"Cannot continue without administrator privileges." << std::endl;
+            std::wcout << L"Please restart the program as administrator." << std::endl;
+            std::wcout << L"Press any key to exit..." << std::endl;
+            std::wcin.ignore();
+            std::wcin.get();
+            return 1;
+        }
+    }
+
     SetConsoleWindowSize();
     HideConsoleCursor();
 
@@ -535,13 +712,19 @@ int main() {
         // make sure we stay at most recent display update
         MoveCursorToLine(0);
 
+        //Trigger display
         {
+            std::lock_guard<std::mutex> lock(displayMutex);
+            DisplayTelemetry(displayData, masterForceValue);
+        }
+
+     /* {
             //Telemetry display for live app
 
             std::lock_guard<std::mutex> lock(displayMutex);
             std::cout << std::fixed << std::setprecision(2);
 
-            std::wcout << L"ICR2 FFB Program Version 0.3 BETA\n"; //keep version up to date
+            std::wcout << L"ICR2 FFB Program Version 0.4 BETA\n"; //keep version up to date
             std::wcout << L"USE AT YOUR OWN RISK\n";
             std::wcout << L"Connected Device: " << targetDeviceName << L"\n";
             std::cout << "Master Force Scale: " << masterForceValue << "%\n\n";
@@ -555,7 +738,7 @@ int main() {
             std::cout << "      == Tire Loads ==\n" << std::endl;
             std::cout << "Front Left" << "      " << "Front Right\n";
             std::cout << displayData.tireload_lf << "           " << displayData.tireload_rf << "\n\n";
-            std::cout << displayData.tiremaglat_lf << "           " << displayData.tiremaglat_rf << "\n\n"; //<- some odd tire param
+            // std::cout << displayData.tiremaglat_lf << "           " << displayData.tiremaglat_rf << "\n\n"; //<- some odd tire param
 
             //Disabled other tire values, I find its nicer to see the raw data
             //std::cout << displayData.slipNorm_lf << "           " << displayData.slipNorm_rf << "\n\n";
@@ -563,7 +746,7 @@ int main() {
 
             std::cout << "Rear Left" << "       " << "Rear Right\n";
             std::cout << displayData.tireload_lr << "           " << displayData.tireload_rr << "\n\n";
-            std::cout << displayData.tiremaglat_lr << "           " << displayData.tiremaglat_rr << "\n\n"; //<- some odd tire param
+           // std::cout << displayData.tiremaglat_lr << "           " << displayData.tiremaglat_rr << "\n\n"; //<- some odd tire param
 
             //std::cout << displayData.slipNorm_lr << "           " << displayData.slipNorm_rr << "\n\n";
             //std::cout << displayData.slipMag_lr << "           " << displayData.slipMag_rr << "\n\n";
@@ -577,10 +760,11 @@ int main() {
 
             std::wcout << L"Log:\n";
         }
+        */
         //Print log data
         {
             std::lock_guard<std::mutex> lock(logMutex);
-            int maxDisplayLines = 3;
+            int maxDisplayLines = 1; //how many lines to display
             std::vector<std::wstring> recentUniqueLines;
             std::unordered_set<std::wstring> seen;
 

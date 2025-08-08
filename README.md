@@ -49,6 +49,11 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ### Betas
 
+**0.4 (2025-08-08)** 
+- Updated to use magnitude to determine force direction instead of a direction parameter. This may fix effects only working in one direction for Moza wheels
+- Rewrote main display to clean up some of the telemetry weirdness
+- App now asks for admin permissions which are needed anyway to look at the memory of ICR2
+
 **0.3 (2025-08-08)**  
 - Fixes to make forces correct for non-Fanatec wheels, may still be in progress
 - Reduced the rate of sending updates to the wheel with a filter to only send updates when they're "meaningful". It still sends updates fast but previously where i sent an update every 16ms no matter what, this will slow them down to try not to overwhelm older wheels.

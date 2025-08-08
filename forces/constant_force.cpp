@@ -161,7 +161,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
     bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
 
     double curved = (force / 10000.0) * (
-        (g < 0.0 ? -1.0 : 1.0) * (invert ? -1.0 : 1.0)
+        (g < 0.0 ? -1.0 : 1.0) * (invert ? 1.0 : -1.0)
         );
 
     // Step 2: Smoothing (moving average)
@@ -263,8 +263,18 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
         LogMessage(L"[DEBUG] FFB updates sent: " + std::to_wstring(updateCount) + L", reason: " + updateReason);
     }
 
-    // Step 5: Apply effect
-    DICONSTANTFORCE cf = { magnitude };
+
+
+    //Step 5 Apply Affect
+
+    // Encode direction in magnitude sign instead of separate direction
+    int signedMagnitude = magnitude;
+    if (smoothed < 0.0) {  // Right turn (negative smoothed = right)
+        signedMagnitude = -static_cast<int>(magnitude);  // Negative magnitude for right
+    }
+    // Left turn (positive smoothed = left) keeps positive magnitude
+
+    DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude
     DIEFFECT eff = {};
     eff.dwSize = sizeof(DIEFFECT);
     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
@@ -273,14 +283,25 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
-    LONG dir[1] = { lastDirection };
+    LONG dir[1] = { 0 };  // ← Always zero direction now
     eff.rgdwAxes = axes;
     eff.rglDirection = dir;
     eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
     eff.lpvTypeSpecificParams = &cf;
 
-    HRESULT hr = constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+    // Only set magnitude params, skip direction
+    HRESULT hr = constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);  // ← Removed | DIEP_DIRECTION
+
     if (FAILED(hr)) {
         std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;
+    }
+
+    // Optional: Add debug logging to see what values are being sent
+    static int debugCounter = 0;
+    debugCounter++;
+    if (debugCounter % 60 == 0) {  // Every second
+        LogMessage(L"[MOZA TEST] LateralG=" + std::to_wstring(load.lateralG) +
+            L", SignedMag=" + std::to_wstring(signedMagnitude) +
+            L", Smoothed=" + std::to_wstring(smoothed));
     }
 }
