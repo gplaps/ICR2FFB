@@ -13,6 +13,10 @@ struct RawTelemetry {
     double tireload_rf;
     double tireload_lr;
     double tireload_rr;
+    double tiremaglat_lf;
+    double tiremaglat_rf;
+    double tiremaglat_lr;
+    double tiremaglat_rr;
     bool valid = false;
 };
 

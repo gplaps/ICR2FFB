@@ -11,103 +11,37 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
     const CalculatedLateralLoad& load, const CalculatedSlip& slip,
     double speed_mph, IDirectInputEffect* constantForceEffect,
     double masterForceScale) {
+
     if (!constantForceEffect) return;
 
-    // Bunch of logic to try to stop this affect when the game is 'paused' or not running
-    // Also if the car is just stopped, the game throws a bunch of random big numbers
-    // trying not to break any wrists (or wheels)
-
-    static bool lastCarStopped = false;
-    static int stopCounter = 0;
-    static const int stopThresholdFrames = 10;  // ~10 updates of consistent status
-
-    bool isCurrentlyStopped = std::abs(current.dlat - previous.dlat) < 0.0001 &&
-        std::abs(current.dlong - previous.dlong) < 0.0001;
-
-    if (isCurrentlyStopped) {
-        if (!lastCarStopped) {
-            stopCounter++;
-            if (stopCounter >= stopThresholdFrames) {
-                lastCarStopped = true;
-                LogMessage(L"[INFO] Constant force skipped: car is stopped.");
-            }
-        }
-    }
-    else {
-        if (lastCarStopped) {
-            stopCounter++;
-            if (stopCounter >= stopThresholdFrames) {
-                lastCarStopped = false;
-                LogMessage(L"[INFO] Car resumed motion, applying constant force.");
-            }
-        }
-    }
-
-    // Reset the counter if status is stable
-    if ((isCurrentlyStopped && lastCarStopped) || (!isCurrentlyStopped && !lastCarStopped)) {
-        stopCounter = 0;
-    }
-
-    if (lastCarStopped) return;
-
-    // Was first attempt at pausing but just stops forces if car is slow
-    // problem is speed stays static when paused or in menus
+    // Low speed filtering
     if (speed_mph < 5.0) {
-        // Optionally send zero force if the effect is still active
-        DICONSTANTFORCE cf = { 0 };
-        DIEFFECT eff = {};
-        eff.dwSize = sizeof(DIEFFECT);
-        eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-        eff.dwDuration = INFINITE;
-        eff.dwGain = 10000;
-        eff.dwTriggerButton = DIEB_NOTRIGGER;
-        eff.cAxes = 1;
-        DWORD axes[1] = { DIJOFS_X };
-        LONG dir[1] = { 0 };
-        eff.rgdwAxes = axes;
-        eff.rglDirection = dir;
-        eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-        eff.lpvTypeSpecificParams = &cf;
-        constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+        static bool wasLowSpeed = false;
+        if (!wasLowSpeed) {
+            // Send zero force when entering low speed
+            DICONSTANTFORCE cf = { 0 };
+            DIEFFECT eff = {};
+            eff.dwSize = sizeof(DIEFFECT);
+            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+            eff.dwDuration = INFINITE;
+            eff.dwGain = 10000;
+            eff.dwTriggerButton = DIEB_NOTRIGGER;
+            eff.cAxes = 1;
+            DWORD axes[1] = { DIJOFS_X };
+            LONG dir[1] = { 0 };
+            eff.rgdwAxes = axes;
+            eff.rglDirection = dir;
+            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+            eff.lpvTypeSpecificParams = &cf;
+            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            wasLowSpeed = true;
+        }
         return;
     }
 
-    // Keep track of previous positions to detect motion
-    static double lastDlong = 0.0;
-    static double lastDlat = 0.0;
-    static int freezeFrameCount = 0;
-    constexpr int freezeThreshold = 10;
-    constexpr double moveThreshold = 0.01;
-
-    bool positionChanged = std::abs(current.dlong - lastDlong) > moveThreshold || std::abs(current.dlat - lastDlat) > moveThreshold;
-    if (positionChanged) {
-        freezeFrameCount = 0;
-        lastDlong = current.dlong;
-        lastDlat = current.dlat;
-    }
-    else {
-        freezeFrameCount++;
-    }
-
-    // Disable force if the car hasn't moved recently
-    // Might be old can possibly delete
-    if (freezeFrameCount >= freezeThreshold) {
-        DICONSTANTFORCE cf = { 0 };
-        DIEFFECT eff = {};
-        eff.dwSize = sizeof(DIEFFECT);
-        eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-        eff.dwDuration = INFINITE;
-        eff.dwGain = 10000;
-        eff.dwTriggerButton = DIEB_NOTRIGGER;
-        eff.cAxes = 1;
-        DWORD axes[1] = { DIJOFS_X };
-        LONG dir[1] = { 0 };
-        eff.rgdwAxes = axes;
-        eff.rglDirection = dir;
-        eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-        eff.lpvTypeSpecificParams = &cf;
-        constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
-        return;
+    static bool wasLowSpeed = false;
+    if (wasLowSpeed) {
+        wasLowSpeed = false;  // Reset when speed picks up
     }
 
     constexpr double maxG = 8.0;
@@ -145,7 +79,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
     }
 
     // Step 1.5: Apply slip angle reduction
-    
+
     // This is all about adding feeling by augmenting the basic force as the car slides
     //New slip angle v0.7 Alpha
     //26% reduction at 20degree slip

@@ -49,6 +49,9 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ### Betas
 
+**0.2 (2025-08-08)**  
+- Fixed issues with Thrustmaster wheels not working with constant force due to pausing effects
+
 **0.1 (2025-08-07)**  
 - Initial beta pushed to Git
 

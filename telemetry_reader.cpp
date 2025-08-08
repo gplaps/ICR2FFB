@@ -25,21 +25,25 @@ struct GameOffsets {
     DWORD tire_data_offsetfr;
     DWORD tire_data_offsetrl;
     DWORD tire_data_offsetrr;
+    DWORD tire_maglat_offsetfl;
+    DWORD tire_maglat_offsetfr;
+    DWORD tire_maglat_offsetrl;
+    DWORD tire_maglat_offsetrr;
 };
 
 // Offsets for different version of the game
 
 // Rendition EXE
 constexpr GameOffsets Offsets_REND = {
-    0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6
+    0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xC5C84, 0xC5C86, 0xC5C88, 0xC5C8A
 };
 
 // DOS4G Exe, should be 1.02
 constexpr GameOffsets Offsets_DOS = {
-    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6
+    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C84, 0xC5C86, 0xC5C88, 0xC5C8A //need to fix maglat
 };
 
-// BOB! Bobby rahal unlocks it all. Find where the text for licensing him is and work from there
+// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
 const char* signatureStr = "license with Bob";
@@ -128,9 +132,14 @@ bool ReadTelemetryData(RawTelemetry& out) {
     static uintptr_t tireLoadAddrFR = 0;
     static uintptr_t tireLoadAddrLR = 0;
     static uintptr_t tireLoadAddrRR = 0;
+    static uintptr_t tireMagLatAddrLF = 0;
+    static uintptr_t tireMagLatAddrFR = 0;
+    static uintptr_t tireMagLatAddrLR = 0;
+    static uintptr_t tireMagLatAddrRR = 0;
 
     SIZE_T bytesRead = 0;
     uint16_t loadLF = 0, loadFR = 0, loadLR = 0, loadRR = 0;
+    uint16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
 
     // Select between Dos and Rendition version. Rendition is default
     const GameOffsets& offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
@@ -162,6 +171,10 @@ bool ReadTelemetryData(RawTelemetry& out) {
         tireLoadAddrFR = exeBase + offsets.tire_data_offsetfr;
         tireLoadAddrLR = exeBase + offsets.tire_data_offsetrl;
         tireLoadAddrRR = exeBase + offsets.tire_data_offsetrr;
+        tireMagLatAddrLF = exeBase + offsets.tire_maglat_offsetfl;
+        tireMagLatAddrFR = exeBase + offsets.tire_maglat_offsetfr;
+        tireMagLatAddrLR = exeBase + offsets.tire_maglat_offsetrl;
+        tireMagLatAddrRR = exeBase + offsets.tire_maglat_offsetrr;
 
         LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
             L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
@@ -188,7 +201,11 @@ bool ReadTelemetryData(RawTelemetry& out) {
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLF, &loadLF, sizeof(loadLF), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrFR, &loadFR, sizeof(loadFR), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLR, &loadLR, sizeof(loadLR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrRR, &loadRR, sizeof(loadRR), &bytesRead);
+        ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrRR, &loadRR, sizeof(loadRR), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLF, &magLatLF, sizeof(magLatLF), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrFR, &magLatFR, sizeof(magLatFR), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLR, &magLatLR, sizeof(magLatLR), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrRR, &magLatRR, sizeof(magLatRR), &bytesRead);
 
     if (!tireOK) {
         LogMessage(L"[ERROR] Failed to read one or more tire loads.");
@@ -201,6 +218,10 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.tireload_rf = static_cast<double>(loadFR);
     out.tireload_lr = static_cast<double>(loadLR);
     out.tireload_rr = static_cast<double>(loadRR);
+    out.tiremaglat_lf = static_cast<double>(magLatLF);
+    out.tiremaglat_rf = static_cast<double>(magLatFR);
+    out.tiremaglat_lr = static_cast<double>(magLatLR);
+    out.tiremaglat_rr = static_cast<double>(magLatRR);
     out.valid = true;
 
     return true;
