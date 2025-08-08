@@ -49,6 +49,11 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ### Betas
 
+**0.3 (2025-08-08)**  
+- Fixes to make forces correct for non-Fanatec wheels, may still be in progress
+- Reduced the rate of sending updates to the wheel with a filter to only send updates when they're "meaningful". It still sends updates fast but previously where i sent an update every 16ms no matter what, this will slow them down to try not to overwhelm older wheels.
+- Logging updates, preventing the program from crashing if it cannot find the controller
+
 **0.2 (2025-08-08)**  
 - Fixed issues with Thrustmaster wheels not working with constant force due to pausing effects
 

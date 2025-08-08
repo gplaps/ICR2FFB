@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.2 Don't forget to update this down below
+// Beta 0.3 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -430,26 +430,83 @@ int main() {
     HideConsoleCursor();
 
     //clear last log
-    std::wofstream clearLog("log.txt", std::ios::trunc);  // Clears existing log
+    std::wofstream clearLog("log.txt", std::ios::trunc);
 
 
     // Load FFB configuration file "ffb.ini"
     if (!LoadFFBSettings(L"ffb.ini")) {
-        LogMessage(L"[ERROR] Failed to load FFB settings.");
+        LogMessage(L"[ERROR] Failed to load FFB settings from ffb.ini");
+        LogMessage(L"[ERROR] Make sure ffb.ini exists and has proper format");
+
+        // SHOW ERROR ON CONSOLE immediately
+        std::wcout << L"[ERROR] Failed to load FFB settings from ffb.ini" << std::endl;
+        std::wcout << L"[ERROR] Make sure ffb.ini exists and has proper format" << std::endl;
+        std::wcout << L"Press any key to exit..." << std::endl;
+        std::cin.get();
         return 1;
     }
 
+    LogMessage(L"[INFO] Successfully loaded FFB settings");
+    LogMessage(L"[INFO] Target device: " + targetDeviceName);
 
     // Initialize DirectInput device
     // I don't really know how this works yet. It enabled "exclusive" mode on the device and calls it a "type 2" joystick.. OK!
     if (!InitializeDevice()) {
-        LogMessage(L"[ERROR] Failed to initialize DirectInput or match device.");
+        LogMessage(L"[ERROR] Failed to initialize DirectInput or find device: " + targetDeviceName);
+        LogMessage(L"[ERROR] Available devices:");
+
+        // List available devices to help user
+        ListAvailableDevices();
+
+        LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
+
+        // SHOW ERROR ON CONSOLE immediately
+        std::wcout << L"[ERROR] Could not find controller: " << targetDeviceName << std::endl;
+        std::wcout << L"[ERROR] Available devices:" << std::endl;
+
+        // Show available devices on console too
+        ShowAvailableDevicesOnConsole();
+
+        std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << std::endl;
+        std::wcout << L"Press any key to exit..." << std::endl;
+        std::cin.get();
         return 1;
     }
 
-    matchedDevice->SetDataFormat(&c_dfDIJoystick2);
-    matchedDevice->SetCooperativeLevel(GetConsoleWindow(), DISCL_BACKGROUND | DISCL_EXCLUSIVE);
-    matchedDevice->Acquire();
+    LogMessage(L"[INFO] Device found and initialized successfully");
+
+
+    // ONLY configure device if it was found successfully
+    HRESULT hr;
+    hr = matchedDevice->SetDataFormat(&c_dfDIJoystick2);
+    if (FAILED(hr)) {
+        LogMessage(L"[ERROR] Failed to set data format: 0x" + std::to_wstring(hr));
+        
+        std::wcout << L"[ERROR] Failed to set data format: 0x" << std::hex << hr << std::endl;
+        std::wcout << L"Press any key to exit..." << std::endl;
+        std::cin.get();
+        return 1;
+    }
+
+    hr = matchedDevice->SetCooperativeLevel(GetConsoleWindow(), DISCL_BACKGROUND | DISCL_EXCLUSIVE);
+    if (FAILED(hr)) {
+        LogMessage(L"[ERROR] Failed to set cooperative level: 0x" + std::to_wstring(hr));
+        LogMessage(L"[ERROR] Another application may be using the device exclusively");
+        
+        std::wcout << L"[ERROR] Failed to set cooperative level: 0x" << std::hex << hr << std::endl;
+        std::wcout << L"[ERROR] Another application may be using the device exclusively" << std::endl;
+        std::wcout << L"Press any key to exit..." << std::endl;
+        std::cin.get();
+        return 1;
+    }
+
+    hr = matchedDevice->Acquire();
+    if (FAILED(hr)) {
+        LogMessage(L"[WARNING] Initial acquire failed: 0x" + std::to_wstring(hr) + L" (this is often normal)");
+    }
+    else {
+        LogMessage(L"[INFO] Device acquired successfully");
+    }
 
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future
@@ -484,7 +541,7 @@ int main() {
             std::lock_guard<std::mutex> lock(displayMutex);
             std::cout << std::fixed << std::setprecision(2);
 
-            std::wcout << L"ICR2 FFB Program Version 0.2 BETA\n"; //keep version up to date
+            std::wcout << L"ICR2 FFB Program Version 0.3 BETA\n"; //keep version up to date
             std::wcout << L"USE AT YOUR OWN RISK\n";
             std::wcout << L"Connected Device: " << targetDeviceName << L"\n";
             std::cout << "Master Force Scale: " << masterForceValue << "%\n\n";
@@ -498,7 +555,7 @@ int main() {
             std::cout << "      == Tire Loads ==\n" << std::endl;
             std::cout << "Front Left" << "      " << "Front Right\n";
             std::cout << displayData.tireload_lf << "           " << displayData.tireload_rf << "\n\n";
-            //std::cout << displayData.tiremaglat_lf << "           " << displayData.tiremaglat_rf << "\n\n"; //<- some odd tire param
+            std::cout << displayData.tiremaglat_lf << "           " << displayData.tiremaglat_rf << "\n\n"; //<- some odd tire param
 
             //Disabled other tire values, I find its nicer to see the raw data
             //std::cout << displayData.slipNorm_lf << "           " << displayData.slipNorm_rf << "\n\n";
@@ -506,7 +563,7 @@ int main() {
 
             std::cout << "Rear Left" << "       " << "Rear Right\n";
             std::cout << displayData.tireload_lr << "           " << displayData.tireload_rr << "\n\n";
-            //std::cout << displayData.tiremaglat_lr << "           " << displayData.tiremaglat_rr << "\n\n"; //<- some odd tire param
+            std::cout << displayData.tiremaglat_lr << "           " << displayData.tiremaglat_rr << "\n\n"; //<- some odd tire param
 
             //std::cout << displayData.slipNorm_lr << "           " << displayData.slipNorm_rr << "\n\n";
             //std::cout << displayData.slipMag_lr << "           " << displayData.slipMag_rr << "\n\n";

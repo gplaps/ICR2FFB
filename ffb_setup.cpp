@@ -18,13 +18,59 @@ std::wstring targetInvertFFB;
 IDirectInputDevice8* matchedDevice = nullptr;
 LPDIRECTINPUT8 directInput = nullptr;
 
+// Device lists for better error messages
+BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+    std::wstring deviceName = pdidInstance->tszProductName;
+    LogMessage(L"[INFO] Available device: " + deviceName);
+    return DIENUM_CONTINUE;  // Continue enumerating all devices
+}
+
+void ListAvailableDevices() {
+    if (directInput) {
+        LogMessage(L"[INFO] Enumerating available game controllers:");
+        HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
+        if (FAILED(hr)) {
+            LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
+        }
+        else {
+            LogMessage(L"[INFO] Device enumeration complete");
+        }
+    }
+    else {
+        LogMessage(L"[ERROR] DirectInput not initialized, cannot list devices");
+    }
+}
+
+BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+    std::wstring deviceName = pdidInstance->tszProductName;
+    std::wcout << L"  - " << deviceName << std::endl;
+    return DIENUM_CONTINUE;
+}
+
+void ShowAvailableDevicesOnConsole() {
+    if (directInput) {
+        directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
+    }
+    else {
+        std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << std::endl;
+    }
+}
+
+
 BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
     std::wstring deviceName = pdidInstance->tszProductName;
+
     if (deviceName == targetDeviceName) {
-        LogMessage(L"[INFO] Matched Device: " + deviceName);
+        LogMessage(L"[INFO] Found matching device: " + deviceName);
         HRESULT hr = directInput->CreateDevice(pdidInstance->guidInstance, &matchedDevice, nullptr);
-        return (FAILED(hr)) ? DIENUM_CONTINUE : DIENUM_STOP;
+        if (FAILED(hr)) {
+            LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
+            return DIENUM_CONTINUE;
+        }
+        LogMessage(L"[INFO] Successfully created device interface");
+        return DIENUM_STOP;  // Found and created successfully
     }
+
     return DIENUM_CONTINUE;
 }
 
@@ -56,8 +102,27 @@ bool LoadFFBSettings(const std::wstring& filename) {
 
 // Kick-off DirectInput
 bool InitializeDevice() {
+    LogMessage(L"[INFO] Initializing DirectInput...");
+
     HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&directInput, NULL);
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) {
+        LogMessage(L"[ERROR] DirectInput8Create failed: 0x" + std::to_wstring(hr));
+        return false;
+    }
+
+    LogMessage(L"[INFO] Searching for device: " + targetDeviceName);
     hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
-    return matchedDevice != nullptr;
+
+    if (FAILED(hr)) {
+        LogMessage(L"[ERROR] EnumDevices failed: 0x" + std::to_wstring(hr));
+        return false;
+    }
+
+    if (matchedDevice == nullptr) {
+        LogMessage(L"[ERROR] Device not found: " + targetDeviceName);
+        return false;
+    }
+
+    LogMessage(L"[INFO] Device initialization successful");
+    return true;
 }
