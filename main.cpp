@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.4 Don't forget to update this down below
+// Beta 0.5 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -27,8 +27,9 @@
 // === Project Includes ===
 #include "ffb_setup.h"
 #include "telemetry_reader.h"
-#include "calculations/slip_angle.h"
-#include "calculations/lateral_load.h"
+//#include "calculations/slip_angle.h"
+//#include "calculations/lateral_load.h"
+#include "calculations/vehicle_dynamics.h"
 #include "forces/constant_force.h"
 #include "forces/damper_effect.h"
 #include "forces/spring_effect.h"
@@ -69,30 +70,43 @@ struct TelemetryDisplayData {
     double speed_mph = 0.0;
     double steering_deg = 0.0;
     double steering_raw = 0.0;
+
+    // Tire loads
     double tireload_lf = 0.0;
     double tireload_rf = 0.0;
     double tireload_lr = 0.0;
     double tireload_rr = 0.0;
+
+    // Tire magnitudes
     double tiremaglat_lf = 0.0;
     double tiremaglat_rf = 0.0;
     double tiremaglat_lr = 0.0;
     double tiremaglat_rr = 0.0;
 
-    // Slip values
-    double slipNorm_lf = 0.0;
-    double slipNorm_rf = 0.0;
-    double slipNorm_lr = 0.0;
-    double slipNorm_rr = 0.0;
-    double slipMag_lf = 0.0;
-    double slipMag_rf = 0.0;
-    double slipMag_lr = 0.0;
-    double slipMag_rr = 0.0;
-
-    // Calculated forces
+    // Legacy calculated data
+    int directionVal = 0;
     double slipAngleDeg = 0.0;
     double lateralG = 0.0;
     int forceMagnitude = 0;
-    int directionVal = 0;
+
+    // Vehicle Dynamics calculated data
+    double vd_lateralG = 0.0;
+    int vd_directionVal = 0;
+    //double vd_yaw = 0.0;
+    double vd_slip = 0.0;
+    int vd_forceMagnitude = 0;
+
+    // Individual tire forces
+    double vd_force_lf = 0.0;
+    double vd_force_rf = 0.0;
+    double vd_force_lr = 0.0;
+    double vd_force_rr = 0.0;
+
+    // Aggregate forces
+    double vd_frontLateralForce = 0.0;
+    double vd_rearLateralForce = 0.0;
+    double vd_totalLateralForce = 0.0;
+    double vd_yawMoment = 0.0;
 };
 
 // === Shared Globals ===
@@ -150,15 +164,29 @@ void RestartAsAdmin() {
 
 void SetConsoleWindowSize() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) {
+        LogMessage(L"[ERROR] Failed to get console handle");
+        return;
+    }
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(hOut, &csbi);
+    if (!GetConsoleScreenBufferInfo(hOut, &csbi)) {
+        LogMessage(L"[ERROR] Failed to get console buffer info");
+        return;
+    }
 
-    SMALL_RECT windowSize = { 0, 0, 119, 39 };  // window size
     COORD bufferSize = { 120, 200 };           // scrollable size
+    if (!SetConsoleScreenBufferSize(hOut, bufferSize)) {
+        LogMessage(L"[WARNING] Failed to set console buffer size");
+    }
 
-    SetConsoleScreenBufferSize(hOut, bufferSize);
-    SetConsoleWindowInfo(hOut, TRUE, &windowSize);
+    SMALL_RECT windowSize = { 0, 0, 119, 39 };  // window size (note: 119, not 120)
+    if (!SetConsoleWindowInfo(hOut, TRUE, &windowSize)) {
+        LogMessage(L"[WARNING] Failed to set console window size");
+    }
+    else {
+        LogMessage(L"[INFO] Console window size set successfully");
+    }
 }
 
 void MoveCursorToTop() {
@@ -175,10 +203,24 @@ void MoveCursorToLine(short lineNumber) {
 
 void HideConsoleCursor() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) {
+        LogMessage(L"[ERROR] Failed to get console handle for cursor");
+        return;
+    }
+
     CONSOLE_CURSOR_INFO cursorInfo;
-    GetConsoleCursorInfo(hOut, &cursorInfo);
+    if (!GetConsoleCursorInfo(hOut, &cursorInfo)) {
+        LogMessage(L"[ERROR] Failed to get cursor info");
+        return;
+    }
+
     cursorInfo.bVisible = FALSE;
-    SetConsoleCursorInfo(hOut, &cursorInfo);
+    if (!SetConsoleCursorInfo(hOut, &cursorInfo)) {
+        LogMessage(L"[ERROR] Failed to hide cursor");
+    }
+    else {
+        LogMessage(L"[INFO] Cursor hidden successfully");
+    }
 }
 
 // New display
@@ -205,7 +247,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.4 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.5 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -245,19 +287,81 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
+    //ss.str(L""); ss.clear();
+    //ss << std::setw(10) << displayData.tireload_lf << L"           " << std::setw(10) << displayData.tireload_rf;
+    //std::wcout << padLine(ss.str()) << L"\n";
+    //std::wcout << padLine(L"") << L"\n";
+
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.tireload_lf << L"           " << std::setw(10) << displayData.tireload_rf;
+    ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
+    //ss.str(L""); ss.clear();
+    //ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
+    //std::wcout << padLine(ss.str()) << L"\n";
+    //std::wcout << padLine(L"") << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    // Vehicle Dynamics section
+    std::wcout << padLine(L"      == Vehicle Dynamics ==") << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Lateral G: " << std::setw(8) << displayData.vd_lateralG << L" G";
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    //ss.str(L""); ss.clear();
+    //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/s²";
+    //std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Slip Angle: " << std::setw(8) << displayData.vd_slip << L" deg";
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Direction Value: " << displayData.vd_directionVal;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Force Magnitude: " << displayData.vd_forceMagnitude;
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    /*
+    // Tire Forces
+    std::wcout << padLine(L"      == Decoded Tire Forces ==") << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+    std::wcout << padLine(L"Front Left      Front Right") << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << displayData.vd_force_lf << L"           " << std::setw(10) << displayData.vd_force_rf;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
+    ss << std::setw(10) << displayData.vd_force_lr << L"           " << std::setw(10) << displayData.vd_force_rr;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
-    // Calculated data section
-    std::wcout << padLine(L"      == Calculated Data (probably wrong) ==") << L"\n";
+    ss.str(L""); ss.clear();
+    ss << L"Front Total: " << std::setw(8) << displayData.vd_frontLateralForce << L"   Rear Total: " << std::setw(8) << displayData.vd_rearLateralForce;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"Total Force: " << std::setw(8) << displayData.vd_totalLateralForce << L"   Yaw Moment: " << std::setw(8) << displayData.vd_yawMoment;
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+
+    /*
+    // Legacy calculated data section
+    std::wcout << padLine(L"      == Legacy Calculated Data ==") << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
@@ -276,6 +380,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     ss << L"Force Magnitude: " << displayData.forceMagnitude;
     std::wcout << padLine(ss.str()) << L"\n";
 
+    */
     std::wcout << padLine(L"----------------------------------------") << L"\n";
     std::wcout << padLine(L"Log:") << L"\n";
 }
@@ -410,8 +515,10 @@ void ProcessLoop() {
     RawTelemetry current{};
     RawTelemetry previousLat{};
     RawTelemetry previousSlip{};
+    RawTelemetry previousVD{};
     bool firstReadingLat = true;
     bool firstReadingSlip = true;
+    bool firstReadingVD = true;
 
     double previousDlong = 0.0;
     int noMovementFrames = 0;
@@ -466,6 +573,9 @@ void ProcessLoop() {
             displayData.slipAngleDeg = slip.slipAngle;
         }
 
+        CalculatedVehicleDynamics vehicleDynamics{};
+        bool vehicleDynamicsValid = CalculateVehicleDynamics(current, previousVD, firstReadingVD, vehicleDynamics);
+
         CalculatedLateralLoad load{};
         if (CalculateLateralLoad(current, previousLat, firstReadingLat, slip, load)) {
             // Poll input state
@@ -485,8 +595,7 @@ void ProcessLoop() {
 
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
-                ApplyConstantForceEffect(current, previousPos, load, slip,
-                    current.speed_mph, constantForceEffect, masterForceScale);
+                ApplyConstantForceEffect(current, load, slip, vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, masterForceScale);
                 previousPos = current;
 
             }
@@ -538,28 +647,52 @@ void ProcessLoop() {
             {
                 std::lock_guard<std::mutex> lock(displayMutex);
 
-                displayData = {
-                    current.dlat,
-                    current.dlong,
-                    current.rotation_deg,
-                    current.speed_mph,
-                    current.steering_raw,
-                    current.steering_deg,
-                    current.tireload_lf,
-                    current.tireload_rf,
-                    current.tireload_lr,
-                    current.tireload_rr,
-                    current.tiremaglat_lf,
-                    current.tiremaglat_rf,
-                    current.tiremaglat_lr,
-                    current.tiremaglat_rr,
-                    slip.slipAngle,
-                    slip.slipNorm_lf, slip.slipNorm_rf, slip.slipNorm_lr, slip.slipNorm_rr,
-                    slip.slipMag_lf, slip.slipMag_rf, slip.slipMag_lr, slip.slipMag_rr,
-                    load.lateralG,
-                    load.forceMagnitude,
-                    load.directionVal
-                };
+                // Basic telemetry
+                displayData.dlat = current.dlat;
+                displayData.dlong = current.dlong;
+                displayData.rotation_deg = current.rotation_deg;
+                displayData.speed_mph = current.speed_mph;
+                displayData.steering_deg = current.steering_deg;
+                displayData.steering_raw = current.steering_raw;
+
+                // Tire loads
+                displayData.tireload_lf = current.tireload_lf;
+                displayData.tireload_rf = current.tireload_rf;
+                displayData.tireload_lr = current.tireload_lr;
+                displayData.tireload_rr = current.tireload_rr;
+
+                // Tire magnitudes
+                displayData.tiremaglat_lf = current.tiremaglat_lf;
+                displayData.tiremaglat_rf = current.tiremaglat_rf;
+                displayData.tiremaglat_lr = current.tiremaglat_lr;
+                displayData.tiremaglat_rr = current.tiremaglat_rr;
+
+                // Legacy calculated data
+                displayData.directionVal = slip.directionVal;
+                displayData.slipAngleDeg = slip.slipAngle;
+                displayData.lateralG = load.lateralG;
+                displayData.forceMagnitude = load.forceMagnitude;
+
+                // NEW: Vehicle dynamics data (only update if calculation was successful)
+                if (vehicleDynamicsValid) {
+                    displayData.vd_lateralG = vehicleDynamics.lateralG;
+                    displayData.vd_directionVal = vehicleDynamics.directionVal;
+                    //displayData.vd_yaw = vehicleDynamics.yaw;
+                    displayData.vd_slip = vehicleDynamics.slip;
+                    displayData.vd_forceMagnitude = vehicleDynamics.forceMagnitude;
+
+                    // Individual tire forces
+                    displayData.vd_force_lf = vehicleDynamics.force_lf;
+                    displayData.vd_force_rf = vehicleDynamics.force_rf;
+                    displayData.vd_force_lr = vehicleDynamics.force_lr;
+                    displayData.vd_force_rr = vehicleDynamics.force_rr;
+
+                    // Aggregate forces
+                    displayData.vd_frontLateralForce = vehicleDynamics.frontLateralForce;
+                    displayData.vd_rearLateralForce = vehicleDynamics.rearLateralForce;
+                    displayData.vd_totalLateralForce = vehicleDynamics.totalLateralForce;
+                    displayData.vd_yawMoment = vehicleDynamics.yawMoment;
+                }
             }
         }
 
@@ -724,7 +857,7 @@ int main() {
             std::lock_guard<std::mutex> lock(displayMutex);
             std::cout << std::fixed << std::setprecision(2);
 
-            std::wcout << L"ICR2 FFB Program Version 0.4 BETA\n"; //keep version up to date
+            std::wcout << L"ICR2 FFB Program Version 0.5 BETA\n"; //keep version up to date
             std::wcout << L"USE AT YOUR OWN RISK\n";
             std::wcout << L"Connected Device: " << targetDeviceName << L"\n";
             std::cout << "Master Force Scale: " << masterForceValue << "%\n\n";
@@ -785,7 +918,7 @@ int main() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     return 0;
 }

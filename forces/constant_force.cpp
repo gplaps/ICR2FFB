@@ -4,15 +4,102 @@
 #include <deque>
 #include <numeric>
 
+
+
+
 // Get config data
 extern std::wstring targetInvertFFB;
 
-void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& previous,
+void ApplyConstantForceEffect(const RawTelemetry& current,
     const CalculatedLateralLoad& load, const CalculatedSlip& slip,
-    double speed_mph, IDirectInputEffect* constantForceEffect,
+    const CalculatedVehicleDynamics& vehicleDynamics,
+    double speed_mph, double steering_deg, IDirectInputEffect* constantForceEffect,
     double masterForceScale) {
 
     if (!constantForceEffect) return;
+
+    // Beta 0.5
+    // This is a bunch of logic to pause/unpause or prevent forces when the game isn't running
+    // I think this could probably be a lot simpler so maybe up for a redo
+    // It works right now though, although it feels a bit delayed
+
+    static double lastDlong = 0.0;
+    static bool hasEverMoved = false;
+    static int noMovementFrames = 0;
+    static bool isPaused = true;
+    static bool pauseForceSet = false;
+    static bool isFirstReading = true;
+    constexpr int movementThreshold = 10;  // Frames to consider "paused"
+    constexpr double movementThreshold_value = 0.001;  // Very small movement threshold
+
+    if (isFirstReading) {
+        lastDlong = current.dlong;  // Set baseline from first real data
+        isFirstReading = false;
+        if (!pauseForceSet) {
+            DICONSTANTFORCE cf = { 0 };
+            DIEFFECT eff = {};
+            eff.dwSize = sizeof(DIEFFECT);
+            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+            eff.dwDuration = INFINITE;
+            eff.dwGain = 10000;
+            eff.dwTriggerButton = DIEB_NOTRIGGER;
+            eff.cAxes = 1;
+            DWORD axes[1] = { DIJOFS_X };
+            LONG dir[1] = { 0 };
+            eff.rgdwAxes = axes;
+            eff.rglDirection = dir;
+            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+            eff.lpvTypeSpecificParams = &cf;
+            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            pauseForceSet = true;
+        }
+        return;
+    }
+
+    bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
+
+    if (isStationary) {
+        noMovementFrames++;
+        if (noMovementFrames >= movementThreshold && !isPaused) {
+            isPaused = true;
+            pauseForceSet = false;  // ← Reset when entering pause
+            LogMessage(L"[INFO] Game paused detected - sending zero force");
+        }
+    }
+    else {
+        if (isPaused || noMovementFrames > 0) {
+            noMovementFrames = 0;
+            if (isPaused) {
+                isPaused = false;
+                pauseForceSet = false;  // ← Reset when exiting pause
+                LogMessage(L"[INFO] Game resumed - restoring normal forces");
+            }
+        }
+        lastDlong = current.dlong;
+    }
+
+    // If paused, send zero force and return
+    if (isPaused) {
+        if (!pauseForceSet) {
+            DICONSTANTFORCE cf = { 0 };
+            DIEFFECT eff = {};
+            eff.dwSize = sizeof(DIEFFECT);
+            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+            eff.dwDuration = INFINITE;
+            eff.dwGain = 10000;
+            eff.dwTriggerButton = DIEB_NOTRIGGER;
+            eff.cAxes = 1;
+            DWORD axes[1] = { DIJOFS_X };
+            LONG dir[1] = { 0 };
+            eff.rgdwAxes = axes;
+            eff.rglDirection = dir;
+            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+            eff.lpvTypeSpecificParams = &cf;
+            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            pauseForceSet = true;
+        }
+        return;
+    }
 
     // Low speed filtering
     if (speed_mph < 5.0) {
@@ -45,234 +132,249 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
     }
 
 
-    // Paused detection to make forces go away when the car isnt moving
-    // Should be safe for all devices because its not stopping the effect, just making it 0
+// === CALC 1 - Lateral G ===
 
-    static double lastDlong = 0.0;
-    static int noMovementFrames = 0;
-    static bool isPaused = false;
-    constexpr int movementThreshold = 10;  // Frames to consider "paused"
-    constexpr double movementThreshold_value = 0.001;  // Very small movement threshold
+/*
+    // Linear force applied to G
+    // 1G = 1500 or ~15% of a wheels total force
+    // 4G (indy) would be 60% of the wheels force which feels nice
+    double force = std::abs(vehicleDynamics.lateralG) * 1500.0;
 
-    bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
+    //Logic to reverse force direction if needed based on ini
+    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
+    double directionMultiplier = (vehicleDynamics.lateralG > 0 ? 1.0 : -1.0);
+    if (invert) {
+        directionMultiplier = -directionMultiplier;
+    }
 
-    if (isStationary) {
-        noMovementFrames++;
-        if (noMovementFrames >= movementThreshold && !isPaused) {
-            isPaused = true;
-            LogMessage(L"[INFO] Game paused detected - sending zero force");
-        }
+    double smoothed = force * directionMultiplier;
+    int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale);
+
+    int signedMagnitude = static_cast<int>(magnitude);
+    if (smoothed < 0.0) {
+        signedMagnitude = -signedMagnitude;
+    }
+*/
+
+// Curved force applied, this feels better because most corners are ~1 - 2 G
+// But using a force that is high enough for those on linear makes ovals too strong
+// Target: 1000 force at 0.5G, 6000 force at 4G (same as linear: 4G × 1500 = 6000)
+    double absG = std::abs(vehicleDynamics.lateralG);
+    double force;
+
+    const double centerDeadZone = 0.08;
+
+    if (absG <= centerDeadZone) {
+        // Linear ramp from 0 to target force at dead zone edge
+        force = (absG / centerDeadZone) * 1200.0;  // Linear from 0 to 800 force units
     }
     else {
-        if (isPaused || noMovementFrames > 0) {
-            noMovementFrames = 0;
-            if (isPaused) {
-                isPaused = false;
-                LogMessage(L"[INFO] Game resumed - restoring normal forces");
+        // Your existing force calculation above dead zone
+        double normalizedG = absG / 4.0;
+        double logValue = std::log1p(normalizedG * 15.0);
+        double maxLogValue = std::log1p(15.0);
+        force = (logValue / maxLogValue) * 6000.0;
+
+    }
+
+    // Cap maximum force 
+    if (force > 10000.0) {
+        force = 10000.0;
+    }   
+
+    // Logic to reverse force direction if needed based on ini
+    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
+    double directionMultiplier = (vehicleDynamics.lateralG > 0 ? 1.0 : -1.0);
+    if (invert) {
+        directionMultiplier = -directionMultiplier;
+    }
+
+    double smoothed = force * directionMultiplier;
+    int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale);
+    int signedMagnitude = static_cast<int>(magnitude);
+    if (smoothed < 0.0) {
+        signedMagnitude = -signedMagnitude;
+    }
+
+// === Self-Aligning Torque ===
+/*
+    const double STEERING_RATIO = 15.0;
+    double wheel_angle_deg = current.steering_deg / STEERING_RATIO;
+    double wheel_angle_rad = wheel_angle_deg * 3.14159 / 180.0;
+    double steeringAngleDegrees = wheel_angle_rad * (180.0 / 3.14159);
+
+    if (speed_mph > 5.0) {
+        double speedFactor = std::clamp(speed_mph / 60.0, 0.2, 1.2);
+        double absAngle = std::abs(steeringAngleDegrees);
+
+        // Add proper dead zone for straight-line stability
+        const double steeringDeadZone = 2.0;  // 2 degrees dead zone
+
+        if (absAngle > steeringDeadZone) {  // Only apply SAT when actually steering
+            // Reduce effective angle by dead zone
+            double effectiveAngle = absAngle - steeringDeadZone;
+
+            // 1. Self-aligning torque (wants to center) - reduced strength
+            double satForce = speedFactor * (effectiveAngle / 25.0) * 400.0;  // Reduced from 800
+
+            // Always opposes current steering direction
+            if (steeringAngleDegrees > 0) {
+                signedMagnitude -= static_cast<int>(satForce * 0.5);  // Reduced from 0.7
+            }
+            else {
+                signedMagnitude += static_cast<int>(satForce * 0.5);
+            }
+
+            // 2. Steering resistance (makes turning harder) - only for larger angles
+            if (effectiveAngle > 3.0) {  // Only add resistance for larger steering inputs
+                double resistanceForce = effectiveAngle * speedFactor * 8.0;  // Reduced from 15
+
+                if (signedMagnitude > 0) {
+                    signedMagnitude += static_cast<int>(resistanceForce);
+                }
+                else if (signedMagnitude < 0) {
+                    signedMagnitude -= static_cast<int>(resistanceForce);
+                }
             }
         }
-        lastDlong = current.dlong;
     }
+*/
+// === CALC 2 - Slip ===
 
-    // If paused, send zero force and return
-    if (isPaused) {
-        static bool pauseForceSet = false;
-        if (!pauseForceSet) {
-            DICONSTANTFORCE cf = { 0 };
-            DIEFFECT eff = {};
-            eff.dwSize = sizeof(DIEFFECT);
-            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-            eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
-            eff.dwTriggerButton = DIEB_NOTRIGGER;
-            eff.cAxes = 1;
-            DWORD axes[1] = { DIJOFS_X };
-            LONG dir[1] = { 0 };
-            eff.rgdwAxes = axes;
-            eff.rglDirection = dir;
-            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-            eff.lpvTypeSpecificParams = &cf;
-            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
-            pauseForceSet = true;
+    // This should modify the forces based on the amount of slip angle the car has
+    // The linear force feels good on its own, but this can add some more detail
+/*
+    if (std::abs(vehicleDynamics.slip) > 0.05) {  // Only apply if meaningful slip
+
+        // Calculate slip modifier: 5% change per 2 degrees
+        double slipDegrees = std::abs(vehicleDynamics.slip);
+        double slipModifier = (slipDegrees / 2.0) * 0.05;
+
+        // Cap the modifier to reasonable limits (max 60% change)
+        slipModifier = std::clamp(slipModifier, 0.0, 0.60);
+
+        bool isLeftTurn = (vehicleDynamics.lateralG < 0.0);
+        bool isUndersteer;
+
+        if (isLeftTurn) {
+            // Left turn: positive slip = oversteer, negative slip = understeer
+            isUndersteer = (vehicleDynamics.slip < 0);
         }
-        return;
+        else {
+            // Right turn: negative slip = oversteer, positive slip = understeer  
+            isUndersteer = (vehicleDynamics.slip > 0);
+        }
+
+        if (isUndersteer) {
+            // UNDERSTEER: INCREASE force (heavier steering)
+            signedMagnitude = static_cast<int>(signedMagnitude * (1.0 + slipModifier));
+        }
+        else {
+            // OVERSTEER: DECREASE force (lighter steering)
+            signedMagnitude = static_cast<int>(signedMagnitude * (1.0 - slipModifier));
+        }
+
+        // Ensure we don't go negative due to oversteer reduction
+        if (smoothed < 0.0 && signedMagnitude > 0) {
+            signedMagnitude = -signedMagnitude;  // Restore correct sign
+        }
+        else if (smoothed > 0.0 && signedMagnitude < 0) {
+            signedMagnitude = -signedMagnitude;  // Restore correct sign
+        }
     }
+*/
 
-    static bool pauseForceSet = false;
-    if (pauseForceSet) {
-        pauseForceSet = false;  // Reset when unpaused
+// === Speed-based Centering ===
+/*
+// Damping that opposes any steering input
+    if (speed_mph > 10.0 && std::abs(vehicleDynamics.lateralG) < 0.15) {
+        // Add baseline steering resistance at speed (not centering force)
+        double speedResistance = std::clamp(speed_mph / 80.0, 0.0, 1.0) * 300.0;
+
+        // Only add resistance if current force is very small
+        if (std::abs(signedMagnitude) < speedResistance) {
+            // Preserve direction but ensure minimum resistance
+            if (signedMagnitude >= 0) {
+                signedMagnitude = static_cast<int>(speedResistance);
+            }
+            else {
+                signedMagnitude = -static_cast<int>(speedResistance);
+            }
+        }
     }
+*/
+// === Smoothing Code ===
 
-
-    // MAIN EVENT !!!!!!
-    // Force Calculations
-
-    constexpr double maxG = 8.0;
-    constexpr double exponent = 0.85;
-    constexpr int minChange = 100;
-    constexpr double dlongThreshold = 0.01;  // Minimum change to consider movement
-    constexpr int freezeFramesThreshold = 10;
-
-
-    // OK Calculation of force, made some kind of 'curve'
-    // 100% based on feel and probably can be redone if I can get some data on how other games work
-
-    // Step 1: Linear from 0–0.5G to 1000, then logarithmic to 8000
-    double g = std::clamp(load.lateralG, -maxG, maxG);
-    double absG = std::abs(g);
-    double force = 0.0;
-
-    if (absG <= 0.5) {
-        // Linear ramp from 0 to 1000
-        force = (absG / 0.5) * 1000.0;
+    static std::deque<int> magnitudeHistory;
+    magnitudeHistory.push_back(signedMagnitude);
+    if (magnitudeHistory.size() > 3) {
+        magnitudeHistory.pop_front();
     }
-    else {
-        //curve of force from .5 g to 8g
-        double scale = (absG - 0.5) / (8.0 - 0.5);  // normalized [0, 1]
-        double curved = std::log1p(scale * 10.0);   // still [0, ~2.4]
-
-        // new scaling: 0.0 = 1000, 0.5 = 4000, 1.0 = 8000
-        double forceMin = 1000.0;
-        double forceMid = 4000.0;
-        double forceMax = 8000.0;
-
-        // rescale curved log output [0, log1p(10)] to [1000, 8000]
-        double maxLog = std::log1p(10.0);
-        force = forceMin + (curved / maxLog) * (forceMax - forceMin);
-    }
-
-    // Step 1.5: Apply slip angle reduction
-
-    // This is all about adding feeling by augmenting the basic force as the car slides
-    //New slip angle v0.7 Alpha
-    //26% reduction at 20degree slip
-    double slipWeight = slip.absSlipDeg;
-    double gWeight = std::abs(g);
-    double slipInfluenceScale = std::clamp(1.0 - (gWeight / 6.0), 0.25, 1.0);
-    double slipReduction = std::clamp((slipWeight / 20.0) * 0.40 * slipInfluenceScale, 0.0, 1.0);
-    force *= (1.0 - slipReduction);
-
-    // Old slip logic
-    //double slipReduction = std::clamp(slip.absSlipDeg / 20.0 * 0.40, 0.0, 1.0);  // max 100% reduction
-    //force *= (1.0 - slipReduction);
-
-    // Normalize and preserve sign\
-    // v0.6 Alpha added inversion capability
-    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
-
-    double curved = (force / 10000.0) * (
-        (g < 0.0 ? -1.0 : 1.0) * (invert ? 1.0 : -1.0)
-        );
-
-    // Step 2: Smoothing (moving average)
-    static std::deque<double> forceHistory;
-    forceHistory.push_back(curved);
-    if (forceHistory.size() > 3) {
-        forceHistory.pop_front();
-    }
-    double smoothed = std::accumulate(forceHistory.begin(), forceHistory.end(), 0.0) / forceHistory.size();
-    int magnitude = static_cast<int>(std::abs(smoothed) * 10000.0 * masterForceScale);
-
-    // How to calculate the direction
-    // can reverse effect here
-   // LONG targetDir = (curved > 0.0 ? -1 : (curved < 0.0 ? 1 : 0)) * 10000;
-    LONG targetDir = (smoothed > 0.0 ? -1 : (smoothed < 0.0 ? 1 : 0)) * 10000;
+    signedMagnitude = static_cast<int>(std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0.0) / magnitudeHistory.size());
 
 
-    // Newer logic but might have broken older wheels?
-    //LONG targetDir = (curved > 0.0 ? -10000 : (curved < 0.0 ? 10000 : 0));
+// === Reduce update Rate ===
+// 
+    // This will reduce the rate at which we send updates to the wheel
+    // The idea is to not break older controllers or ones which can't take frequent updates
+    // The risk is adding delay
 
-    static LONG lastDirection = 0;
 
-
-    // Ultra-slow single smoothing 
-    constexpr double directionSmoothingFactor = 0.3; // Instead of 0.2
-    lastDirection = static_cast<LONG>((1.0 - directionSmoothingFactor) * lastDirection + directionSmoothingFactor * targetDir);
-
-    // Blend direction near center to avoid sharp swaps
-    // Beta 0.3 removing because duplicate?
-    //lastDirection = static_cast<LONG>((1.0 - directionSmoothingFactor) * lastDirection + directionSmoothingFactor * targetDir);
-
-    // Step 4: Avoid micro-changes
-    // Change with Beta 3 to prevent overwhelming older wheels
     static int lastSentMagnitude = -1;
-    static LONG lastSentDirection = 0;
-    static int lastProcessedMagnitude = -1;  // Track previous frame's magnitude
+    static int lastSentSignedMagnitude = 0;
+    static int lastProcessedMagnitude = -1;
     static int framesSinceLastUpdate = 0;
     static double accumulatedMagnitudeChange = 0.0;
-    static double accumulatedDirectionChange = 0.0;
+    static double accumulatedSignChange = 0.0;
 
-    // Track accumulated changes since last update
     if (lastSentMagnitude != -1) {
         accumulatedMagnitudeChange += std::abs(magnitude - lastProcessedMagnitude);
-        accumulatedDirectionChange += std::abs(lastDirection - lastSentDirection);
+        accumulatedSignChange += std::abs(signedMagnitude - lastSentSignedMagnitude);
     }
 
     framesSinceLastUpdate++;
-
-    // Conditions for sending an update
     bool shouldUpdate = false;
-    std::wstring updateReason;
 
-    // 1. Large immediate change
-    if (std::abs(magnitude - lastSentMagnitude) >= 400 || std::abs(lastDirection - lastSentDirection) >= 2000) {
+    // 1. More sensitive immediate changes
+    if (std::abs(magnitude - lastSentMagnitude) >= 250 ||     // Reduced from 400
+        std::abs(signedMagnitude - lastSentSignedMagnitude) >= 500) { // Reduced from 800
         shouldUpdate = true;
-        updateReason = L"Large immediate change";
     }
-    // 2. Accumulated drift is significant
-    else if (accumulatedMagnitudeChange >= 300 || accumulatedDirectionChange >= 1500) {
+    // 2. More sensitive accumulated changes  
+    else if (accumulatedMagnitudeChange >= 200 ||             // Reduced from 300
+        accumulatedSignChange >= 400) {                   // Reduced from 600
         shouldUpdate = true;
-        updateReason = L"Accumulated change";
     }
-    // 3. Direction sign change (always important)
-    else if ((lastSentDirection > 0 && lastDirection < 0) || (lastSentDirection < 0 && lastDirection > 0) ||
-        (lastSentDirection == 0 && lastDirection != 0) || (lastSentDirection != 0 && lastDirection == 0)) {
+    // 3. Direction change (unchanged - always important)
+    else if ((lastSentSignedMagnitude > 0 && signedMagnitude < 0) ||
+        (lastSentSignedMagnitude < 0 && signedMagnitude > 0) ||
+        (lastSentSignedMagnitude == 0 && signedMagnitude != 0) ||
+        (lastSentSignedMagnitude != 0 && signedMagnitude == 0)) {
         shouldUpdate = true;
-        updateReason = L"Direction change";
     }
-    // 4. Force timeout - prevent wheels from "forgetting" current force
-    // Change this to make the maximum "Wait" time larger between forces
-    else if (framesSinceLastUpdate >= 12) {  // should be ~10hz?
+    // 4. Timeout, how long until we send an update no matter what
+    else if (framesSinceLastUpdate >= 8) {                    // Reduced from 12 (~15Hz)
         shouldUpdate = true;
-        updateReason = L"Timeout refresh";
     }
-    // 5. Zero force (always send immediately for responsiveness)
+    // 5. Zero force (unchanged)
     else if (magnitude == 0 && lastSentMagnitude != 0) {
         shouldUpdate = true;
-        updateReason = L"Zero force";
     }
 
-    // Skip update if no meaningful change
     if (!shouldUpdate) {
-        lastProcessedMagnitude = magnitude;  // Track for next frame calculation
+        lastProcessedMagnitude = magnitude;
         return;
     }
 
-    // Reset tracking when we send an update
+    // Reset tracking
     lastSentMagnitude = magnitude;
-    lastSentDirection = lastDirection;
+    lastSentSignedMagnitude = signedMagnitude;
     framesSinceLastUpdate = 0;
     accumulatedMagnitudeChange = 0.0;
-    accumulatedDirectionChange = 0.0;
+    accumulatedSignChange = 0.0;
     lastProcessedMagnitude = magnitude;
 
-    // Optional: Log update frequency for debugging
-    static int updateCount = 0;
-    updateCount++;
-    if (updateCount % 100 == 0) {
-        LogMessage(L"[DEBUG] FFB updates sent: " + std::to_wstring(updateCount) + L", reason: " + updateReason);
-    }
 
-
-
-    //Step 5 Apply Affect
-
-    // Encode direction in magnitude sign instead of separate direction
-    int signedMagnitude = magnitude;
-    if (smoothed < 0.0) {  // Right turn (negative smoothed = right)
-        signedMagnitude = -static_cast<int>(magnitude);  // Negative magnitude for right
-    }
-    // Left turn (positive smoothed = left) keeps positive magnitude
 
     DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude
     DIEFFECT eff = {};
@@ -283,7 +385,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
-    LONG dir[1] = { 0 };  // ← Always zero direction now
+    LONG dir[1] = { 0 };  // ← Always zero direction now, this broke Moza wheels
     eff.rgdwAxes = axes;
     eff.rglDirection = dir;
     eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
@@ -294,14 +396,5 @@ void ApplyConstantForceEffect(const RawTelemetry& current, const RawTelemetry& p
 
     if (FAILED(hr)) {
         std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;
-    }
-
-    // Optional: Add debug logging to see what values are being sent
-    static int debugCounter = 0;
-    debugCounter++;
-    if (debugCounter % 60 == 0) {  // Every second
-        LogMessage(L"[MOZA TEST] LateralG=" + std::to_wstring(load.lateralG) +
-            L", SignedMag=" + std::to_wstring(signedMagnitude) +
-            L", Smoothed=" + std::to_wstring(smoothed));
     }
 }

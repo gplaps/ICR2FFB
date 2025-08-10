@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.3  
+# FFB for ICR2 – BETA 0.5  
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,6 +48,14 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+
+**0.5 (2025-08-10)** 
+- A big update based on some new tire telemetry found (thanks Eric!). These new tire values are thought to be the amount of friction each tires has and show much more varied data in different conditions. To take advantage of these I rewrote the entire calculations and forces pipeline to be cleaner and better represent the forces. The forces are approximated into real-life data and force feedback calculations are based on this. The results are more predictable than feedback was based before for oversteer/understeer conditions. Overall the feedback is still missing detail for changes in the road or distinct feeling for going off into the dirt/grass. Hopefully we find more physics values which could be brought in to bring this more to life.
+- At this time 'slip' does not directly factor into the feedback, but because the tires themselves report loss of grip the feeling of oversteer/understeer is still quite present.
+- Fixed pausing/unpausing logic, it should remove force now
+- Fixed a lot of display data to make sure its not flickering/dispalys cleanly
+- Log now tracks more things
+- Code cleanup is still needed to remove old slip and lateral calculation code, it is no longer used in constant force
 
 **0.4 (2025-08-08)** 
 - Updated to use magnitude to determine force direction instead of a direction parameter. This may fix effects only working in one direction for Moza wheels
