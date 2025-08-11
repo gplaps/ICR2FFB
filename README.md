@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.5  
+# FFB for ICR2 – BETA 0.6  
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,6 +48,11 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+
+**0.6 (2025-08-10)** 
+- You can now feel surface (grass vs dirt vs tarmac) and camber changes in the road!
+- Added new code to use the force split between left and right-side which has allowed for a ton of detail to be added which helps remove the 'smooth' feeling of previous versions.
+- Updated the display to show the actual force being delivered to the wheel (0 - 10000 units)
 
 **0.5 (2025-08-10)** 
 - A big update based on some new tire telemetry found (thanks Eric!). These new tire values are thought to be the amount of friction each tires has and show much more varied data in different conditions. To take advantage of these I rewrote the entire calculations and forces pipeline to be cleaner and better represent the forces. The forces are approximated into real-life data and force feedback calculations are based on this. The results are more predictable than feedback was based before for oversteer/understeer conditions. Overall the feedback is still missing detail for changes in the road or distinct feeling for going off into the dirt/grass. Hopefully we find more physics values which could be brought in to bring this more to life.

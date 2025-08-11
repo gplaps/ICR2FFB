@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.5 Don't forget to update this down below
+// Beta 0.6 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -113,6 +113,7 @@ struct TelemetryDisplayData {
 std::mutex displayMutex;
 TelemetryDisplayData displayData;
 std::atomic<double> currentSpeed = 0.0;
+int g_currentFFBForce = 0;
 
 // Check Admin rights
 bool IsRunningAsAdmin() {
@@ -247,7 +248,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.5 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.6 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -329,7 +330,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Force Magnitude: " << displayData.vd_forceMagnitude;
+    ss << L"Force Magnitude: " << g_currentFFBForce;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
@@ -595,7 +596,8 @@ void ProcessLoop() {
 
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
-                ApplyConstantForceEffect(current, load, slip, vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, masterForceScale);
+                ApplyConstantForceEffect(current, load, slip, 
+                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, masterForceScale);
                 previousPos = current;
 
             }

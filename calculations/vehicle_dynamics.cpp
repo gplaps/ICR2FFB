@@ -101,6 +101,9 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     double force_lr_N = convertTireForceToNewtons(out.force_lr);
     double force_rr_N = convertTireForceToNewtons(out.force_rr);
 
+    out.frontLeftForce_N = convertTireForceToNewtons(out.force_lf);
+    out.frontRightForce_N = convertTireForceToNewtons(out.force_rf);
+
     // CALC 1
     //===== LATERAL FORCE CALC ======
     

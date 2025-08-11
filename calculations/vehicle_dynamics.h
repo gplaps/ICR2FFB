@@ -25,6 +25,9 @@ struct CalculatedVehicleDynamics {
     double rearLateralForce = 0.0;
     double totalLateralForce = 0.0;
     double yawMoment = 0.0;
+
+    double frontLeftForce_N;
+    double frontRightForce_N;
 };
 
 bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedVehicleDynamics& out);

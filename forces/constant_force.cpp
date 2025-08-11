@@ -10,6 +10,9 @@
 // Get config data
 extern std::wstring targetInvertFFB;
 
+// To be used in reporting
+extern int g_currentFFBForce;
+
 void ApplyConstantForceEffect(const RawTelemetry& current,
     const CalculatedLateralLoad& load, const CalculatedSlip& slip,
     const CalculatedVehicleDynamics& vehicleDynamics,
@@ -196,6 +199,8 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         signedMagnitude = -signedMagnitude;
     }
 
+
+
 // === Self-Aligning Torque ===
 /*
     const double STEERING_RATIO = 15.0;
@@ -311,7 +316,54 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         magnitudeHistory.pop_front();
     }
     signedMagnitude = static_cast<int>(std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0.0) / magnitudeHistory.size());
+ 
 
+    // === Experimental ===
+        // Weight shifting code
+        // This will try to create some feeling based on the front tire loads changing to hopefully 'feel' the road more
+        // It watches for changes in the left to right split of force
+        // 
+        // If the front left tire is doing 45% of the work and right front is doing 55%
+        // And then they change and the left is doing 40% and the right is 60%
+        // You will feel a bump
+        // This adds detail to camber and surface changes
+
+    if (speed_mph > 1.0) {
+        static double lastFrontImbalance = 0.0;
+        static double weightTransferForce = 0.0;
+        static int framesSinceChange = 0;
+
+        double totalFrontLoad = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+        if (totalFrontLoad > 100.0) {
+            double currentImbalance = (vehicleDynamics.frontLeftForce_N - vehicleDynamics.frontRightForce_N) / totalFrontLoad;
+            double imbalanceChange = currentImbalance - lastFrontImbalance;
+
+            
+            if (std::abs(imbalanceChange) > 0.005) {  // How much of a change to consider between left/right split
+                // Much stronger force
+                weightTransferForce += imbalanceChange * 4500.0;  // Force scaler
+                framesSinceChange = 0;
+
+                // Higher cap for stronger effects
+                weightTransferForce = std::clamp(weightTransferForce, -5000.0, 5000.0);
+            }
+            else {
+                framesSinceChange++;
+            }
+
+            // Decay time to hold effect, don't want to hold it forever because then we dont feel regular force
+            if (framesSinceChange > 60) { 
+                weightTransferForce *= 0.995;  // decay time per frame, inverse so 0.005% per frame
+
+                if (std::abs(weightTransferForce) < 20.0) {
+                    weightTransferForce = 0.0;
+                }
+            }
+
+            signedMagnitude += static_cast<int>(weightTransferForce);
+            lastFrontImbalance = currentImbalance;
+        }
+    }
 
 // === Reduce update Rate ===
 // 
@@ -374,6 +426,9 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     accumulatedSignChange = 0.0;
     lastProcessedMagnitude = magnitude;
 
+
+
+    g_currentFFBForce = signedMagnitude;
 
 
     DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude
