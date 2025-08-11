@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.6 Don't forget to update this down below
+// Beta 0.65 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -248,7 +248,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.6 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.65 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 

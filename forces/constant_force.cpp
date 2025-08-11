@@ -360,7 +360,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
                 }
             }
 
-            signedMagnitude += static_cast<int>(weightTransferForce);
+            signedMagnitude += static_cast<int>(weightTransferForce * masterForceScale);
             lastFrontImbalance = currentImbalance;
         }
     }
