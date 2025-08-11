@@ -10,10 +10,16 @@ std::wstring targetDeviceName;
 std::wstring targetGameVersion;
 std::wstring targetGameWindowName;
 std::wstring targetForceSetting;
-std::wstring targetDamperEnabled;
-std::wstring targetSpringEnabled;
-std::wstring targetConstantEnabled;
 std::wstring targetInvertFFB;
+std::wstring targetConstantEnabled;
+std::wstring targetConstantScale;
+std::wstring targetWeightEnabled;
+std::wstring targetWeightScale;
+std::wstring targetDamperEnabled;
+std::wstring targetDamperScale;
+std::wstring targetSpringEnabled;
+
+
 
 IDirectInputDevice8* matchedDevice = nullptr;
 LPDIRECTINPUT8 directInput = nullptr;
@@ -82,20 +88,30 @@ bool LoadFFBSettings(const std::wstring& filename) {
     while (std::getline(file, line)) {
         if (line.rfind(L"Device: ", 0) == 0)
             targetDeviceName = line.substr(8);
+        else if (line.rfind(L"Game: ", 0) == 0)
+            targetGameWindowName = line.substr(6);
         else if (line.rfind(L"Version: ", 0) == 0)
             targetGameVersion = line.substr(9);
         else if (line.rfind(L"Force: ", 0) == 0)
             targetForceSetting = line.substr(7);
-        else if (line.rfind(L"Game: ", 0) == 0)
-            targetGameWindowName = line.substr(6);
-        else if (line.rfind(L"Damper: ", 0) == 0)
-            targetDamperEnabled = line.substr(8);
-        else if (line.rfind(L"Spring: ", 0) == 0)
-            targetSpringEnabled = line.substr(8);
-        else if (line.rfind(L"Constant: ", 0) == 0)
-            targetConstantEnabled = line.substr(10);
         else if (line.rfind(L"Invert: ", 0) == 0)
             targetInvertFFB = line.substr(8);
+        else if (line.rfind(L"Constant: ", 0) == 0)
+            targetConstantEnabled = line.substr(10);
+        else if (line.rfind(L"Constant Scale: ", 0) == 0)
+            targetConstantScale = line.substr(16);
+        else if (line.rfind(L"Weight: ", 0) == 0)
+            targetWeightEnabled = line.substr(8);
+        else if (line.rfind(L"Weight Scale: ", 0) == 0)
+            targetWeightScale = line.substr(14);
+        else if (line.rfind(L"Damper: ", 0) == 0)
+            targetDamperEnabled = line.substr(8);
+        else if (line.rfind(L"Damper Scale: ", 0) == 0)
+            targetDamperScale = line.substr(14);
+        else if (line.rfind(L"Spring: ", 0) == 0)
+            targetSpringEnabled = line.substr(8);
+
+
     }
     return !targetDeviceName.empty();
 }

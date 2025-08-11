@@ -7,4 +7,4 @@ void LogMessage(const std::wstring& msg);
 
 extern IDirectInputEffect* damperEffect;
 
-void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double masterForceScale);
+void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double masterForceScale, double damperForceScale);

@@ -18,4 +18,8 @@ void ApplyConstantForceEffect(
     double speed_mph,
     double steering_deg,
     IDirectInputEffect* constantForceEffect,
-    double masterForceScale);
+    bool enableWeightForce,
+    double masterForceScale,
+    double constantForceScale,
+    double weightForceScale
+    );

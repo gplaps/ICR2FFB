@@ -17,7 +17,11 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     const CalculatedLateralLoad& load, const CalculatedSlip& slip,
     const CalculatedVehicleDynamics& vehicleDynamics,
     double speed_mph, double steering_deg, IDirectInputEffect* constantForceEffect,
-    double masterForceScale) {
+    bool enableWeightForce,
+    double masterForceScale,
+    double constantForceScale,
+    double weightForceScale
+    ) {
 
     if (!constantForceEffect) return;
 
@@ -193,7 +197,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     }
 
     double smoothed = force * directionMultiplier;
-    int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale);
+    int magnitude = static_cast<int>((std::abs(smoothed) * masterForceScale) * constantForceScale);
     int signedMagnitude = static_cast<int>(magnitude);
     if (smoothed < 0.0) {
         signedMagnitude = -signedMagnitude;
@@ -318,7 +322,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     signedMagnitude = static_cast<int>(std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0.0) / magnitudeHistory.size());
  
 
-    // === Experimental ===
+    // === CALC 3 Weight Force ===
         // Weight shifting code
         // This will try to create some feeling based on the front tire loads changing to hopefully 'feel' the road more
         // It watches for changes in the left to right split of force
@@ -328,7 +332,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         // You will feel a bump
         // This adds detail to camber and surface changes
 
-    if (speed_mph > 1.0) {
+    if (enableWeightForce && speed_mph > 1.0) {
         static double lastFrontImbalance = 0.0;
         static double weightTransferForce = 0.0;
         static int framesSinceChange = 0;
@@ -360,7 +364,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
                 }
             }
 
-            signedMagnitude += static_cast<int>(weightTransferForce * masterForceScale);
+            signedMagnitude += static_cast<int>((weightTransferForce * masterForceScale) * weightForceScale);
             lastFrontImbalance = currentImbalance;
         }
     }

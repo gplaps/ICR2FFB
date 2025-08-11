@@ -13,10 +13,16 @@ extern std::wstring targetGameVersion;
 extern std::wstring targetGameWindowName;
 
 extern std::wstring targetForceSetting;
-extern std::wstring targetDamperEnabled;
-extern std::wstring targetSpringEnabled;
-extern std::wstring targetConstantEnabled;
 extern std::wstring targetInvertFFB;
+extern std::wstring targetConstantEnabled;
+extern std::wstring targetConstantScale;
+extern std::wstring targetWeightEnabled;
+extern std::wstring targetWeightScale;
+extern std::wstring targetDamperEnabled;
+extern std::wstring targetDamperScale;
+extern std::wstring targetSpringEnabled;
+
+
 
 extern IDirectInputDevice8* matchedDevice;
 extern LPDIRECTINPUT8 directInput;

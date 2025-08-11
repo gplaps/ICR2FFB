@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.65  
+# FFB for ICR2 – BETA 0.7  
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,6 +48,10 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+
+**0.7 (2025-08-11)** 
+- Added more options for configuration. In the INI file there are now independant scale options and toggles for each force.
+- I have also added toggles/force scale for the new 'weight' force which gives the surface and camber change feeling. Its now possible to turn this part of the force off, or reduce its scale compared to the other effects.
 
 **0.65 (2025-08-10)** 
 - Fixed an issue where the new weight effects did not scale based on the INI value

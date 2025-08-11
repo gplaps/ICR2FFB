@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.65 Don't forget to update this down below
+// Beta 0.7 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -46,6 +46,7 @@ const size_t maxLogLines = 1000;  // Show last 1000 log lines
 // Constant force is the most in depth
 // Damper & Spring just use speed to do things
 bool enableConstantForce = false;
+bool enableWeightForce = false;
 bool enableDamperEffect = false;
 bool enableSpringEffect = false;
 
@@ -248,7 +249,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.65 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.7 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -560,9 +561,18 @@ void ProcessLoop() {
         double masterForceValue = std::stod(targetForceSetting);
         double masterForceScale = std::clamp(masterForceValue / 100.0, 0.0, 1.0);
 
+        double constantForceValue = std::stod(targetConstantScale);
+        double constantForceScale = std::clamp(constantForceValue / 100.0, 0.0, 1.0);
+
+        double weightForceValue = std::stod(targetWeightScale);
+        double weightForceScale = std::clamp(weightForceValue / 100.0, 0.0, 1.0);
+
+        double damperForceValue = std::stod(targetDamperScale);
+        double damperForceScale = std::clamp(damperForceValue / 100.0, 0.0, 1.0);
+
         // Update Effects
         if (damperEffect && enableDamperEffect)
-            UpdateDamperEffect(current.speed_mph, damperEffect, masterForceScale);
+            UpdateDamperEffect(current.speed_mph, damperEffect, masterForceScale, damperForceScale);
 
         if (springEffect && enableSpringEffect)
             UpdateSpringEffect(springEffect, masterForceScale);
@@ -597,7 +607,8 @@ void ProcessLoop() {
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
                 ApplyConstantForceEffect(current, load, slip, 
-                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, masterForceScale);
+                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, masterForceScale,
+                    constantForceScale, weightForceScale);
                 previousPos = current;
 
             }
@@ -823,6 +834,7 @@ int main() {
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future
     enableConstantForce = (targetConstantEnabled == L"true" || targetConstantEnabled == L"True");
+    enableWeightForce = (targetWeightEnabled == L"true" || targetWeightEnabled == L"True");
     enableDamperEffect = (targetDamperEnabled == L"true" || targetDamperEnabled == L"True");
     enableSpringEffect = (targetSpringEnabled == L"true" || targetSpringEnabled == L"True");
 
@@ -834,6 +846,9 @@ int main() {
     // This is to control the max % for any of the FFB effects as specified in the ffb.ini
     // Prevents broken wrists (hopefully)
     double masterForceValue = std::stod(targetForceSetting);
+    double constantForceValue = std::stod(targetConstantScale);
+    double weightForceValue = std::stod(targetWeightScale);
+    double damperForceValue = std::stod(targetDamperScale);
 
     // Start telemetry processing!
     std::thread processThread(ProcessLoop);
@@ -853,49 +868,6 @@ int main() {
             DisplayTelemetry(displayData, masterForceValue);
         }
 
-     /* {
-            //Telemetry display for live app
-
-            std::lock_guard<std::mutex> lock(displayMutex);
-            std::cout << std::fixed << std::setprecision(2);
-
-            std::wcout << L"ICR2 FFB Program Version 0.5 BETA\n"; //keep version up to date
-            std::wcout << L"USE AT YOUR OWN RISK\n";
-            std::wcout << L"Connected Device: " << targetDeviceName << L"\n";
-            std::cout << "Master Force Scale: " << masterForceValue << "%\n\n";
-            std::cout << "      == Raw Data ==\n" << std::endl;
-            std::cout << "dLat: " << displayData.dlat << "   dLong: " << displayData.dlong << "\n";
-            std::cout << "Centerline Rotation: " << displayData.rotation_deg << " deg\n";
-            std::cout << "Speed: " << displayData.speed_mph << " mph\n";
-            std::cout << "Steering Raw: " << displayData.steering_raw << "\n";
-            std::cout << "Steering Lock Degree: " << displayData.steering_deg << "\n\n";
-
-            std::cout << "      == Tire Loads ==\n" << std::endl;
-            std::cout << "Front Left" << "      " << "Front Right\n";
-            std::cout << displayData.tireload_lf << "           " << displayData.tireload_rf << "\n\n";
-            // std::cout << displayData.tiremaglat_lf << "           " << displayData.tiremaglat_rf << "\n\n"; //<- some odd tire param
-
-            //Disabled other tire values, I find its nicer to see the raw data
-            //std::cout << displayData.slipNorm_lf << "           " << displayData.slipNorm_rf << "\n\n";
-            //std::cout << displayData.slipMag_lf << "           " << displayData.slipMag_rf << "\n\n";
-
-            std::cout << "Rear Left" << "       " << "Rear Right\n";
-            std::cout << displayData.tireload_lr << "           " << displayData.tireload_rr << "\n\n";
-           // std::cout << displayData.tiremaglat_lr << "           " << displayData.tiremaglat_rr << "\n\n"; //<- some odd tire param
-
-            //std::cout << displayData.slipNorm_lr << "           " << displayData.slipNorm_rr << "\n\n";
-            //std::cout << displayData.slipMag_lr << "           " << displayData.slipMag_rr << "\n\n";
-
-            std::cout << "      == Calculated Data (probably wrong) ==\n" << std::endl;
-            std::cout << "Direction Value: " << displayData.directionVal << "\n";
-            std::cout << "Slip: " << displayData.slipAngleDeg << "\n";
-            std::cout << "Lateral G: " << displayData.lateralG << " G\n";
-            std::cout << "Force Magnitude: " << displayData.forceMagnitude << "\n";
-            std::cout << "----------------------------------------\n";
-
-            std::wcout << L"Log:\n";
-        }
-        */
         //Print log data
         {
             std::lock_guard<std::mutex> lock(logMutex);
