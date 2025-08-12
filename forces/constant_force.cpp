@@ -18,6 +18,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     const CalculatedVehicleDynamics& vehicleDynamics,
     double speed_mph, double steering_deg, IDirectInputEffect* constantForceEffect,
     bool enableWeightForce,
+    bool enableRateLimit,
     double masterForceScale,
     double constantForceScale,
     double weightForceScale
@@ -369,6 +370,8 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         }
     }
 
+
+/*
 // === Reduce update Rate ===
 // 
     // This will reduce the rate at which we send updates to the wheel
@@ -383,6 +386,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     static double accumulatedMagnitudeChange = 0.0;
     static double accumulatedSignChange = 0.0;
 
+
     if (lastSentMagnitude != -1) {
         accumulatedMagnitudeChange += std::abs(magnitude - lastProcessedMagnitude);
         accumulatedSignChange += std::abs(signedMagnitude - lastSentSignedMagnitude);
@@ -392,13 +396,13 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     bool shouldUpdate = false;
 
     // 1. More sensitive immediate changes
-    if (std::abs(magnitude - lastSentMagnitude) >= 250 ||     // Reduced from 400
-        std::abs(signedMagnitude - lastSentSignedMagnitude) >= 500) { // Reduced from 800
+    if (std::abs(magnitude - lastSentMagnitude) >= 400 ||     // Reduced from 400
+        std::abs(signedMagnitude - lastSentSignedMagnitude) >= 2000) { // Reduced from 800
         shouldUpdate = true;
     }
     // 2. More sensitive accumulated changes  
-    else if (accumulatedMagnitudeChange >= 200 ||             // Reduced from 300
-        accumulatedSignChange >= 400) {                   // Reduced from 600
+    else if (accumulatedMagnitudeChange >= 300 ||             // Reduced from 300
+        accumulatedSignChange >= 1500) {                   // Reduced from 600
         shouldUpdate = true;
     }
     // 3. Direction change (unchanged - always important)
@@ -409,7 +413,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         shouldUpdate = true;
     }
     // 4. Timeout, how long until we send an update no matter what
-    else if (framesSinceLastUpdate >= 8) {                    // Reduced from 12 (~15Hz)
+    else if (framesSinceLastUpdate >= 12) {                    // Reduced from 12 (~15Hz)
         shouldUpdate = true;
     }
     // 5. Zero force (unchanged)
@@ -429,10 +433,90 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     accumulatedMagnitudeChange = 0.0;
     accumulatedSignChange = 0.0;
     lastProcessedMagnitude = magnitude;
+    
+    */
 
+    // === Rate Limiting ===
+// === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
+    if (enableRateLimit) {
+        // Direction calculation and smoothing for rate limiting
+        LONG targetDir = (smoothed > 0.0 ? -1 : (smoothed < 0.0 ? 1 : 0)) * 10000;
+        static LONG lastDirection = 0;
 
+        // Direction smoothing - this prevents rapid direction changes
+        constexpr double directionSmoothingFactor = 0.3;
+        lastDirection = static_cast<LONG>((1.0 - directionSmoothingFactor) * lastDirection + directionSmoothingFactor * targetDir);
+
+        // Rate limiting with direction smoothing
+        static int lastSentMagnitude = -1;
+        static int lastSentSignedMagnitude = 0;
+        static LONG lastSentDirection = 0;  // Track smoothed direction
+        static int lastProcessedMagnitude = -1;
+        static int framesSinceLastUpdate = 0;
+        static double accumulatedMagnitudeChange = 0.0;
+        static double accumulatedDirectionChange = 0.0;  // Track direction changes
+
+        // Track accumulated changes since last update
+        if (lastSentMagnitude != -1) {
+            accumulatedMagnitudeChange += std::abs(magnitude - lastProcessedMagnitude);
+            accumulatedDirectionChange += std::abs(lastDirection - lastSentDirection);  // Use smoothed direction
+        }
+
+        framesSinceLastUpdate++;
+        bool shouldUpdate = false;
+
+        // 1. Large immediate change
+        if (std::abs(magnitude - lastSentMagnitude) >= 400 ||
+            std::abs(lastDirection - lastSentDirection) >= 2000) {  // Use smoothed direction
+            shouldUpdate = true;
+        }
+        // 2. Accumulated changes
+        else if (accumulatedMagnitudeChange >= 300 ||
+            accumulatedDirectionChange >= 1500) {  // Use direction accumulation
+            shouldUpdate = true;
+        }
+        // 3. Direction sign change (use smoothed direction)
+        else if ((lastSentDirection > 0 && lastDirection < 0) ||
+            (lastSentDirection < 0 && lastDirection > 0) ||
+            (lastSentDirection == 0 && lastDirection != 0) ||
+            (lastSentDirection != 0 && lastDirection == 0)) {
+            shouldUpdate = true;
+        }
+        // 4. Timeout
+        else if (framesSinceLastUpdate >= 12) {
+            shouldUpdate = true;
+        }
+        // 5. Zero force
+        else if (magnitude == 0 && lastSentMagnitude != 0) {
+            shouldUpdate = true;
+        }
+
+        if (!shouldUpdate) {
+            lastProcessedMagnitude = magnitude;
+            return;  // Skip this frame
+        }
+
+        // Reset tracking when we send an update
+        lastSentMagnitude = magnitude;
+        lastSentSignedMagnitude = signedMagnitude;
+        lastSentDirection = lastDirection;  // Track the smoothed direction
+        framesSinceLastUpdate = 0;
+        accumulatedMagnitudeChange = 0.0;
+        accumulatedDirectionChange = 0.0;
+        lastProcessedMagnitude = magnitude;
+    }
 
     g_currentFFBForce = signedMagnitude;
+
+    //Logging
+
+    static int logCounter = 0;
+    if (logCounter % 30 == 0) { // Log every 30 frames to avoid spam
+        LogMessage(L"[DEBUG] Force: " + std::to_wstring(signedMagnitude) +
+            L", Speed: " + std::to_wstring(speed_mph) +
+            L", LateralG: " + std::to_wstring(vehicleDynamics.lateralG));
+    }
+    logCounter++;
 
 
     DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude

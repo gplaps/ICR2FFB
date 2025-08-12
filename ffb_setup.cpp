@@ -11,6 +11,7 @@ std::wstring targetGameVersion;
 std::wstring targetGameWindowName;
 std::wstring targetForceSetting;
 std::wstring targetInvertFFB;
+std::wstring targetLimitEnabled;
 std::wstring targetConstantEnabled;
 std::wstring targetConstantScale;
 std::wstring targetWeightEnabled;
@@ -96,6 +97,8 @@ bool LoadFFBSettings(const std::wstring& filename) {
             targetForceSetting = line.substr(7);
         else if (line.rfind(L"Invert: ", 0) == 0)
             targetInvertFFB = line.substr(8);
+        else if (line.rfind(L"Limit: ", 0) == 0)
+            targetLimitEnabled = line.substr(7);
         else if (line.rfind(L"Constant: ", 0) == 0)
             targetConstantEnabled = line.substr(10);
         else if (line.rfind(L"Constant Scale: ", 0) == 0)

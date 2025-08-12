@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.7 Don't forget to update this down below
+// Beta 0.78 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -45,6 +45,7 @@ const size_t maxLogLines = 1000;  // Show last 1000 log lines
 
 // Constant force is the most in depth
 // Damper & Spring just use speed to do things
+bool enableRateLimit = false;
 bool enableConstantForce = false;
 bool enableWeightForce = false;
 bool enableDamperEffect = false;
@@ -191,6 +192,32 @@ void SetConsoleWindowSize() {
     }
 }
 
+// Prevent lockup if window is clicked
+void DisableConsoleQuickEdit() {
+    HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+    if (hInput == INVALID_HANDLE_VALUE) {
+        LogMessage(L"[ERROR] Failed to get input handle");
+        return;
+    }
+
+    DWORD mode;
+    if (!GetConsoleMode(hInput, &mode)) { 
+        LogMessage(L"[ERROR] Failed to get console mode");
+        return;
+    }
+
+ 
+    mode &= ~(ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE);
+    mode |= ENABLE_EXTENDED_FLAGS;
+
+    if (!SetConsoleMode(hInput, mode)) { 
+        LogMessage(L"[ERROR] Failed to set console mode");
+    }
+    else {
+        LogMessage(L"[INFO] Console Quick Edit Mode disabled");
+    }
+}
+
 void MoveCursorToTop() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD topLeft = { 0, 0 };
@@ -249,7 +276,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.7 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.78 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -607,7 +634,7 @@ void ProcessLoop() {
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
                 ApplyConstantForceEffect(current, load, slip, 
-                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, masterForceScale,
+                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, enableRateLimit, masterForceScale,
                     constantForceScale, weightForceScale);
                 previousPos = current;
 
@@ -751,6 +778,7 @@ int main() {
 
     SetConsoleWindowSize();
     HideConsoleCursor();
+    DisableConsoleQuickEdit();
 
     //clear last log
     std::wofstream clearLog("log.txt", std::ios::trunc);
@@ -833,6 +861,7 @@ int main() {
 
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future
+    enableRateLimit = (targetWeightEnabled == L"true" || targetWeightEnabled == L"True");
     enableConstantForce = (targetConstantEnabled == L"true" || targetConstantEnabled == L"True");
     enableWeightForce = (targetWeightEnabled == L"true" || targetWeightEnabled == L"True");
     enableDamperEffect = (targetDamperEnabled == L"true" || targetDamperEnabled == L"True");

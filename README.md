@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.7  
+# FFB for ICR2 – BETA 0.78  
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,6 +48,12 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+
+**0.78 (2025-08-12)** 
+- Trying to fix compatibility and oscillation issues with T500RS and other belt wheels. Added option for "Limit" which when set to true tries to limit the frequency the FFB updates are sent to the wheel. This can help wheels which can't process 60hz refresh rates, or where frequent FFB changes make them go crazy. I have tested without this on a G27 and it works fine, so most older wheels should be ok, but belt wheels like the T500RS may need it.
+
+**0.75 (2025-08-11)** 
+- Fixed app from crashing if the window is clicked
 
 **0.7 (2025-08-11)** 
 - Added more options for configuration. In the INI file there are now independant scale options and toggles for each force.
