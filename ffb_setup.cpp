@@ -181,3 +181,8 @@ bool InitializeDevice()
     LogMessage(L"[INFO] Device initialization successful");
     return true;
 }
+
+bool FFBShouldInvert()
+{
+    return (targetInvertFFB == L"true" || targetInvertFFB == L"True");
+}
