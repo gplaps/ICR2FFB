@@ -24,16 +24,14 @@ extern std::wstring targetDamperEnabled;
 extern std::wstring targetDamperScale;
 extern std::wstring targetSpringEnabled;
 
-
-
-extern IDirectInputDevice8* matchedDevice;
+extern IDirectInputDevice8 *matchedDevice;
 extern LPDIRECTINPUT8 directInput;
 
 // Include logging
-void LogMessage(const std::wstring& msg);
+void LogMessage(const std::wstring &msg);
 void ListAvailableDevices();
 void ShowAvailableDevicesOnConsole();
 
 // === FFB Setup Functions ===
-bool LoadFFBSettings(const std::wstring& filename);
+bool LoadFFBSettings(const std::wstring &filename);
 bool InitializeDevice();

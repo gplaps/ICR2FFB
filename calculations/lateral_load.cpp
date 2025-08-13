@@ -14,9 +14,11 @@
 // Idea is the force should be a direct opposite to the lateral G so the driver "Feels" the pull of the forces
 // You should have to push your wheel against the force
 
-bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading,
-    const CalculatedSlip& slip, CalculatedLateralLoad& out) {
-    if (firstReading) {
+bool CalculateLateralLoad(const RawTelemetry &current, RawTelemetry &previous, bool &firstReading,
+                          const CalculatedSlip &slip, CalculatedLateralLoad &out)
+{
+    if (firstReading)
+    {
         previous = current;
         firstReading = false;
         return false;
@@ -27,7 +29,7 @@ bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& previous, b
     double avgSlip = (slip.slipNorm_lf + slip.slipNorm_rf) * 0.5;
 
     // assuming going around Indy at 220mph is 4G, this looks ABOUT right
-    double lateralG = avgSlip * 16.0;  // 0.25 slipNorm ≈ 4G
+    double lateralG = avgSlip * 16.0; // 0.25 slipNorm ≈ 4G
 
     // Output variables
     out.speedMph = current.speed_mph;

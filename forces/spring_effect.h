@@ -3,8 +3,8 @@
 #include <string>
 
 // Include logging
-void LogMessage(const std::wstring& msg);
+void LogMessage(const std::wstring &msg);
 
-extern IDirectInputEffect* springEffect;
+extern IDirectInputEffect *springEffect;
 
-void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale);
+void UpdateSpringEffect(IDirectInputEffect *effect, double masterForceScale);

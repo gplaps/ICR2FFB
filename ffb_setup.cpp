@@ -17,9 +17,9 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-extern IDirectInputEffect* constantForceEffect;
+extern IDirectInputEffect *constantForceEffect;
 
-//settings from the ffb.ini
+// settings from the ffb.ini
 std::wstring targetDeviceName;
 std::wstring targetGameVersion;
 std::wstring targetGameWindowName;
@@ -35,77 +35,90 @@ std::wstring targetDamperEnabled;
 std::wstring targetDamperScale;
 std::wstring targetSpringEnabled;
 
-
-
-IDirectInputDevice8* matchedDevice = nullptr;
+IDirectInputDevice8 *matchedDevice = nullptr;
 LPDIRECTINPUT8 directInput = nullptr;
 
 // Device lists for better error messages
-BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE *pdidInstance, VOID *)
+{
     std::wstring deviceName = pdidInstance->tszProductName;
     LogMessage(L"[INFO] Available device: " + deviceName);
-    return DIENUM_CONTINUE;  // Continue enumerating all devices
+    return DIENUM_CONTINUE; // Continue enumerating all devices
 }
 
-void ListAvailableDevices() {
-    if (directInput) {
+void ListAvailableDevices()
+{
+    if (directInput)
+    {
         LogMessage(L"[INFO] Enumerating available game controllers:");
         HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
-        if (FAILED(hr)) {
+        if (FAILED(hr))
+        {
             LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
         }
-        else {
+        else
+        {
             LogMessage(L"[INFO] Device enumeration complete");
         }
     }
-    else {
+    else
+    {
         LogMessage(L"[ERROR] DirectInput not initialized, cannot list devices");
     }
 }
 
-BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE *pdidInstance, VOID *)
+{
     std::wstring deviceName = pdidInstance->tszProductName;
     std::wcout << L"  - " << deviceName << std::endl;
     return DIENUM_CONTINUE;
 }
 
-void ShowAvailableDevicesOnConsole() {
-    if (directInput) {
+void ShowAvailableDevicesOnConsole()
+{
+    if (directInput)
+    {
         directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
     }
-    else {
+    else
+    {
         std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << std::endl;
     }
 }
 
-
-BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE *pdidInstance, VOID *)
+{
     std::wstring deviceName = pdidInstance->tszProductName;
 
-    if (deviceName == targetDeviceName) {
+    if (deviceName == targetDeviceName)
+    {
         LogMessage(L"[INFO] Found matching device: " + deviceName);
         HRESULT hr = directInput->CreateDevice(pdidInstance->guidInstance, &matchedDevice, nullptr);
-        if (FAILED(hr)) {
+        if (FAILED(hr))
+        {
             LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
             return DIENUM_CONTINUE;
         }
         LogMessage(L"[INFO] Successfully created device interface");
-        return DIENUM_STOP;  // Found and created successfully
+        return DIENUM_STOP; // Found and created successfully
     }
 
     return DIENUM_CONTINUE;
 }
 
 // Search the ini file for settings and find what the user has set them to
-bool LoadFFBSettings(const std::wstring& filename) {
-    
+bool LoadFFBSettings(const std::wstring &filename)
+{
+
     targetWeightEnabled = L"false";
     targetWeightScale = L"1.0";
-    
+
     std::wifstream file(filename);
-    if (!file) return false;
+    if (!file)
+        return false;
     std::wstring line;
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+    {
         if (line.rfind(L"Device: ", 0) == 0)
             targetDeviceName = line.substr(8);
         else if (line.rfind(L"Game: ", 0) == 0)
@@ -134,18 +147,18 @@ bool LoadFFBSettings(const std::wstring& filename) {
             targetDamperScale = line.substr(14);
         else if (line.rfind(L"Spring: ", 0) == 0)
             targetSpringEnabled = line.substr(8);
-
-
     }
     return !targetDeviceName.empty();
 }
 
 // Kick-off DirectInput
-bool InitializeDevice() {
+bool InitializeDevice()
+{
     LogMessage(L"[INFO] Initializing DirectInput...");
 
-    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&directInput, NULL);
-    if (FAILED(hr)) {
+    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID **)&directInput, NULL);
+    if (FAILED(hr))
+    {
         LogMessage(L"[ERROR] DirectInput8Create failed: 0x" + std::to_wstring(hr));
         return false;
     }
@@ -153,12 +166,14 @@ bool InitializeDevice() {
     LogMessage(L"[INFO] Searching for device: " + targetDeviceName);
     hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
 
-    if (FAILED(hr)) {
+    if (FAILED(hr))
+    {
         LogMessage(L"[ERROR] EnumDevices failed: 0x" + std::to_wstring(hr));
         return false;
     }
 
-    if (matchedDevice == nullptr) {
+    if (matchedDevice == nullptr)
+    {
         LogMessage(L"[ERROR] Device not found: " + targetDeviceName);
         return false;
     }

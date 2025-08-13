@@ -6,8 +6,10 @@
 // just basic centering spring to try to give the wheel more weight while driving
 // Used to scale to speed but ive never found this effect to feel very nice on the fanatec
 
-void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale) {
-    if (!effect) return;
+void UpdateSpringEffect(IDirectInputEffect *effect, double masterForceScale)
+{
+    if (!effect)
+        return;
 
     // How much centering force?
     LONG springStrength = static_cast<LONG>(6500.0 * masterForceScale);
@@ -20,8 +22,8 @@ void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale) {
     condition.dwNegativeSaturation = 10000;
     condition.lDeadBand = 0; // Reduce deadzone
 
-    DWORD axes[1] = { DIJOFS_X };
-    LONG direction[1] = { 0 };
+    DWORD axes[1] = {DIJOFS_X};
+    LONG direction[1] = {0};
 
     DIEFFECT eff = {};
     eff.dwSize = sizeof(DIEFFECT);
@@ -38,7 +40,8 @@ void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale) {
     eff.dwStartDelay = 0;
 
     HRESULT hr = effect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
-    if (FAILED(hr)) {
+    if (FAILED(hr))
+    {
         std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << std::endl;
     }
 }

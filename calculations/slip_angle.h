@@ -3,9 +3,10 @@
 #include <string>
 
 // Include logging
-void LogMessage(const std::wstring& msg);
+void LogMessage(const std::wstring &msg);
 
-struct CalculatedSlip {
+struct CalculatedSlip
+{
     double slipAngle = 0.0;
     double absSlipDeg = 0.0;
     int forceMagnitude = 0;
@@ -15,4 +16,4 @@ struct CalculatedSlip {
     double slipMag_lf, slipMag_rf, slipMag_lr, slipMag_rr;
 };
 
-bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedSlip& out);
+bool CalculateSlipAngle(const RawTelemetry &current, RawTelemetry &previous, bool &firstReading, CalculatedSlip &out);
