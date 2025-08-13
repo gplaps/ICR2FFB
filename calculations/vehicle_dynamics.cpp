@@ -50,9 +50,13 @@ int getTurnDirection(int16_t lf, int16_t rf, int16_t lr, int16_t rr)
     // Determine if we're turning left or right based on force signs
     // Most of your forces will have the same sign during a turn
     int negative_count = 0;
-    if (lf < 0 || rf < 0)
+    if (lf < 0)
         negative_count++;
-    if (lr < 0 || rr < 0)
+    if (rf < 0)
+        negative_count++;
+    if (lr < 0)
+        negative_count++;
+    if (rr < 0)
         negative_count++;
 
     if (negative_count >= 2)
