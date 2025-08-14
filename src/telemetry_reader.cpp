@@ -86,10 +86,12 @@ static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
 #else
         std::wstring titleStr = ToLower(title);
 #endif
+        LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
         for (const auto& key : wdata->keywords) {
             auto query = ToLower(key);
             if (titleStr.find(query) != std::wstring::npos) 
             {
+                LogMessage(L"[DEBUG] Window \"" + titleStr + L"\" matches \"" + key + L'\"');
                 GetWindowThreadProcessId(hwnd, &wdata->pid);
                 return FALSE;
             }
