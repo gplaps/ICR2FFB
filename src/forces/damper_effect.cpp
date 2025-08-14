@@ -11,7 +11,7 @@ void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double mast
     if (!effect) return;
 
     double maxSpeed = 40.0;
-    double minDamper = 0.0;
+    double minDamper = 0.0; (void)minDamper; // unused currently
     double maxDamper = 5000.0;
 
     double t = std::clamp(speedMph / maxSpeed, 0.0, 1.0);

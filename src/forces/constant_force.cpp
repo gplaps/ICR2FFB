@@ -27,15 +27,15 @@ extern std::wstring targetInvertFFB;
 extern int g_currentFFBForce;
 
 void ApplyConstantForceEffect(const RawTelemetry& current,
-    const CalculatedLateralLoad& load, const CalculatedSlip& slip,
+    const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
     const CalculatedVehicleDynamics& vehicleDynamics,
-    double speed_mph, double steering_deg, IDirectInputEffect* constantForceEffect,
-    bool enableWeightForce,
+    double speed_mph, double /*steering_deg*/, IDirectInputEffect* constantForceEffect,
+    bool /*enableWeightForce*/,
     bool enableRateLimit,
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
-    double weightForceScale
+    double /*weightForceScale*/
     ) {
 
     if (!constantForceEffect) return;
@@ -46,7 +46,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     // It works right now though, although it feels a bit delayed
 
     static double lastDlong = 0.0;
-    static bool hasEverMoved = false;
+    static bool hasEverMoved = false; (void)hasEverMoved; // unused currently
     static int noMovementFrames = 0;
     static bool isPaused = true;
     static bool pauseForceSet = false;
@@ -520,7 +520,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
         // Rate limiting with direction smoothing
         static int lastSentMagnitude = -1;
-        static int lastSentSignedMagnitude = 0;
+        static int lastSentSignedMagnitude = 0; (void) lastSentSignedMagnitude; // unused currently
         static LONG lastSentDirection = 0;  // Track smoothed direction
         static int lastProcessedMagnitude = -1;
         static int framesSinceLastUpdate = 0;

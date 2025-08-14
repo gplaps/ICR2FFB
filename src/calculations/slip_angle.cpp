@@ -6,7 +6,7 @@
 #define M_PI 3.14159265358979323846
 
 // Some variables for smoothing
-constexpr int VELOCITY_HISTORY_SIZE = 5;
+// const int VELOCITY_HISTORY_SIZE = 5;
 static std::deque<double> velocityAngleHistory;
 
 struct DecodedSlip {
@@ -70,6 +70,7 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, boo
     double absSlipDeg = std::abs(slipAngleDeg);
     double slipScale = (current.speed_mph < 20.0) ? 0.0 : std::min((current.speed_mph - 20.0) / 20.0, 1.0);
     int force = static_cast<int>(std::clamp(absSlipDeg * 400 * slipScale, 0.0, 10000.0));
+    (void)force; // currently unused
 
     // Output
     out.slipAngle = slipAngleDeg;

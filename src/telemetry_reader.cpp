@@ -28,8 +28,8 @@
 
 // === Globals ===
 static HANDLE hProcess = nullptr;
-static DWORD carsDataAddr = 0;
-static bool telemetryInitialized = false;
+// static DWORD carsDataAddr = 0;
+// static bool telemetryInitialized = false;
 
 // Things to look for in the Memory to make it tick
 struct GameOffsets {

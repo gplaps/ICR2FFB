@@ -567,10 +567,11 @@ void ProcessLoop() {
     bool firstReadingSlip = true;
     bool firstReadingVD = true;
 
-    double previousDlong = 0.0;
-    int noMovementFrames = 0;
+    double previousDlong = 0.0; (void)previousDlong; // currently unused
+    int noMovementFrames = 0; (void) noMovementFrames; // currently unused
     const int movementThreshold = 3;  // number of frames to consider "stopped"
-    bool effectPaused = false;
+    (void)movementThreshold; // currently unused
+    bool effectPaused = false; (void)effectPaused; // currently unused
 
     //Added for feedback skipping if stopped
     RawTelemetry previousPos{};
@@ -900,10 +901,10 @@ int main() {
 
     // This is to control the max % for any of the FFB effects as specified in the ffb.ini
     // Prevents broken wrists (hopefully)
-    double masterForceValue = std::stod(targetForceSetting);
-    double constantForceValue = std::stod(targetConstantScale);
-    double weightForceValue = std::stod(targetWeightScale);
-    double damperForceValue = std::stod(targetDamperScale);
+    double masterForceValue = std::stod(targetForceSetting); (void)masterForceValue; // currently unused
+    double constantForceValue = std::stod(targetConstantScale); (void)constantForceValue; // currently unused
+    double weightForceValue = std::stod(targetWeightScale); (void)weightForceValue; // currently unused
+    double damperForceValue = std::stod(targetDamperScale); (void)damperForceValue; // currently unused
 
     // Start telemetry processing!
     std::thread processThread(ProcessLoop);

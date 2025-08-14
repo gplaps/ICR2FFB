@@ -21,12 +21,12 @@
 // May or may not be used
 namespace VehicleConstants {
     const double VEHICLE_MASS = 700.0 + 60.0 + 76.0; // kg (car + fuel + driver) - Can add real fuel later
-    const double FRONT_TRACK = 1.753; // m
-    const double REAR_TRACK = 1.638; // m  
+    // const double FRONT_TRACK = 1.753; // m
+    // const double REAR_TRACK = 1.638; // m  
     const double WHEELBASE = 3.048; // m
-    const double YAW_INERTIA = 1100.0; // kg⋅m² (estimated for IndyCar)
-    const double CG_FROM_FRONT = 1.3; // m (43% of wheelbase, typical for IndyCar)
-    const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
+    // const double YAW_INERTIA = 1100.0; // kg⋅m² (estimated for IndyCar)
+    // const double CG_FROM_FRONT = 1.3; // m (43% of wheelbase, typical for IndyCar)
+    // const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
     const double GRAVITY = 9.81; // m/s²
 
     // Tire guesswork since we do not know precise load in Newtons
