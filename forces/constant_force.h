@@ -21,6 +21,7 @@ void ApplyConstantForceEffect(
     bool enableWeightForce,
     bool enableRateLimit,
     double masterForceScale,
+    double deadzoneForceScale,
     double constantForceScale,
     double weightForceScale
     );

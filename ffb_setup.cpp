@@ -3,6 +3,20 @@
 #include <iostream>
 #include "constant_force.h"
 
+/*
+ * Copyright 2025 gplaps
+ *
+ * Licensed under the MIT License (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://opensource.org/licenses/MIT
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ */
+
 extern IDirectInputEffect* constantForceEffect;
 
 //settings from the ffb.ini
@@ -10,6 +24,7 @@ std::wstring targetDeviceName;
 std::wstring targetGameVersion;
 std::wstring targetGameWindowName;
 std::wstring targetForceSetting;
+std::wstring targetDeadzoneSetting;
 std::wstring targetInvertFFB;
 std::wstring targetLimitEnabled;
 std::wstring targetConstantEnabled;
@@ -95,6 +110,8 @@ bool LoadFFBSettings(const std::wstring& filename) {
             targetGameVersion = line.substr(9);
         else if (line.rfind(L"Force: ", 0) == 0)
             targetForceSetting = line.substr(7);
+        else if (line.rfind(L"Deadzone: ", 0) == 0)
+            targetDeadzoneSetting = line.substr(10);
         else if (line.rfind(L"Invert: ", 0) == 0)
             targetInvertFFB = line.substr(8);
         else if (line.rfind(L"Limit: ", 0) == 0)

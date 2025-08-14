@@ -4,7 +4,19 @@
 #include <deque>
 #include <numeric>
 
-
+/*
+ * Copyright 2025 gplaps
+ *
+ * Licensed under the MIT License (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://opensource.org/licenses/MIT
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ */
 
 
 // Get config data
@@ -20,6 +32,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     bool enableWeightForce,
     bool enableRateLimit,
     double masterForceScale,
+    double deadzoneForceScale,
     double constantForceScale,
     double weightForceScale
     ) {
@@ -142,47 +155,52 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
 // === CALC 1 - Lateral G ===
 
-/*
-    // Linear force applied to G
-    // 1G = 1500 or ~15% of a wheels total force
-    // 4G (indy) would be 60% of the wheels force which feels nice
-    double force = std::abs(vehicleDynamics.lateralG) * 1500.0;
+// This will add a 'base' force based on speed. This helps INCREDIBLY with straight line control
+// It gets rid of that 'ping pong' effect that I've been chasing while not making the forces feel delayed
 
-    //Logic to reverse force direction if needed based on ini
-    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
-    double directionMultiplier = (vehicleDynamics.lateralG > 0 ? 1.0 : -1.0);
-    if (invert) {
-        directionMultiplier = -directionMultiplier;
+    double baseLoad = 0.0;
+    if (speed_mph > 60.0) {
+        double speedFactor = (speed_mph - 60.0) / 180.0;  // 0.0 at 120mph, 1.0 at 220mph
+        if (speedFactor > 1.0) speedFactor = 1.0;
+        baseLoad = speedFactor * speedFactor * 1200.0;    // Amount of force to apply at 'peak'
     }
 
-    double smoothed = force * directionMultiplier;
-    int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale);
-
-    int signedMagnitude = static_cast<int>(magnitude);
-    if (smoothed < 0.0) {
-        signedMagnitude = -signedMagnitude;
-    }
-*/
-
-// Curved force applied, this feels better because most corners are ~1 - 2 G
-// But using a force that is high enough for those on linear makes ovals too strong
-// Target: 1000 force at 0.5G, 6000 force at 4G (same as linear: 4G × 1500 = 6000)
+    // === G-Force cornering ===
     double absG = std::abs(vehicleDynamics.lateralG);
+    double corneringForce = 0.0;
+
+    double configuredDeadzone = 0.03 * deadzoneForceScale;  // Version 0.8 Beta added Deadzone to ini
+
+    if (absG > configuredDeadzone) {
+        double effectiveG = absG - configuredDeadzone;
+
+        // Adjust the calculation range based on deadzone
+        double maxEffectiveG = 4.0 - configuredDeadzone;
+
+        if (effectiveG <= maxEffectiveG) {
+            double normalizedG = effectiveG / maxEffectiveG;
+            double curveValue = normalizedG * (0.7 + 0.3 * normalizedG);
+            corneringForce = curveValue * 8000.0;
+        }
+        else {
+            corneringForce = 8000.0;
+        }
+    }
+
+    // === Final force calculation ===
     double force;
 
-    const double centerDeadZone = 0.08;
-
-    if (absG <= centerDeadZone) {
-        // Linear ramp from 0 to target force at dead zone edge
-        force = (absG / centerDeadZone) * 1200.0;  // Linear from 0 to 800 force units
+    if (vehicleDynamics.lateralG > 0.03) {
+        // Right turn
+        force = baseLoad + corneringForce;
+    }
+    else if (vehicleDynamics.lateralG < -0.03) {
+        // Left turn
+        force = baseLoad + corneringForce;
     }
     else {
-        // Your existing force calculation above dead zone
-        double normalizedG = absG / 4.0;
-        double logValue = std::log1p(normalizedG * 15.0);
-        double maxLogValue = std::log1p(15.0);
-        force = (logValue / maxLogValue) * 6000.0;
-
+        // Straight line - very light
+        force = baseLoad * 0.2;  // Even lighter when straight
     }
 
     // Cap maximum force 
@@ -197,6 +215,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         directionMultiplier = -directionMultiplier;
     }
 
+    // Convert calcualted force to signed magnitude
     double smoothed = force * directionMultiplier;
     int magnitude = static_cast<int>((std::abs(smoothed) * masterForceScale) * constantForceScale);
     int signedMagnitude = static_cast<int>(magnitude);
@@ -313,11 +332,13 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         }
     }
 */
-// === Smoothing Code ===
+// === Output Smoothing ===
+
+// Take final magnitude and prevent any massive jumps over a small frame range
 
     static std::deque<int> magnitudeHistory;
     magnitudeHistory.push_back(signedMagnitude);
-    if (magnitudeHistory.size() > 3) {
+    if (magnitudeHistory.size() > 2) {
         magnitudeHistory.pop_front();
     }
     signedMagnitude = static_cast<int>(std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0.0) / magnitudeHistory.size());
@@ -509,14 +530,15 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     g_currentFFBForce = signedMagnitude;
 
     //Logging
-
-    static int logCounter = 0;
-    if (logCounter % 30 == 0) { // Log every 30 frames to avoid spam
-        LogMessage(L"[DEBUG] Force: " + std::to_wstring(signedMagnitude) +
-            L", Speed: " + std::to_wstring(speed_mph) +
-            L", LateralG: " + std::to_wstring(vehicleDynamics.lateralG));
+    static int detailLogCounter = 0;
+    if (detailLogCounter % 30 == 0) {  // Log every 3 frames to see oscillations
+        LogMessage(L"[DETAILED] RawG: " + std::to_wstring(vehicleDynamics.lateralG) +
+            L", AbsG: " + std::to_wstring(absG) +
+            L", SteeringDeg: " + std::to_wstring(current.steering_deg) +
+            L", Force: " + std::to_wstring(force) +
+            L", Speed: " + std::to_wstring(speed_mph));
     }
-    logCounter++;
+    detailLogCounter++;
 
 
     DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude

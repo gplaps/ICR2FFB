@@ -1,9 +1,23 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.78 Don't forget to update this down below
+// Beta 0.8 Don't forget to update this down below
 
 
 // File: main.cpp
+
+/*
+ * Copyright 2025 gplaps
+ *
+ * Licensed under the MIT License (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://opensource.org/licenses/MIT
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ */
  
 
 // === Standard Library Includes ===
@@ -276,7 +290,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.78 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.8 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -588,6 +602,9 @@ void ProcessLoop() {
         double masterForceValue = std::stod(targetForceSetting);
         double masterForceScale = std::clamp(masterForceValue / 100.0, 0.0, 1.0);
 
+        double deadzoneForceValue = std::stod(targetDeadzoneSetting);
+        double deadzoneForceScale = std::clamp(deadzoneForceValue / 100.0, 0.0, 1.0);
+
         double constantForceValue = std::stod(targetConstantScale);
         double constantForceScale = std::clamp(constantForceValue / 100.0, 0.0, 1.0);
 
@@ -623,7 +640,7 @@ void ProcessLoop() {
             }
             matchedDevice->GetDeviceState(sizeof(DIJOYSTATE2), &js);
 
-            // Start constant force once telemetry is valid
+            // Start constant force once telemetry is valid 
             if (enableConstantForce && constantForceEffect) {
                 if (!constantStarted) {
                     constantForceEffect->Start(1, 0);
@@ -634,7 +651,8 @@ void ProcessLoop() {
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
                 ApplyConstantForceEffect(current, load, slip, 
-                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, enableRateLimit, masterForceScale,
+                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, enableRateLimit, 
+                    masterForceScale, deadzoneForceScale,
                     constantForceScale, weightForceScale);
                 previousPos = current;
 

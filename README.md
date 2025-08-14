@@ -49,6 +49,13 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ### Betas
 
+**0.8 (2025-08-13)** 
+- Redid force curve to be MUCH stronger overall. This is to give the most detail possible in normal driving conditions. You may need to lower your overall FFB %. I also found lowering the "Weight" is a good idea, I've set the default for that to 75%. It should now be possible to 'max out' your wheel
+- Added some force which is applied by speed. This should help smooth out oscillation in a straight line (fingers crossed)
+- Added "Deadzone" option to ini. I do not recommend setting this unless you have issues with the direction swapping too eratically (also try the limiter in that case)
+- Added some new logging
+- Added License stuff
+
 **0.78 (2025-08-12)** 
 - Trying to fix compatibility and oscillation issues with T500RS and other belt wheels. Added option for "Limit" which when set to true tries to limit the frequency the FFB updates are sent to the wheel. This can help wheels which can't process 60hz refresh rates, or where frequent FFB changes make them go crazy. I have tested without this on a G27 and it works fine, so most older wheels should be ok, but belt wheels like the T500RS may need it.
 

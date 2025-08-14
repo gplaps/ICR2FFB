@@ -13,6 +13,7 @@ extern std::wstring targetGameVersion;
 extern std::wstring targetGameWindowName;
 
 extern std::wstring targetForceSetting;
+extern std::wstring targetDeadzoneSetting;
 extern std::wstring targetInvertFFB;
 extern std::wstring targetLimitEnabled;
 extern std::wstring targetConstantEnabled;
