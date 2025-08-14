@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.8.5 Don't forget to update this down below
+// Beta 0.8.7 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -86,6 +86,7 @@ struct TelemetryDisplayData {
     double speed_mph = 0.0;
     double steering_deg = 0.0;
     double steering_raw = 0.0;
+    double long_force = 0.0;
 
     // Tire loads
     double tireload_lf = 0.0;
@@ -107,6 +108,8 @@ struct TelemetryDisplayData {
 
     // Vehicle Dynamics calculated data
     double vd_lateralG = 0.0;
+    double vd_frontLeftForce_N = 0.0;
+    double vd_frontRightForce_N = 0.0;
     int vd_directionVal = 0;
     //double vd_yaw = 0.0;
     double vd_slip = 0.0;
@@ -290,7 +293,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.8.5 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.8.7 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -330,10 +333,10 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
-    //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << displayData.tireload_lf << L"           " << std::setw(10) << displayData.tireload_rf;
-    //std::wcout << padLine(ss.str()) << L"\n";
-    //std::wcout << padLine(L"") << L"\n";
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << displayData.vd_frontLeftForce_N << L"           " << std::setw(10) << displayData.vd_frontRightForce_N;
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
     ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
@@ -364,7 +367,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     //std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Slip Angle: " << std::setw(8) << displayData.vd_slip << L" deg";
+    ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
@@ -712,6 +715,8 @@ void ProcessLoop() {
                 displayData.speed_mph = current.speed_mph;
                 displayData.steering_deg = current.steering_deg;
                 displayData.steering_raw = current.steering_raw;
+                displayData.long_force = current.long_force;
+
 
                 // Tire loads
                 displayData.tireload_lf = current.tireload_lf;
@@ -735,6 +740,8 @@ void ProcessLoop() {
                 if (vehicleDynamicsValid) {
                     displayData.vd_lateralG = vehicleDynamics.lateralG;
                     displayData.vd_directionVal = vehicleDynamics.directionVal;
+                    displayData.vd_frontLeftForce_N = vehicleDynamics.frontLeftForce_N;
+                    displayData.vd_frontRightForce_N = vehicleDynamics.frontRightForce_N;
                     //displayData.vd_yaw = vehicleDynamics.yaw;
                     displayData.vd_slip = vehicleDynamics.slip;
                     displayData.vd_forceMagnitude = vehicleDynamics.forceMagnitude;

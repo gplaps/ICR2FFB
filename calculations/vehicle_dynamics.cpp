@@ -39,19 +39,8 @@ namespace VehicleConstants {
 
 // Helper function to convert raw tire data to usable data
 double convertTireForceToNewtons(int16_t tire_force_raw) {
-    double force_magnitude;
-
-    // 65535 center for left, 0 center for right
-    if (tire_force_raw < 0) {
-        // Left turn: negative values, more negative = more force
-        force_magnitude = std::abs(tire_force_raw);
-    }
-    else {
-        // Right turn: positive values, more positive = more force  
-        force_magnitude = tire_force_raw;
-    }
-
-    // Convert to Newtons using guesswork
+    // Always use absolute value - treat all forces as magnitude
+    double force_magnitude = std::abs(tire_force_raw);
     return force_magnitude * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
 }
 

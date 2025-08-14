@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.8 
+# FFB for ICR2 – BETA 0.8.7 
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,8 +48,10 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**0.8.7 (2025-08-14)** 
+- Fixed an error in how i was reading some game data that resulted in the output being asymetrical.
 
-**0.8.5 (2025-08-13)** 
+**0.8.5 (2025-08-14)** 
 - Redid force curve, again, but even better this time. Niels has supplied some knowledge and the main constant force curve is now being calculated on front tire load alone. This removes the separate 'constant' vs 'weight' settings in the INI, but the results are much much better!
 
 **0.8 (2025-08-13)** 

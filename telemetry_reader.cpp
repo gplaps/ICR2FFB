@@ -12,6 +12,20 @@
 #include "telemetry_reader.h"
 #include "ffb_setup.h"
 
+/*
+ * Copyright 2025 gplaps
+ *
+ * Licensed under the MIT License (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://opensource.org/licenses/MIT
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ */
+
 // === Globals ===
 static HANDLE hProcess = nullptr;
 static DWORD carsDataAddr = 0;
@@ -29,19 +43,20 @@ struct GameOffsets {
     DWORD tire_maglat_offsetfr;
     DWORD tire_maglat_offsetrl;
     DWORD tire_maglat_offsetrr;
+    DWORD car_longitude_offset;
 };
 
 // Offsets for different version of the game
 
 // Rendition EXE
 constexpr GameOffsets Offsets_REND = {
-     0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22
+     0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
     //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
 };
 
 // DOS4G Exe, should be 1.02
 constexpr GameOffsets Offsets_DOS = {
-    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46
+    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14
     //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
 };
 
@@ -88,7 +103,7 @@ uintptr_t ScanSignature(HANDLE hProcess) {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
-    LogMessage(L"[DEBUG] Starting memory scan for 'license with Bob'...");
+    LogMessage(L"[DEBUG] Scanning for game...");
     LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMinimumApplicationAddress));
     LogMessage(L"[DEBUG] Process max addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMaximumApplicationAddress));
 
@@ -108,7 +123,7 @@ uintptr_t ScanSignature(HANDLE hProcess) {
                     for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i) {
                         if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0) {
                             std::wstringstream ss;
-                            ss << L"[MATCH] Found 'license with Bob' at 0x" << std::hex << (addr + i);
+                            ss << L"[MATCH] Found Game at 0x" << std::hex << (addr + i);
                             LogMessage(ss.str());
                             return addr + i;
                         }
@@ -122,7 +137,7 @@ uintptr_t ScanSignature(HANDLE hProcess) {
         }
     }
 
-    LogMessage(L"[ERROR] 'license with Bob' not found in memory.");
+    LogMessage(L"[ERROR] Signature not found in game.");
     return 0;
 }
 
@@ -138,10 +153,13 @@ bool ReadTelemetryData(RawTelemetry& out) {
     static uintptr_t tireMagLatAddrFR = 0;
     static uintptr_t tireMagLatAddrLR = 0;
     static uintptr_t tireMagLatAddrRR = 0;
+    static uintptr_t carLongitudeAddr = 0;
+
 
     SIZE_T bytesRead = 0;
-    uint16_t loadLF = 0, loadFR = 0, loadLR = 0, loadRR = 0;
-    uint16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
+    int16_t loadLF = 0, loadFR = 0, loadLR = 0, loadRR = 0;
+    int16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
+    int16_t longiF = 0;
 
     // Select between Dos and Rendition version. Rendition is default
     const GameOffsets& offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
@@ -177,6 +195,7 @@ bool ReadTelemetryData(RawTelemetry& out) {
         tireMagLatAddrFR = exeBase + offsets.tire_maglat_offsetfr;
         tireMagLatAddrLR = exeBase + offsets.tire_maglat_offsetrl;
         tireMagLatAddrRR = exeBase + offsets.tire_maglat_offsetrr;
+        carLongitudeAddr = exeBase + offsets.car_longitude_offset;
 
         LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
             L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
@@ -198,6 +217,15 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.speed_mph = static_cast<double>(car0_data[8]) / 75.0;
     out.steering_deg = static_cast<double>(car0_data[10]) / 11600000.0;
     out.steering_raw = static_cast<double>(car0_data[10]);
+
+    ReadProcessMemory(hProcess, (LPCVOID)carLongitudeAddr, &longiF, sizeof(longiF), &bytesRead);
+    if (bytesRead != sizeof(longiF)) {
+        LogMessage(L"[ERROR] Failed to read longitude force. Bytes read: " + std::to_wstring(bytesRead));
+        out.long_force = 0.0;
+    }
+    else {
+        out.long_force = static_cast<double>(longiF);
+    }
 
     bool tireOK =
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLF, &loadLF, sizeof(loadLF), &bytesRead) &&

@@ -208,14 +208,14 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // Calculate based on front tire load directly instead of linear G = Much better
 // No issues with oscillations anymore
 
-    double frontTireLoad = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+    double frontTireLoad = std::abs(vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N);
 
     // Physics constants from your engineer friend
     const double CURVE_STEEPNESS = 1.0e-4;
     const double MAX_THEORETICAL = 8500;
     const double SCALE_FACTOR = 1.20;
 
-    // Calculate base force using physics formula
+    // Calculate base force using physics formula - now always positive
     double physicsForce = atan(frontTireLoad * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
 
     // Apply proportional deadzone
@@ -569,12 +569,12 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
     //Logging
     static int debugCounter = 0;
-    if (debugCounter % 30 == 0) {  // Every 30 frames
+    if (debugCounter % 5 == 0) {  // Every 30 frames
         LogMessage(L"[DEBUG] FL: " + std::to_wstring(vehicleDynamics.frontLeftForce_N) +
             L", FR: " + std::to_wstring(vehicleDynamics.frontRightForce_N) +
             L", Total: " + std::to_wstring(frontTireLoad) +
-            L", atan_input: " + std::to_wstring(frontTireLoad * 5.0e-4) +
-            L", atan_result: " + std::to_wstring(atan(frontTireLoad * 5.0e-4)));
+            L", atan_input: " + std::to_wstring(frontTireLoad * 1.0e-4) +
+            L", atan_result: " + std::to_wstring(atan(frontTireLoad * 1.0e-4)));
     }
     debugCounter++;
 
