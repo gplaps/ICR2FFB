@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.78  
+# FFB for ICR2 – BETA 0.8 
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
