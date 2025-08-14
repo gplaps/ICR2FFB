@@ -121,7 +121,14 @@ uintptr_t ScanSignature(HANDLE hProcess) {
 
                 if (ReadProcessMemory(hProcess, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead)) {
                     for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i) {
-                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0) {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif
+                        if (memcmp(buffer.data() + i, signatureStr.c_str(), targetLen) == 0) {
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
                             std::wstringstream ss;
                             ss << L"[MATCH] Found Game at 0x" << std::hex << (addr + i);
                             LogMessage(ss.str());
