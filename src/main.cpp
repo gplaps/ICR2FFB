@@ -36,6 +36,7 @@
 
 // === Windows & DirectInput ===
 #include <windows.h>
+#include <initguid.h>
 #include <dinput.h>
 
 // === Project Includes ===
@@ -363,7 +364,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(ss.str()) << L"\n";
 
     //ss.str(L""); ss.clear();
-    //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/s²";
+    //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/sï¿½";
     //std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();

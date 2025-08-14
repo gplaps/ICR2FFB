@@ -1,8 +1,9 @@
-﻿#include "constant_force.h"
+#include "constant_force.h"
 #include <iostream>
 #include <algorithm>
 #include <deque>
 #include <numeric>
+#include <cmath>
 
 /*
  * Copyright 2025 gplaps

@@ -102,7 +102,7 @@ bool LoadFFBSettings(const std::wstring& filename) {
     targetWeightEnabled = L"false";
     targetWeightScale = L"1.0";
     
-    std::wifstream file(filename);
+    std::wifstream file(filename.c_str());
     if (!file) return false;
     std::wstring line;
     while (std::getline(file, line)) {
