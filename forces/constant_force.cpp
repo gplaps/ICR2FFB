@@ -19,11 +19,10 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-// Get config data
-extern std::wstring targetInvertFFB;
-
 // To be used in reporting
 extern int g_currentFFBForce;
+
+static constexpr double MAXIMUM_FORCE = 10000.0;
 
 void ApplyConstantForceEffect(const RawTelemetry &current,
                               const CalculatedLateralLoad &load, const CalculatedSlip &slip,
@@ -174,30 +173,35 @@ void ApplyConstantForceEffect(const RawTelemetry &current,
 // It gets rid of that 'ping pong' effect that I've been chasing while not making the forces feel delayed
 /*
     double baseLoad = 0.0;
-    if (speed_mph > 60.0) {
-        double speedFactor = (speed_mph - 60.0) / 180.0;  // 0.0 at 120mph, 1.0 at 220mph
-        if (speedFactor > 1.0) speedFactor = 1.0;
-        baseLoad = speedFactor * speedFactor * 1200.0;    // Amount of force to apply at 'peak'
+    if (speed_mph > 60.0)
+    {
+        double speedFactor = (speed_mph - 60.0) / 180.0; // 0.0 at 120mph, 1.0 at 220mph
+        if (speedFactor > 1.0)
+            speedFactor = 1.0;
+        baseLoad = speedFactor * speedFactor * 1200.0; // Amount of force to apply at 'peak'
     }
 
     // === G-Force cornering ===
     double absG = std::abs(vehicleDynamics.lateralG);
     double corneringForce = 0.0;
 
-    double configuredDeadzone = 0.03 * deadzoneForceScale;  // Version 0.8 Beta added Deadzone to ini
+    double configuredDeadzone = 0.03 * deadzoneForceScale; // Version 0.8 Beta added Deadzone to ini
 
-    if (absG > configuredDeadzone) {
+    if (absG > configuredDeadzone)
+    {
         double effectiveG = absG - configuredDeadzone;
 
         // Adjust the calculation range based on deadzone
         double maxEffectiveG = 4.0 - configuredDeadzone;
 
-        if (effectiveG <= maxEffectiveG) {
+        if (effectiveG <= maxEffectiveG)
+        {
             double normalizedG = effectiveG / maxEffectiveG;
             double curveValue = normalizedG * (0.7 + 0.3 * normalizedG);
             corneringForce = curveValue * 8000.0;
         }
-        else {
+        else
+        {
             corneringForce = 8000.0;
         }
     }
@@ -205,17 +209,20 @@ void ApplyConstantForceEffect(const RawTelemetry &current,
     // === Final force calculation ===
     double force;
 
-    if (vehicleDynamics.lateralG > 0.03) {
+    if (vehicleDynamics.lateralG > 0.03)
+    {
         // Right turn
         force = baseLoad + corneringForce;
     }
-    else if (vehicleDynamics.lateralG < -0.03) {
+    else if (vehicleDynamics.lateralG < -0.03)
+    {
         // Left turn
         force = baseLoad + corneringForce;
     }
-    else {
+    else
+    {
         // Straight line - very light
-        force = baseLoad * 0.2;  // Even lighter when straight
+        force = baseLoad * 0.2; // Even lighter when straight
     }
 */
 
@@ -377,6 +384,25 @@ void ApplyConstantForceEffect(const RawTelemetry &current,
             }
             else if (smoothed > 0.0 && signedMagnitude < 0) {
                 signedMagnitude = -signedMagnitude;  // Restore correct sign
+            }
+        }
+    */
+
+    // === Speed-based Centering ===
+    /*
+    // Damping that opposes any steering input
+        if (speed_mph > 10.0 && std::abs(vehicleDynamics.lateralG) < 0.15) {
+            // Add baseline steering resistance at speed (not centering force)
+            double speedResistance = std::clamp(speed_mph / 80.0, 0.0, 1.0) * 300.0;
+
+            // Only add resistance if current force is very small
+            if (std::abs(signedMagnitude) < speedResistance) {
+                // Preserve direction but ensure minimum resistance
+                if (signedMagnitude >= 0) {
+                    signedMagnitude = static_cast<int>(speedResistance);
+                }
+                else {
+                    signedMagnitude = -static_cast<int>(speedResistance);
             }
         }
     }
