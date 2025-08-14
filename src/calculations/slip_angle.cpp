@@ -1,4 +1,6 @@
 ﻿#include "slip_angle.h"
+#include "constants.h"
+#include "helpers.h"
 #include <cmath>
 #include <algorithm>
 #include <deque>
@@ -68,15 +70,14 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, boo
 
     // Compute output force scaling
     double absSlipDeg = std::abs(slipAngleDeg);
-    double slipScale = (current.speed_mph < 20.0) ? 0.0 : std::min((current.speed_mph - 20.0) / 20.0, 1.0);
-    int force = static_cast<int>(std::clamp(absSlipDeg * 400 * slipScale, 0.0, 10000.0));
-    (void)force; // currently unused
+    double slipScale = std::clamp((current.speed_mph - SPEED_THRESHOLD) / SLIP_SPEED_RAMP_RANGE, 0.0, 1.0);
+    double force = std::clamp(absSlipDeg * 400 * slipScale, 0.0, 1.0);
 
     // Output
     out.slipAngle = slipAngleDeg;
     out.absSlipDeg = std::abs(slipAngleDeg);
-    out.forceMagnitude = static_cast<int>(std::clamp(out.absSlipDeg / 90.0, 0.0, 1.0) * 10000.0);
-    out.directionVal = (slipAngleDeg > 0) ? -10000 : (slipAngleDeg < 0 ? 10000 : 0);
+    out.forceMagnitude = std::clamp(out.absSlipDeg / 90.0, 0.0, 1.0);
+    out.directionVal = (slipAngleDeg > 0) ? -1 : (slipAngleDeg < 0 ? 1 : 0);
 
     previous = current;
     return true;

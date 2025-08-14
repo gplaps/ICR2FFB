@@ -9,7 +9,7 @@ void LogMessage(const std::wstring& msg);
 struct CalculatedLateralLoad {
     double steeringDeg = 0.0;
     double speedMph = 0.0;
-    int forceMagnitude = 0;
+    double forceMagnitude = 0;
     int directionVal = 0;
     double lateralG = 0.0;
     double steeringRaw = 0.0;

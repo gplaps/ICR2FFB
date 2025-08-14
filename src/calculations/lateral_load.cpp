@@ -1,4 +1,6 @@
 #include "lateral_load.h"
+#include "constants.h"
+#include "helpers.h"
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -36,11 +38,11 @@ bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& previous, b
     out.lateralG = lateralG;
 
     // FFB scaling: assume max useful G is 8. It should make whatever "Max" force is top out at "8" G
-    out.forceMagnitude = static_cast<int>(std::clamp(std::abs(lateralG / 8.0), 0.0, 1.0) * 10000.0);
+    out.forceMagnitude = std::clamp(std::abs(lateralG / MAX_USEFUL_G), 0.0, 1.0);
 
     // Direction: force toward inside of corner
     // You want the wheel to push against you
-    out.directionVal = (lateralG > 0) ? -10000 : (lateralG < 0 ? 10000 : 0);
+    out.directionVal = -sign(lateralG);
 
     previous = current;
     return true;

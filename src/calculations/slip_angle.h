@@ -8,7 +8,7 @@ void LogMessage(const std::wstring& msg);
 struct CalculatedSlip {
     double slipAngle = 0.0;
     double absSlipDeg = 0.0;
-    int forceMagnitude = 0;
+    double forceMagnitude = 0;
     int directionVal = 0;
     bool suppressFrame = false;
     double slipNorm_lf, slipNorm_rf, slipNorm_lr, slipNorm_rr;

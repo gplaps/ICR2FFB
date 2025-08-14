@@ -1,4 +1,6 @@
 #include "vehicle_dynamics.h"
+#include "constants.h"
+#include "helpers.h"
 #include <cmath>
 #include <algorithm>
 
@@ -115,18 +117,15 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     if (std::abs(out.lateralG) < 0.05) {
         out.directionVal = 0; // Straight
     }
-    else if (out.totalLateralForce > 0) {
-        out.directionVal = 10000; // Left (positive totalLateralForce)
-    }
     else {
-        out.directionVal = -10000; // Right (negative totalLateralForce)
+        out.directionVal = sign(out.totalLateralForce);
     }
 
     // CALC 2
     //===== SLIP ANGLE ======
 
     // This is to cut out random noise
-    if (speed_ms > 2.0 && std::abs(out.lateralG) > 0.1) { // Only calculate when moving and turning
+    if (speed_ms > STANDSTILL_SPEED && std::abs(out.lateralG) > MIN_LAT_G) { // Only calculate when moving and turning
 
         // Calculate front and rear lateral forces
         double front_lateral_force = force_lf_N + force_rf_N;
@@ -167,10 +166,10 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
 
         // Response method: too much response = oversteer, too little = understeer
         // Tune this to make slip match reality
-        if (response_ratio > 1.02) {
+        if (response_ratio > 1.0 + RESPONSE_THRESHOLD) {
             slip_indicator += (response_ratio - 1.0) * 0.5; // Oversteer
         }
-        else if (response_ratio < 0.98) {
+        else if (response_ratio < 1.0 - RESPONSE_THRESHOLD) {
             slip_indicator += (response_ratio - 1.0) * 0.5; // Understeer (negative)
         }
 
@@ -200,18 +199,18 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     }
 
     // Apply bounds to outputs
-    out.lateralG = std::clamp(out.lateralG, -8.0, 8.0); // Reasonable G range for IndyCar
+    out.lateralG = std::clamp(out.lateralG, -MAX_USEFUL_G, MAX_USEFUL_G); // Reasonable G range for IndyCar
     //out.yaw = std::clamp(out.yaw, -180.0, 180.0); // Limit yaw acceleration
     out.slip = std::clamp(out.slip, -45.0, 45.0); // Limit slip angle
 
     // Calculate force magnitude for FFB
     // Scale based on absolute lateral G, with max at 4G (typical for IndyCar cornering)
-    double gForceScale = std::clamp(std::abs(out.lateralG) / 4.0, 0.0, 1.0);
+    double gForceScale = std::clamp(std::abs(out.lateralG) / TYPICAL_G, 0.0, 1.0);
 
     // Apply speed scaling (reduce forces at low speeds like your other calculations)
-    double speedScale = (current.speed_mph < 20.0) ? 0.0 : std::min((current.speed_mph - 20.0) / 40.0, 1.0);
+    double speedScale = std::clamp((current.speed_mph - SPEED_THRESHOLD) / SPEED_SCALE_RAMP_RANGE, 0.0, 1.0);
 
-    out.forceMagnitude = static_cast<int>(gForceScale * speedScale * 10000.0);
+    out.forceMagnitude = gForceScale * speedScale;
 
     // Store basic telemetry for output
     out.speedMph = current.speed_mph;

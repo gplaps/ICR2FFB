@@ -40,6 +40,7 @@
 #include <dinput.h>
 
 // === Project Includes ===
+#include "constants.h"
 #include "ffb_setup.h"
 #include "telemetry_reader.h"
 //#include "calculations/slip_angle.h"
@@ -105,7 +106,7 @@ struct TelemetryDisplayData {
     int directionVal = 0;
     double slipAngleDeg = 0.0;
     double lateralG = 0.0;
-    int forceMagnitude = 0;
+    double forceMagnitude = 0;
 
     // Vehicle Dynamics calculated data
     double vd_lateralG = 0.0;
@@ -114,7 +115,7 @@ struct TelemetryDisplayData {
     int vd_directionVal = 0;
     //double vd_yaw = 0.0;
     double vd_slip = 0.0;
-    int vd_forceMagnitude = 0;
+    double vd_forceMagnitude = 0;
 
     // Individual tire forces
     double vd_force_lf = 0.0;
@@ -132,7 +133,7 @@ struct TelemetryDisplayData {
 // === Shared Globals ===
 std::mutex displayMutex;
 TelemetryDisplayData displayData;
-std::atomic<double> currentSpeed = 0.0;
+std::atomic<double> currentSpeed = {};
 int g_currentFFBForce = 0;
 
 // Check Admin rights
@@ -424,7 +425,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Force Magnitude: " << displayData.forceMagnitude;
+    ss << L"Force Magnitude: " << static_cast<int>(displayData.forceMagnitude * (double)DEFAULT_DINPUT_GAIN);
     std::wcout << padLine(ss.str()) << L"\n";
 
     */
@@ -459,7 +460,7 @@ void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
     eff.dwSize = sizeof(DIEFFECT);
     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
     eff.dwDuration = INFINITE;
-    eff.dwGain = 10000;
+    eff.dwGain = DEFAULT_DINPUT_GAIN;
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
@@ -474,8 +475,8 @@ void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
     diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
     diprg.diph.dwHow = DIPH_BYOFFSET;
     diprg.diph.dwObj = DIJOFS_X;
-    diprg.lMin = -10000;
-    diprg.lMax = 10000;
+    diprg.lMin = -DEFAULT_DINPUT_GAIN;
+    diprg.lMax = DEFAULT_DINPUT_GAIN;
     matchedDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
 
     HRESULT hr = device->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, nullptr);
@@ -494,15 +495,15 @@ void CreateDamperEffect(IDirectInputDevice8* device) {
     condition.lOffset = 0;
     condition.lPositiveCoefficient = 8000;
     condition.lNegativeCoefficient = 8000;
-    condition.dwPositiveSaturation = 10000;
-    condition.dwNegativeSaturation = 10000;
+    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
+    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0;
 
     DIEFFECT eff = {};
     eff.dwSize = sizeof(DIEFFECT);
     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
     eff.dwDuration = INFINITE;
-    eff.dwGain = 10000;
+    eff.dwGain = DEFAULT_DINPUT_GAIN;
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
@@ -528,15 +529,15 @@ void CreateSpringEffect(IDirectInputDevice8* device) {
     condition.lOffset = 0;
     condition.lPositiveCoefficient = 8000;
     condition.lNegativeCoefficient = 8000;
-    condition.dwPositiveSaturation = 10000;
-    condition.dwNegativeSaturation = 10000;
+    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
+    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0;
 
     DIEFFECT eff = {};
     eff.dwSize = sizeof(DIEFFECT);
     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
     eff.dwDuration = INFINITE;
-    eff.dwGain = 10000;
+    eff.dwGain = DEFAULT_DINPUT_GAIN;
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
@@ -814,11 +815,11 @@ int main() {
     // Load FFB configuration file "ffb.ini"
     if (!LoadFFBSettings(L"ffb.ini")) {
         LogMessage(L"[ERROR] Failed to load FFB settings from ffb.ini");
-        LogMessage(L"[ERROR] Make sure ffb.ini exists and has proper format");
+        LogMessage(L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format");
 
         // SHOW ERROR ON CONSOLE immediately
         std::wcout << L"[ERROR] Failed to load FFB settings from ffb.ini" << std::endl;
-        std::wcout << L"[ERROR] Make sure ffb.ini exists and has proper format" << std::endl;
+        std::wcout << L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format" << std::endl;
         std::wcout << L"Press any key to exit..." << std::endl;
         std::cin.get();
         return 1;

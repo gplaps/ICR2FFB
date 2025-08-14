@@ -1,4 +1,6 @@
 #include "damper_effect.h"
+#include "constants.h"
+#include "helpers.h"
 #include <dinput.h>
 #include <iostream>
 #include <algorithm>
@@ -21,8 +23,8 @@ void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double mast
     condition.lOffset = 0;
     condition.lPositiveCoefficient = damperStrength;
     condition.lNegativeCoefficient = damperStrength;
-    condition.dwPositiveSaturation = 10000;
-    condition.dwNegativeSaturation = 10000;
+    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
+    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0;
 
     DIEFFECT eff = {};

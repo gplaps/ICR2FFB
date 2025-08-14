@@ -1,4 +1,5 @@
 #include "spring_effect.h"
+#include "constants.h"
 #include <dinput.h>
 #include <iostream>
 #include <algorithm>
@@ -16,8 +17,8 @@ void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale) {
     condition.lOffset = 0;
     condition.lPositiveCoefficient = springStrength;
     condition.lNegativeCoefficient = springStrength;
-    condition.dwPositiveSaturation = 10000;
-    condition.dwNegativeSaturation = 10000;
+    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
+    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0; // Reduce deadzone
 
     DWORD axes[1] = { DIJOFS_X };

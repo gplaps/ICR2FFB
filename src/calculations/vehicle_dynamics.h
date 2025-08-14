@@ -10,7 +10,7 @@ struct CalculatedVehicleDynamics {
     int directionVal = 0;
     double yaw = 0.0;
     double slip = 0.0;
-    int forceMagnitude = 0;
+    double forceMagnitude = 0;
     double speedMph = 0.0;
     double steeringDeg = 0.0;
 

@@ -1,4 +1,5 @@
 #include "constant_force.h"
+#include "constants.h"
 #include <iostream>
 #include <algorithm>
 #include <deque>
@@ -63,7 +64,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.dwSize = sizeof(DIEFFECT);
             eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
             eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
+            eff.dwGain = DEFAULT_DINPUT_GAIN;
             eff.dwTriggerButton = DIEB_NOTRIGGER;
             eff.cAxes = 1;
             DWORD axes[1] = { DIJOFS_X };
@@ -108,7 +109,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.dwSize = sizeof(DIEFFECT);
             eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
             eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
+            eff.dwGain = DEFAULT_DINPUT_GAIN;
             eff.dwTriggerButton = DIEB_NOTRIGGER;
             eff.cAxes = 1;
             DWORD axes[1] = { DIJOFS_X };
@@ -133,7 +134,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.dwSize = sizeof(DIEFFECT);
             eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
             eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
+            eff.dwGain = DEFAULT_DINPUT_GAIN;
             eff.dwTriggerButton = DIEB_NOTRIGGER;
             eff.cAxes = 1;
             DWORD axes[1] = { DIJOFS_X };
@@ -511,7 +512,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
     if (enableRateLimit) {
         // Direction calculation and smoothing for rate limiting
-        LONG targetDir = (smoothed > 0.0 ? -1 : (smoothed < 0.0 ? 1 : 0)) * 10000;
+        LONG targetDir = (smoothed > 0.0 ? -1 : (smoothed < 0.0 ? 1 : 0)) * DEFAULT_DINPUT_GAIN;
         static LONG lastDirection = 0;
 
         // Direction smoothing - this prevents rapid direction changes
@@ -596,7 +597,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     eff.dwSize = sizeof(DIEFFECT);
     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
     eff.dwDuration = INFINITE;
-    eff.dwGain = 10000;
+    eff.dwGain = DEFAULT_DINPUT_GAIN;
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
