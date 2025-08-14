@@ -4,10 +4,6 @@
 #include <cmath>
 #include <algorithm>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
 // SAE Convention
 // Lateral force 
 // Negative <---------> Positive
@@ -40,11 +36,11 @@ namespace VehicleConstants {
 }
 
 // Helper function to convert raw tire data to usable data
-double convertTireForceToNewtons(double tire_force_raw) {
+static double convertTireForceToNewtons(double tire_force_raw) {
     return tire_force_raw * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
 }
 
-int getTurnDirection(double lf, double rf, double lr, double rr) {
+static int getTurnDirection(double lf, double rf, double lr, double rr) {
     // Determine if we're turning left or right based on force signs
     // Most of your forces will have the same sign during a turn
     int negative_count = 0;

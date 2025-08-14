@@ -6,25 +6,25 @@
 void LogMessage(const std::wstring& msg);
 
 struct CalculatedVehicleDynamics {
-    double lateralG = 0.0;
-    int directionVal = 0;
-    double yaw = 0.0;
-    double slip = 0.0;
-    double forceMagnitude = 0;
-    double speedMph = 0.0;
-    double steeringDeg = 0.0;
+    double lateralG;
+    int directionVal;
+    double yaw;
+    double slip;
+    double forceMagnitude;
+    double speedMph;
+    double steeringDeg;
 
     // Individual tire forces for debugging
-    double force_lf = 0.0;
-    double force_rf = 0.0;
-    double force_lr = 0.0;
-    double force_rr = 0.0;
+    double force_lf;
+    double force_rf;
+    double force_lr;
+    double force_rr;
 
     // Additional calculated values
-    double frontLateralForce = 0.0;
-    double rearLateralForce = 0.0;
-    double totalLateralForce = 0.0;
-    double yawMoment = 0.0;
+    double frontLateralForce;
+    double rearLateralForce;
+    double totalLateralForce;
+    double yawMoment;
 
     double frontLeftForce_N;
     double frontRightForce_N;

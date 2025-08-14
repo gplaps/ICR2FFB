@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "constant_force.h"
+#include "helpers.h"
 
 /*
  * Copyright 2025 gplaps
@@ -16,8 +17,6 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
-
-extern IDirectInputEffect* constantForceEffect;
 
 //settings from the ffb.ini
 std::wstring targetDeviceName;
@@ -37,11 +36,11 @@ std::wstring targetSpringEnabled;
 
 
 
-IDirectInputDevice8* matchedDevice = nullptr;
-LPDIRECTINPUT8 directInput = nullptr;
+IDirectInputDevice8* matchedDevice = NULL;
+LPDIRECTINPUT8 directInput = NULL;
 
 // Device lists for better error messages
-BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
 #if !defined(UNICODE)
     std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
 #else
@@ -67,7 +66,7 @@ void ListAvailableDevices() {
     }
 }
 
-BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
 #if !defined(UNICODE)
     std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
 #else
@@ -87,7 +86,7 @@ void ShowAvailableDevicesOnConsole() {
 }
 
 
-BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
 #if !defined(UNICODE)
     std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
 #else
@@ -96,7 +95,7 @@ BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
 
     if (deviceName == targetDeviceName) {
         LogMessage(L"[INFO] Found matching device: " + deviceName);
-        HRESULT hr = directInput->CreateDevice(pdidInstance->guidInstance, &matchedDevice, nullptr);
+        HRESULT hr = directInput->CreateDevice(pdidInstance->guidInstance, &matchedDevice, NULL);
         if (FAILED(hr)) {
             LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
             return DIENUM_CONTINUE;
@@ -170,7 +169,7 @@ bool InitializeDevice() {
         return false;
     }
 
-    if (matchedDevice == nullptr) {
+    if (matchedDevice == NULL) {
         LogMessage(L"[ERROR] Device not found: " + targetDeviceName);
         return false;
     }

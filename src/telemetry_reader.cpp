@@ -1,4 +1,4 @@
-﻿// telemetry_reader.cpp
+// telemetry_reader.cpp
 #include <windows.h>
 #include <tlhelp32.h>
 #include <psapi.h>
@@ -28,7 +28,7 @@
  */
 
 // === Globals ===
-static HANDLE hProcess = nullptr;
+static HANDLE hProcess = NULL;
 // static DWORD carsDataAddr = 0;
 // static bool telemetryInitialized = false;
 
@@ -50,13 +50,13 @@ struct GameOffsets {
 // Offsets for different version of the game
 
 // Rendition EXE
-constexpr GameOffsets Offsets_REND = {
+const GameOffsets Offsets_REND = {
      0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
     //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
 };
 
 // DOS4G Exe, should be 1.02
-constexpr GameOffsets Offsets_DOS = {
+const GameOffsets Offsets_DOS = {
     0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14
     //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
 };
@@ -64,13 +64,13 @@ constexpr GameOffsets Offsets_DOS = {
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-const char* signatureStr = "license with Bob";
+static std::string signatureStr = "license with Bob";
 
 // Gets the process ID of indycar
-DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
+static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
     struct FindWindowData {
         std::vector<std::wstring> keywords;
-        DWORD pid = 0;
+        DWORD pid;
     } data{ keywords, 0 };
 
     EnumWindows([]
@@ -78,7 +78,7 @@ DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
         CALLBACK
 #endif
         (HWND hwnd, LPARAM lParam) -> BOOL {
-        auto* data = reinterpret_cast<FindWindowData*>(lParam);
+        auto* wdata = reinterpret_cast<FindWindowData*>(lParam);
         TCHAR title[256];
         GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
 #if !defined(UNICODE)
@@ -86,11 +86,11 @@ DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
 #else
         std::wstring titleStr = ToLower(title);
 #endif
-        for (const auto& key : data->keywords) {
+        for (const auto& key : wdata->keywords) {
             auto query = ToLower(key);
             if (titleStr.find(query) != std::wstring::npos) 
             {
-                GetWindowThreadProcessId(hwnd, &data->pid);
+                GetWindowThreadProcessId(hwnd, &wdata->pid);
                 return FALSE;
             }
         }
@@ -102,7 +102,7 @@ DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
 }
 
 // Really don't understand this, but here is where we scan the memory for the data needed
-uintptr_t ScanSignature(HANDLE hProcess) {
+static uintptr_t ScanSignature(HANDLE processHandle) {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -114,15 +114,15 @@ uintptr_t ScanSignature(HANDLE hProcess) {
     uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
-    const size_t targetLen = strlen(signatureStr);
+    const size_t targetLen = signatureStr.size();
 
     while (addr < maxAddr) {
-        if (VirtualQueryEx(hProcess, (LPCVOID)addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+        if (VirtualQueryEx(processHandle, (LPCVOID)addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
             if ((mbi.State == MEM_COMMIT) && !(mbi.Protect & PAGE_NOACCESS)) {
                 std::vector<BYTE> buffer(mbi.RegionSize);
                 SIZE_T bytesRead = 0;
 
-                if (ReadProcessMemory(hProcess, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead)) {
+                if (ReadProcessMemory(processHandle, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead)) {
                     for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i) {
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -181,7 +181,7 @@ bool ReadTelemetryData(RawTelemetry& out) {
         }
 
         // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
-        std::vector<std::wstring> keywords = { L"dosbox", targetGameWindowName };
+        const std::vector<std::wstring> keywords = { L"dosbox", targetGameWindowName };
         DWORD pid = FindProcessIdByWindow(keywords);
         if (!pid) return false;
 
@@ -191,7 +191,7 @@ bool ReadTelemetryData(RawTelemetry& out) {
         uintptr_t sigAddr = ScanSignature(hProcess);
         if (!sigAddr) {
             CloseHandle(hProcess);
-            hProcess = nullptr;
+            hProcess = NULL;
             return false;
         }
 
@@ -215,7 +215,7 @@ bool ReadTelemetryData(RawTelemetry& out) {
     if (!ReadProcessMemory(hProcess, (LPCVOID)carsDataAddr, &car0_data, sizeof(car0_data), &bytesRead)) {
         LogMessage(L"[ERROR] Failed to read car0 data. GetLastError(): " + std::to_wstring(GetLastError()));
         CloseHandle(hProcess);
-        hProcess = nullptr;
+        hProcess = NULL;
         return false;
     }
 

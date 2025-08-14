@@ -52,8 +52,8 @@
 #include "forces/spring_effect.h"
 
 // Global log buffer
-std::mutex logMutex;
-std::deque<std::wstring> logLines;
+static std::mutex logMutex;
+static std::deque<std::wstring> logLines;
 const size_t maxLogLines = 1000;  // Show last 1000 log lines
 
 // === Global Force Feedback Flags & States ===
@@ -62,83 +62,84 @@ const size_t maxLogLines = 1000;  // Show last 1000 log lines
 
 // Constant force is the most in depth
 // Damper & Spring just use speed to do things
-bool enableRateLimit = false;
-bool enableConstantForce = false;
-bool enableWeightForce = false;
-bool enableDamperEffect = false;
-bool enableSpringEffect = false;
+static bool enableRateLimit = false;
+static bool enableConstantForce = false;
+static bool enableWeightForce = false;
+static bool enableDamperEffect = false;
+static bool enableSpringEffect = false;
 
-bool constantStarted = false;
-bool damperStarted = false;
-bool springStarted = false;
+static bool constantStarted = false;
+static bool damperStarted = false;
+static bool springStarted = false;
 
 // I think this is how we tell it these things are DirectInput stuff?
-IDirectInputEffect* constantForceEffect = nullptr;
-IDirectInputEffect* damperEffect = nullptr;
-IDirectInputEffect* springEffect = nullptr;
+static IDirectInputEffect* constantForceEffect = NULL;
+static IDirectInputEffect* damperEffect = NULL;
+static IDirectInputEffect* springEffect = NULL;
 
-DIJOYSTATE2 js; // No idea what this is
+static DIJOYSTATE2 js; // No idea what this is
 
 
 // === Shared Telemetry Display Data ===
 struct TelemetryDisplayData {
     // Raw telemetry
-    double dlat = 0.0;
-    double dlong = 0.0;
-    double rotation_deg = 0.0;
-    double speed_mph = 0.0;
-    double steering_deg = 0.0;
-    double steering_raw = 0.0;
-    double long_force = 0.0;
+    double dlat;
+    double dlong;
+    double rotation_deg;
+    double speed_mph;
+    double steering_deg;
+    double steering_raw;
+    double long_force;
 
     // Tire loads
-    double tireload_lf = 0.0;
-    double tireload_rf = 0.0;
-    double tireload_lr = 0.0;
-    double tireload_rr = 0.0;
+    double tireload_lf;
+    double tireload_rf;
+    double tireload_lr;
+    double tireload_rr;
 
     // Tire magnitudes
-    double tiremaglat_lf = 0.0;
-    double tiremaglat_rf = 0.0;
-    double tiremaglat_lr = 0.0;
-    double tiremaglat_rr = 0.0;
+    double tiremaglat_lf;
+    double tiremaglat_rf;
+    double tiremaglat_lr;
+    double tiremaglat_rr;
 
     // Legacy calculated data
-    int directionVal = 0;
-    double slipAngleDeg = 0.0;
-    double lateralG = 0.0;
-    double forceMagnitude = 0;
+    int directionVal;
+    double slipAngleDeg;
+    double lateralG;
+    double forceMagnitude;
 
     // Vehicle Dynamics calculated data
-    double vd_lateralG = 0.0;
-    double vd_frontLeftForce_N = 0.0;
-    double vd_frontRightForce_N = 0.0;
-    int vd_directionVal = 0;
-    //double vd_yaw = 0.0;
-    double vd_slip = 0.0;
-    double vd_forceMagnitude = 0;
+    double vd_lateralG;
+    double vd_frontLeftForce_N;
+    double vd_frontRightForce_N;
+    int vd_directionVal;
+    //double vd_yaw;
+    double vd_slip;
+    double vd_forceMagnitude;
 
     // Individual tire forces
-    double vd_force_lf = 0.0;
-    double vd_force_rf = 0.0;
-    double vd_force_lr = 0.0;
-    double vd_force_rr = 0.0;
+    double vd_force_lf;
+    double vd_force_rf;
+    double vd_force_lr;
+    double vd_force_rr;
 
     // Aggregate forces
-    double vd_frontLateralForce = 0.0;
-    double vd_rearLateralForce = 0.0;
-    double vd_totalLateralForce = 0.0;
-    double vd_yawMoment = 0.0;
+    double vd_frontLateralForce;
+    double vd_rearLateralForce;
+    double vd_totalLateralForce;
+    double vd_yawMoment;
 };
 
 // === Shared Globals ===
-std::mutex displayMutex;
-TelemetryDisplayData displayData;
-std::atomic<double> currentSpeed = {};
+static std::mutex displayMutex;
+static TelemetryDisplayData displayData;
+static std::atomic<double> currentSpeed = {};
+extern int g_currentFFBForce;
 int g_currentFFBForce = 0;
 
 // Check Admin rights
-bool IsRunningAsAdmin() {
+static bool IsRunningAsAdmin() {
     BOOL isAdmin = FALSE;
     PSID administratorsGroup = NULL;
 
@@ -153,7 +154,7 @@ bool IsRunningAsAdmin() {
     return isAdmin == TRUE;
 }
 
-void RestartAsAdmin() {
+static void RestartAsAdmin() {
     // Get the current executable path
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
@@ -185,7 +186,7 @@ void RestartAsAdmin() {
 // little function to help with display refreshing
 // moves cursor to top without refreshing the screen
 
-void SetConsoleWindowSize() {
+static void SetConsoleWindowSize() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE) {
         LogMessage(L"[ERROR] Failed to get console handle");
@@ -213,7 +214,7 @@ void SetConsoleWindowSize() {
 }
 
 // Prevent lockup if window is clicked
-void DisableConsoleQuickEdit() {
+static void DisableConsoleQuickEdit() {
     HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
     if (hInput == INVALID_HANDLE_VALUE) {
         LogMessage(L"[ERROR] Failed to get input handle");
@@ -227,7 +228,7 @@ void DisableConsoleQuickEdit() {
     }
 
  
-    mode &= ~(ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE);
+    mode &= static_cast<DWORD>(~(ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE));
     mode |= ENABLE_EXTENDED_FLAGS;
 
     if (!SetConsoleMode(hInput, mode)) { 
@@ -238,19 +239,19 @@ void DisableConsoleQuickEdit() {
     }
 }
 
-void MoveCursorToTop() {
+static void MoveCursorToTop() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD topLeft = { 0, 0 };
     SetConsoleCursorPosition(hConsole, topLeft);
 }
 
-void MoveCursorToLine(short lineNumber) {
+static void MoveCursorToLine(short lineNumber) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD pos = { 0, lineNumber };
     SetConsoleCursorPosition(hConsole, pos);
 }
 
-void HideConsoleCursor() {
+static void HideConsoleCursor() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE) {
         LogMessage(L"[ERROR] Failed to get console handle for cursor");
@@ -274,7 +275,7 @@ void HideConsoleCursor() {
 
 // New display
 
-void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForceValue) {
+static void DisplayTelemetry(const TelemetryDisplayData& displayDataIn, double masterForceValue) {
     // Move cursor to top and set up formatting
     MoveCursorToTop();
     std::cout << std::fixed << std::setprecision(2);
@@ -284,7 +285,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     const unsigned int CONSOLE_WIDTH = 80;
 
     // Helper lambda to pad lines
-    auto padLine = [CONSOLE_WIDTH](const std::wstring& text) {
+    auto padLine = [&](const std::wstring& text) {
         std::wstring padded = text;
         if (padded.length() < CONSOLE_WIDTH) {
             padded.append(CONSOLE_WIDTH - padded.length(), L' ');
@@ -311,23 +312,23 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"dLat: " << std::setw(10) << displayData.dlat << L"   dLong: " << std::setw(10) << displayData.dlong;
+    ss << L"dLat: " << std::setw(10) << displayDataIn.dlat << L"   dLong: " << std::setw(10) << displayDataIn.dlong;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Centerline Rotation: " << std::setw(8) << displayData.rotation_deg << L" deg";
+    ss << L"Centerline Rotation: " << std::setw(8) << displayDataIn.rotation_deg << L" deg";
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Speed: " << std::setw(8) << displayData.speed_mph << L" mph";
+    ss << L"Speed: " << std::setw(8) << displayDataIn.speed_mph << L" mph";
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Steering Raw: " << std::setw(10) << displayData.steering_raw;
+    ss << L"Steering Raw: " << std::setw(10) << displayDataIn.steering_raw;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Steering Lock Degree: " << std::setw(8) << displayData.steering_deg;
+    ss << L"Steering Lock Degree: " << std::setw(8) << displayDataIn.steering_deg;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
@@ -337,23 +338,23 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.vd_frontLeftForce_N << L"           " << std::setw(10) << displayData.vd_frontRightForce_N;
+    ss << std::setw(10) << displayDataIn.vd_frontLeftForce_N << L"           " << std::setw(10) << displayDataIn.vd_frontRightForce_N;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
+    ss << std::setw(10) << static_cast<int16_t>(displayDataIn.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayDataIn.tiremaglat_rf);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
     //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
+    //ss << std::setw(10) << displayDataIn.tireload_lr << L"           " << std::setw(10) << displayDataIn.tireload_rr;
     //std::wcout << padLine(ss.str()) << L"\n";
     //std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
+    ss << std::setw(10) << static_cast<int16_t>(displayDataIn.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayDataIn.tiremaglat_rr);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
@@ -362,19 +363,19 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Lateral G: " << std::setw(8) << displayData.vd_lateralG << L" G";
+    ss << L"Lateral G: " << std::setw(8) << displayDataIn.vd_lateralG << L" G";
     std::wcout << padLine(ss.str()) << L"\n";
 
     //ss.str(L""); ss.clear();
-    //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/s�";
+    //ss << L"Yaw Rate: " << std::setw(8) << displayDataIn.vd_yaw << L" deg/s�";
     //std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
+    ss << L"Longi Force: " << std::setw(8) << displayDataIn.long_force << L"";
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Direction Value: " << displayData.vd_directionVal;
+    ss << L"Direction Value: " << displayDataIn.vd_directionVal;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
@@ -389,24 +390,25 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.vd_force_lf << L"           " << std::setw(10) << displayData.vd_force_rf;
+    ss << std::setw(10) << displayDataIn.vd_force_lf << L"           " << std::setw(10) << displayDataIn.vd_force_rf;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.vd_force_lr << L"           " << std::setw(10) << displayData.vd_force_rr;
+    ss << std::setw(10) << displayDataIn.vd_force_lr << L"           " << std::setw(10) << displayDataIn.vd_force_rr;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Front Total: " << std::setw(8) << displayData.vd_frontLateralForce << L"   Rear Total: " << std::setw(8) << displayData.vd_rearLateralForce;
+    ss << L"Front Total: " << std::setw(8) << displayDataIn.vd_frontLateralForce << L"   Rear Total: " << std::setw(8) << displayDataIn.vd_rearLateralForce;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Total Force: " << std::setw(8) << displayData.vd_totalLateralForce << L"   Yaw Moment: " << std::setw(8) << displayData.vd_yawMoment;
+    ss << L"Total Force: " << std::setw(8) << displayDataIn.vd_totalLateralForce << L"   Yaw Moment: " << std::setw(8) << displayDataIn.vd_yawMoment;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
+    */
 
     /*
     // Legacy calculated data section
@@ -414,19 +416,19 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Direction Value: " << displayData.directionVal;
+    ss << L"Direction Value: " << displayDataIn.directionVal;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Slip: " << displayData.slipAngleDeg;
+    ss << L"Slip: " << displayDataIn.slipAngleDeg;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Lateral G: " << displayData.lateralG << L" G";
+    ss << L"Lateral G: " << displayDataIn.lateralG << L" G";
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"Force Magnitude: " << static_cast<int>(displayData.forceMagnitude * (double)DEFAULT_DINPUT_GAIN);
+    ss << L"Force Magnitude: " << static_cast<int>(displayDataIn.forceMagnitude * (double)DEFAULT_DINPUT_GAIN);
     std::wcout << padLine(ss.str()) << L"\n";
 
     */
@@ -452,7 +454,7 @@ void LogMessage(const std::wstring& msg) {
 }
 
 // === Force Effect Creators ===
-void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
+static void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
     if (!device) return;
 
     DICONSTANTFORCE cf = { 0 };
@@ -480,7 +482,7 @@ void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
     diprg.lMax = DEFAULT_DINPUT_GAIN;
     matchedDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
 
-    HRESULT hr = device->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, nullptr);
+    HRESULT hr = device->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
     if (FAILED(hr)) {
         LogMessage(L"[ERROR] Failed to create constant force effect. HRESULT: 0x" + std::to_wstring(hr));
     }
@@ -489,7 +491,7 @@ void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
     }
 }
 
-void CreateDamperEffect(IDirectInputDevice8* device) {
+static void CreateDamperEffect(IDirectInputDevice8* device) {
     if (!device) return;
 
     DICONDITION condition = {};
@@ -514,7 +516,7 @@ void CreateDamperEffect(IDirectInputDevice8* device) {
     eff.cbTypeSpecificParams = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams = &condition;
 
-    HRESULT hr = device->CreateEffect(GUID_Damper, &eff, &damperEffect, nullptr);
+    HRESULT hr = device->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
     if (FAILED(hr) || !damperEffect) {
         LogMessage(L"[ERROR] Failed to create damper effect. HRESULT: 0x" + std::to_wstring(hr));
     }
@@ -523,7 +525,7 @@ void CreateDamperEffect(IDirectInputDevice8* device) {
     }
 }
 
-void CreateSpringEffect(IDirectInputDevice8* device) {
+static void CreateSpringEffect(IDirectInputDevice8* device) {
     if (!device) return;
 
     DICONDITION condition = {};
@@ -548,7 +550,7 @@ void CreateSpringEffect(IDirectInputDevice8* device) {
     eff.cbTypeSpecificParams = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams = &condition;
 
-    HRESULT hr = device->CreateEffect(GUID_Spring, &eff, &springEffect, nullptr);
+    HRESULT hr = device->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
     if (FAILED(hr) || !springEffect) {
         LogMessage(L"[ERROR] Failed to create spring effect. HRESULT: 0x" + std::to_wstring(hr));
     }
@@ -558,7 +560,7 @@ void CreateSpringEffect(IDirectInputDevice8* device) {
 }
 
 // Loop which kicks stuff off and coordinates everything!
-void ProcessLoop() {
+static void ProcessLoop() {
    
     //Get some data from RawTelemetry -> not 100% sure what this does
     RawTelemetry current{};

@@ -7,14 +7,14 @@
 void LogMessage(const std::wstring& msg);
 
 struct CalculatedLateralLoad {
-    double steeringDeg = 0.0;
-    double speedMph = 0.0;
-    double forceMagnitude = 0;
-    int directionVal = 0;
-    double lateralG = 0.0;
-    double steeringRaw = 0.0;
-    double dlong = 0.0;
-    double dlat = 0.0; 
+    double steeringDeg;
+    double speedMph;
+    double forceMagnitude;
+    int directionVal;
+    double lateralG;
+    double steeringRaw;
+    double dlong;
+    double dlat; 
 };
 
 bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading,

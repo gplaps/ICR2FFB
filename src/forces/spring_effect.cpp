@@ -33,7 +33,7 @@ void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale) {
     eff.cAxes = 1;
     eff.rgdwAxes = axes;
     eff.rglDirection = direction;
-    eff.lpEnvelope = nullptr;
+    eff.lpEnvelope = NULL;
     eff.cbTypeSpecificParams = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams = &condition;
     eff.dwStartDelay = 0;
