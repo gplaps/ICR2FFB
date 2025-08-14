@@ -157,7 +157,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
 // This will add a 'base' force based on speed. This helps INCREDIBLY with straight line control
 // It gets rid of that 'ping pong' effect that I've been chasing while not making the forces feel delayed
-
+/*
     double baseLoad = 0.0;
     if (speed_mph > 60.0) {
         double speedFactor = (speed_mph - 60.0) / 180.0;  // 0.0 at 120mph, 1.0 at 220mph
@@ -202,6 +202,44 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         // Straight line - very light
         force = baseLoad * 0.2;  // Even lighter when straight
     }
+*/
+
+// Niels Equation
+// Calculate based on front tire load directly instead of linear G = Much better
+// No issues with oscillations anymore
+
+    double frontTireLoad = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+
+    // Physics constants from your engineer friend
+    const double CURVE_STEEPNESS = 1.0e-4;
+    const double MAX_THEORETICAL = 8500;
+    const double SCALE_FACTOR = 1.20;
+
+    // Calculate base force using physics formula
+    double physicsForce = atan(frontTireLoad * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
+
+    // Apply proportional deadzone
+    double force = physicsForce;
+    if (deadzoneForceScale > 0.0) {
+        // Convert deadzoneForceScale (0-100) to percentage (0.0-1.0)
+        double deadzonePercentage = deadzoneForceScale / 100.0;
+
+        // Calculate deadzone threshold (20% deadzone = remove bottom 20% of force range)
+        double maxPossibleForce = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
+        double deadzoneThreshold = maxPossibleForce * deadzonePercentage;
+
+        // Apply deadzone: remove bottom X% and rescale remaining range
+        if (physicsForce <= deadzoneThreshold) {
+            force = 0.0;  // Force is in deadzone - zero output
+        }
+        else {
+            // Rescale remaining force range to maintain full output range
+            double remainingRange = maxPossibleForce - deadzoneThreshold;
+            double adjustedInput = physicsForce - deadzoneThreshold;
+            force = (adjustedInput / remainingRange) * maxPossibleForce;
+        }
+    }
+
 
     // Cap maximum force 
     if (force > 10000.0) {
@@ -353,7 +391,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         // And then they change and the left is doing 40% and the right is 60%
         // You will feel a bump
         // This adds detail to camber and surface changes
-
+    /*
     if (enableWeightForce && speed_mph > 1.0) {
         static double lastFrontImbalance = 0.0;
         static double weightTransferForce = 0.0;
@@ -390,7 +428,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             lastFrontImbalance = currentImbalance;
         }
     }
-
+    */
 
 /*
 // === Reduce update Rate ===
@@ -530,15 +568,15 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     g_currentFFBForce = signedMagnitude;
 
     //Logging
-    static int detailLogCounter = 0;
-    if (detailLogCounter % 30 == 0) {  // Log every 3 frames to see oscillations
-        LogMessage(L"[DETAILED] RawG: " + std::to_wstring(vehicleDynamics.lateralG) +
-            L", AbsG: " + std::to_wstring(absG) +
-            L", SteeringDeg: " + std::to_wstring(current.steering_deg) +
-            L", Force: " + std::to_wstring(force) +
-            L", Speed: " + std::to_wstring(speed_mph));
+    static int debugCounter = 0;
+    if (debugCounter % 30 == 0) {  // Every 30 frames
+        LogMessage(L"[DEBUG] FL: " + std::to_wstring(vehicleDynamics.frontLeftForce_N) +
+            L", FR: " + std::to_wstring(vehicleDynamics.frontRightForce_N) +
+            L", Total: " + std::to_wstring(frontTireLoad) +
+            L", atan_input: " + std::to_wstring(frontTireLoad * 5.0e-4) +
+            L", atan_result: " + std::to_wstring(atan(frontTireLoad * 5.0e-4)));
     }
-    detailLogCounter++;
+    debugCounter++;
 
 
     DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude

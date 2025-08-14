@@ -49,6 +49,9 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ### Betas
 
+**0.8.5 (2025-08-13)** 
+- Redid force curve, again, but even better this time. Niels has supplied some knowledge and the main constant force curve is now being calculated on front tire load alone. This removes the separate 'constant' vs 'weight' settings in the INI, but the results are much much better!
+
 **0.8 (2025-08-13)** 
 - Redid force curve to be MUCH stronger overall. This is to give the most detail possible in normal driving conditions. You may need to lower your overall FFB %. I also found lowering the "Weight" is a good idea, I've set the default for that to 75%. It should now be possible to 'max out' your wheel
 - Added some force which is applied by speed. This should help smooth out oscillation in a straight line (fingers crossed)

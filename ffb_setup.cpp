@@ -98,6 +98,10 @@ BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
 
 // Search the ini file for settings and find what the user has set them to
 bool LoadFFBSettings(const std::wstring& filename) {
+    
+    targetWeightEnabled = L"false";
+    targetWeightScale = L"1.0";
+    
     std::wifstream file(filename);
     if (!file) return false;
     std::wstring line;
