@@ -135,6 +135,7 @@ struct TelemetryDisplayData {
 static std::mutex displayMutex;
 static TelemetryDisplayData displayData;
 static std::atomic<double> currentSpeed = {};
+static std::atomic<bool> shouldExit = {};
 extern int g_currentFFBForce;
 int g_currentFFBForce = 0;
 
@@ -581,7 +582,7 @@ static void ProcessLoop() {
     RawTelemetry previousPos{};
     bool firstPos = true;
 
-    while (true) {
+    while (!shouldExit) {
 
         // Check to see if Telemetry is coming in, but if not then wait for it!
         if (!ReadTelemetryData(current)) {
@@ -771,6 +772,21 @@ static void ProcessLoop() {
     }
 }
 
+static BOOL WINAPI ConsoleHandler(DWORD CEvent) noexcept
+{
+    switch(CEvent)
+    {
+    case CTRL_C_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        shouldExit = true;
+        break;
+    default: break;
+    }
+    return TRUE;
+}
+
 // Where it all happens
 int main() {
     
@@ -810,6 +826,12 @@ int main() {
     SetConsoleWindowSize();
     HideConsoleCursor();
     DisableConsoleQuickEdit();
+    if (SetConsoleCtrlHandler(
+        static_cast<PHANDLER_ROUTINE>(ConsoleHandler),TRUE)==FALSE)
+    {
+        LogMessage(L"[ERROR] Unable to install keyboard ctrl handler");
+        return -1;
+    }
 
     //clear last log
     std::wofstream clearLog("log.txt", std::ios::trunc);
@@ -917,7 +939,7 @@ int main() {
     // Now that we're doing everything we can display stuff!
     // Main Display Loop - Set to 200ms? Probably fine
     // Flickers a lot right now but perhaps moving to a GUI will solve that eventually
-    while (true) {
+    while (!shouldExit) {
 
         // make sure we stay at most recent display update
         MoveCursorToLine(0);
