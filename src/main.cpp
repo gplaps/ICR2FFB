@@ -41,6 +41,7 @@
 
 // === Project Includes ===
 #include "constants.h"
+#include "helpers.h"
 #include "ffb_setup.h"
 #include "telemetry_reader.h"
 //#include "calculations/slip_angle.h"
@@ -440,7 +441,7 @@ void LogMessage(const std::wstring& msg) {
 
     // Add to in-memory deque for optional UI display (if needed)
     logLines.push_back(msg);
-    if (logLines.size() > maxLogLines)
+    while (logLines.size() > maxLogLines)
         logLines.pop_front();
 
     // Append to log.txt
@@ -889,11 +890,11 @@ int main() {
 
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future
-    enableRateLimit = (targetWeightEnabled == L"true" || targetWeightEnabled == L"True");
-    enableConstantForce = (targetConstantEnabled == L"true" || targetConstantEnabled == L"True");
-    enableWeightForce = (targetWeightEnabled == L"true" || targetWeightEnabled == L"True");
-    enableDamperEffect = (targetDamperEnabled == L"true" || targetDamperEnabled == L"True");
-    enableSpringEffect = (targetSpringEnabled == L"true" || targetSpringEnabled == L"True");
+    enableRateLimit = ToLower(targetWeightEnabled) == L"true";
+    enableConstantForce = ToLower(targetConstantEnabled) == L"true";
+    enableWeightForce = ToLower(targetWeightEnabled) == L"true";
+    enableDamperEffect = ToLower(targetDamperEnabled) == L"true";
+    enableSpringEffect = ToLower(targetSpringEnabled) == L"true";
 
     // Create FFB effects as needed
     if (enableConstantForce) CreateConstantForceEffect(matchedDevice);

@@ -11,6 +11,7 @@
 
 #include "telemetry_reader.h"
 #include "ffb_setup.h"
+#include "helpers.h"
 
 /*
  * Copyright 2025 gplaps
@@ -65,15 +66,6 @@ constexpr GameOffsets Offsets_DOS = {
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
 const char* signatureStr = "license with Bob";
 
-// === Helpers ===
-
-std::wstring ToLower(const std::wstring& str) {
-    std::wstring result = str;
-    for (wchar_t& ch : result) ch = towlower(ch);
-    return result;
-}
-
-
 // Gets the process ID of indycar
 DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
     struct FindWindowData {
@@ -81,18 +73,29 @@ DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
         DWORD pid = 0;
     } data{ keywords, 0 };
 
-    EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL {
+    EnumWindows([]
+#if defined(__GNUC__) && !defined(__clang__)
+        CALLBACK
+#endif
+        (HWND hwnd, LPARAM lParam) -> BOOL {
         auto* data = reinterpret_cast<FindWindowData*>(lParam);
-        wchar_t title[256];
-        GetWindowTextW(hwnd, title, sizeof(title) / sizeof(wchar_t));
-        std::wstring titleStr = ToLower(std::wstring(title));
-
+        TCHAR title[256];
+        GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
+#if !defined(UNICODE)
+        std::wstring titleStr = ToLower(ansiToWide(title));
+#else
+        std::wstring titleStr = ToLower(title);
+#endif
         for (const auto& key : data->keywords) {
-            if (titleStr.find(ToLower(key)) == std::wstring::npos) return TRUE;
+            auto query = ToLower(key);
+            if (titleStr.find(query) != std::wstring::npos) 
+            {
+                GetWindowThreadProcessId(hwnd, &data->pid);
+                return FALSE;
+            }
         }
 
-        GetWindowThreadProcessId(hwnd, &data->pid);
-        return FALSE;
+        return TRUE;
         }, reinterpret_cast<LPARAM>(&data));
 
     return data.pid;

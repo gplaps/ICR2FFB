@@ -42,7 +42,11 @@ LPDIRECTINPUT8 directInput = nullptr;
 
 // Device lists for better error messages
 BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+#if !defined(UNICODE)
+    std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
+#else
     std::wstring deviceName = pdidInstance->tszProductName;
+#endif
     LogMessage(L"[INFO] Available device: " + deviceName);
     return DIENUM_CONTINUE;  // Continue enumerating all devices
 }
@@ -64,7 +68,11 @@ void ListAvailableDevices() {
 }
 
 BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+#if !defined(UNICODE)
+    std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
+#else
     std::wstring deviceName = pdidInstance->tszProductName;
+#endif
     std::wcout << L"  - " << deviceName << std::endl;
     return DIENUM_CONTINUE;
 }
@@ -80,7 +88,11 @@ void ShowAvailableDevicesOnConsole() {
 
 
 BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+#if !defined(UNICODE)
+    std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
+#else
     std::wstring deviceName = pdidInstance->tszProductName;
+#endif
 
     if (deviceName == targetDeviceName) {
         LogMessage(L"[INFO] Found matching device: " + deviceName);

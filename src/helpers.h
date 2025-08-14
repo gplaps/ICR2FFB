@@ -14,3 +14,22 @@ namespace std {
     }
 }
 #endif
+
+inline std::wstring ToLower(const std::wstring& str) {
+    std::wstring result = str;
+    for (wchar_t& ch : result) ch = towlower(ch);
+    return result;
+}
+
+inline std::string ToLower(const std::string& str) {
+    std::string result = str;
+    for (char& ch : result) ch = tolower(ch);
+    return result;
+}
+
+inline std::wstring ansiToWide(const char* str) {
+    size_t len = std::mbstowcs(NULL,str,0);
+    std::wstring asWide(len,L'\0');
+    std::mbstowcs(const_cast<wchar_t*>(asWide.data()),str,len+1);
+    return asWide;
+}
