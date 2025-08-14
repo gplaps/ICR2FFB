@@ -23,7 +23,7 @@ inline std::wstring ToLower(const std::wstring& str) {
 
 inline std::string ToLower(const std::string& str) {
     std::string result = str;
-    for (char& ch : result) ch = tolower(ch);
+    for (char& ch : result) ch = static_cast<char>(tolower(ch));
     return result;
 }
 

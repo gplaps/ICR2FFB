@@ -281,7 +281,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << std::fixed << std::setprecision(2);  // Also set for wide cout
 
     // Define console width
-    const int CONSOLE_WIDTH = 80;
+    const unsigned int CONSOLE_WIDTH = 80;
 
     // Helper lambda to pad lines
     auto padLine = [CONSOLE_WIDTH](const std::wstring& text) {
@@ -476,7 +476,7 @@ void CreateConstantForceEffect(LPDIRECTINPUTDEVICE8 device) {
     diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
     diprg.diph.dwHow = DIPH_BYOFFSET;
     diprg.diph.dwObj = DIJOFS_X;
-    diprg.lMin = -DEFAULT_DINPUT_GAIN;
+    diprg.lMin = -static_cast<LONG>(DEFAULT_DINPUT_GAIN);
     diprg.lMax = DEFAULT_DINPUT_GAIN;
     matchedDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
 
@@ -929,7 +929,7 @@ int main() {
         //Print log data
         {
             std::lock_guard<std::mutex> lock(logMutex);
-            int maxDisplayLines = 1; //how many lines to display
+            unsigned int maxDisplayLines = 1; //how many lines to display
             std::vector<std::wstring> recentUniqueLines;
             std::unordered_set<std::wstring> seen;
 

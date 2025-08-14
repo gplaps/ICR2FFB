@@ -392,7 +392,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     if (magnitudeHistory.size() > 2) {
         magnitudeHistory.pop_front();
     }
-    signedMagnitude = static_cast<int>(std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0.0) / magnitudeHistory.size());
+    signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
  
 
     // === CALC 3 Weight Force ===
@@ -512,7 +512,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
     if (enableRateLimit) {
         // Direction calculation and smoothing for rate limiting
-        LONG targetDir = (smoothed > 0.0 ? -1 : (smoothed < 0.0 ? 1 : 0)) * DEFAULT_DINPUT_GAIN;
+        LONG targetDir = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
         static LONG lastDirection = 0;
 
         // Direction smoothing - this prevents rapid direction changes

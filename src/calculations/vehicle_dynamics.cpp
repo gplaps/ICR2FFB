@@ -40,13 +40,11 @@ namespace VehicleConstants {
 }
 
 // Helper function to convert raw tire data to usable data
-double convertTireForceToNewtons(int16_t tire_force_raw) {
-    // DON'T remove the sign - preserve it!
-    double force_with_sign = static_cast<double>(tire_force_raw);
-    return force_with_sign * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
+double convertTireForceToNewtons(double tire_force_raw) {
+    return tire_force_raw * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
 }
 
-int getTurnDirection(int16_t lf, int16_t rf, int16_t lr, int16_t rr) {
+int getTurnDirection(double lf, double rf, double lr, double rr) {
     // Determine if we're turning left or right based on force signs
     // Most of your forces will have the same sign during a turn
     int negative_count = 0;
@@ -80,10 +78,10 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     double wheel_angle_rad = wheel_angle_deg * M_PI / 180.0;
 
     // Force Assignments
-    out.force_lf = static_cast<int16_t>(current.tiremaglat_lf);
-    out.force_rf = static_cast<int16_t>(current.tiremaglat_rf);
-    out.force_lr = static_cast<int16_t>(current.tiremaglat_lr);
-    out.force_rr = static_cast<int16_t>(current.tiremaglat_rr);
+    out.force_lf = current.tiremaglat_lf;
+    out.force_rf = current.tiremaglat_rf;
+    out.force_lr = current.tiremaglat_lr;
+    out.force_rr = current.tiremaglat_rr;
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
