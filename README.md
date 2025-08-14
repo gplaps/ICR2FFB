@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.8.7 
+# FFB for ICR2 – BETA 0.8.8 
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,6 +48,9 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**0.8.8 (2025-08-14)** 
+- Actually fixed the asymetrical error. All versions up until this had it! WOW!
+
 **0.8.7 (2025-08-14)** 
 - Fixed an error in how i was reading some game data that resulted in the output being asymetrical.
 

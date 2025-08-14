@@ -39,9 +39,9 @@ namespace VehicleConstants {
 
 // Helper function to convert raw tire data to usable data
 double convertTireForceToNewtons(int16_t tire_force_raw) {
-    // Always use absolute value - treat all forces as magnitude
-    double force_magnitude = std::abs(tire_force_raw);
-    return force_magnitude * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
+    // DON'T remove the sign - preserve it!
+    double force_with_sign = static_cast<double>(tire_force_raw);
+    return force_with_sign * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
 }
 
 int getTurnDirection(int16_t lf, int16_t rf, int16_t lr, int16_t rr) {

@@ -208,15 +208,25 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // Calculate based on front tire load directly instead of linear G = Much better
 // No issues with oscillations anymore
 
-    double frontTireLoad = std::abs(vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N);
+// Get the sum with signs preserved
+    double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+
+    // Use the magnitude for physics calculation
+    double frontTireLoadMagnitude = std::abs(frontTireLoadSum);
+
+    // Keep frontTireLoad for logging compatibility
+    double frontTireLoad = frontTireLoadMagnitude;
 
     // Physics constants from your engineer friend
     const double CURVE_STEEPNESS = 1.0e-4;
     const double MAX_THEORETICAL = 8500;
     const double SCALE_FACTOR = 1.20;
 
-    // Calculate base force using physics formula - now always positive
-    double physicsForce = atan(frontTireLoad * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
+    // Calculate magnitude using physics formula
+    double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
+
+    // Apply the natural sign from the tire load sum
+    double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
 
     // Apply proportional deadzone
     double force = physicsForce;
@@ -224,38 +234,39 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         // Convert deadzoneForceScale (0-100) to percentage (0.0-1.0)
         double deadzonePercentage = deadzoneForceScale / 100.0;
 
-        // Calculate deadzone threshold (20% deadzone = remove bottom 20% of force range)
+        // Calculate deadzone threshold using magnitude
         double maxPossibleForce = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
         double deadzoneThreshold = maxPossibleForce * deadzonePercentage;
 
         // Apply deadzone: remove bottom X% and rescale remaining range
-        if (physicsForce <= deadzoneThreshold) {
+        if (std::abs(physicsForce) <= deadzoneThreshold) {
             force = 0.0;  // Force is in deadzone - zero output
         }
         else {
             // Rescale remaining force range to maintain full output range
             double remainingRange = maxPossibleForce - deadzoneThreshold;
-            double adjustedInput = physicsForce - deadzoneThreshold;
-            force = (adjustedInput / remainingRange) * maxPossibleForce;
+            double adjustedInput = std::abs(physicsForce) - deadzoneThreshold;
+            double scaledMagnitude = (adjustedInput / remainingRange) * maxPossibleForce;
+
+            // Restore original sign
+            force = (physicsForce >= 0) ? scaledMagnitude : -scaledMagnitude;
         }
     }
 
-
-    // Cap maximum force 
-    if (force > 10000.0) {
-        force = 10000.0;
-    }   
-
-    // Logic to reverse force direction if needed based on ini
-    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
-    double directionMultiplier = (vehicleDynamics.lateralG > 0 ? 1.0 : -1.0);
-    if (invert) {
-        directionMultiplier = -directionMultiplier;
+    // Cap maximum force magnitude while preserving sign
+    if (std::abs(force) > 10000.0) {
+        force = (force >= 0) ? 10000.0 : -10000.0;
     }
 
-    // Convert calcualted force to signed magnitude
-    double smoothed = force * directionMultiplier;
-    int magnitude = static_cast<int>((std::abs(smoothed) * masterForceScale) * constantForceScale);
+    // Handle invert option (no more complex direction logic needed!)
+    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
+    if (invert) {
+        force = -force;
+    }
+
+    // Convert to signed magnitude
+    double smoothed = force;
+    int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
     int signedMagnitude = static_cast<int>(magnitude);
     if (smoothed < 0.0) {
         signedMagnitude = -signedMagnitude;
@@ -569,7 +580,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
     //Logging
     static int debugCounter = 0;
-    if (debugCounter % 5 == 0) {  // Every 30 frames
+    if (debugCounter % 30 == 0) {  // Every 30 frames
         LogMessage(L"[DEBUG] FL: " + std::to_wstring(vehicleDynamics.frontLeftForce_N) +
             L", FR: " + std::to_wstring(vehicleDynamics.frontRightForce_N) +
             L", Total: " + std::to_wstring(frontTireLoad) +
