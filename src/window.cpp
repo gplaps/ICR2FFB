@@ -2,6 +2,7 @@
 #include "project_dependencies.h"
 #include "log.h"
 #include "main.h"
+#include <shellapi.h>
 #include <iostream>
 
 // Check Admin rights

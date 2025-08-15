@@ -1,7 +1,7 @@
 #include "damper_effect.h"
 #include "constants.h"
 #include "helpers.h"
-#include <dinput.h>
+#include "project_dependencies.h"
 #include <iostream>
 #include <algorithm>
 

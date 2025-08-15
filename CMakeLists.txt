@@ -26,6 +26,7 @@ else()
         -Wno-exit-time-destructors
          # you can't please them all ... personal preference, contradicting patterns, different C++ standards, WinAPI which has roots even before ANSI C++ ... NULL/nullptr ... its a fine mess all in all
          # thats how "professional" coding moves from elegant clean and easy to read code to the #ifndef, pragma warning disable, compiler-agnostic, build script mess that it can become
+        -Wno-covered-switch-default # preferred over -Wno-switch-enum
         -Wno-zero-as-null-pointer-constant
         -Wno-old-style-cast
         -Wno-c++98-compat

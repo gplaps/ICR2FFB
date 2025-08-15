@@ -1,6 +1,6 @@
 #include "spring_effect.h"
 #include "constants.h"
-#include <dinput.h>
+#include "project_dependencies.h"
 #include <iostream>
 #include <algorithm>
 

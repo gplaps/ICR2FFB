@@ -1,8 +1,9 @@
 #pragma once
 #include "ffb_config.h"
+#include "project_dependencies.h"
+#include "memoryapi.h"
 #include <cstdint>
 #include <string>
-#include <windows.h>
 
 struct RawTelemetry {
     double dlat;
@@ -55,17 +56,17 @@ private:
         int32_t data[12] = { 0 };
     } carData;
 
-    void ConvertCarData(const CarData& carData);
+    void ConvertCarData();
     void ConvertTireData();
     bool ReadLongitudinalForce();
     bool ReadCarData();
     bool ReadTireData();
     template<typename T>
     bool ReadValue(T& dest, uintptr_t offset) {
-        size_t bytesRead = 0;
+        SIZE_T bytesRead = 0;
         return ReadProcessMemory(hProcess, (LPCVOID)offset, &dest, sizeof(dest), &bytesRead) == sizeof(dest);
     }
-    bool ReadRaw(void* dest, uintptr_t offset, size_t size);
+    bool ReadRaw(void* dest, uintptr_t offset, SIZE_T size);
 
     // TODO: consistency in order of front/rear and left/right
     struct RawData {

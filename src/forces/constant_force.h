@@ -2,7 +2,7 @@
 #include "calculations/slip_angle.h"
 #include "calculations/lateral_load.h"
 #include "calculations/vehicle_dynamics.h"
-#include <dinput.h>
+#include "project_dependencies.h"
 #include <string>
 
 void ApplyConstantForceEffect(

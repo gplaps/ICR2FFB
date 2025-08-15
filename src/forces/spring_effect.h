@@ -1,5 +1,5 @@
 #pragma once
-#include <dinput.h>
+#include "project_dependencies.h"
 #include <string>
 
 void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale);

@@ -100,6 +100,7 @@ std::wstring FFBConfig::PrintGameVersion() const {
     switch(version) {
         case GameVersion::ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
         case GameVersion::ICR2_RENDITION: return L"ICR2 - Rendition";
+        case GameVersion::UNINITIALIZED:
         default:
             break;
     }

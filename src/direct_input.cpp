@@ -1,5 +1,6 @@
 #include "direct_input.h"
 #include "log.h"
+#include "helpers.h"
 #include <iostream>
 
 LPDIRECTINPUT8 DirectInput::directInput = NULL;

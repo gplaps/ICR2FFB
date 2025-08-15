@@ -54,14 +54,14 @@ void GameOffsets::ApplySignature(uintptr_t sigAddr) {
     car_longitude_offset += exeBase;
 }
 
-GameOffsets GetGameOffsets(GameVersion version) {
+static GameOffsets GetGameOffsets(GameVersion version) {
     switch(version) {
         case GameVersion::ICR2_DOS4G_1_02:
             return Offsets_DOS;
         case GameVersion::ICR2_RENDITION:
+        case GameVersion::UNINITIALIZED:
         default:
             return Offsets_REND;
-        break;
     }
 }
 
@@ -207,15 +207,15 @@ const RawTelemetry& TelemetryReader::Data() const {
     return out;
 }
 
-bool TelemetryReader::ReadRaw(void* dest, uintptr_t offset, size_t size) {
-    size_t bytesRead = 0;
+bool TelemetryReader::ReadRaw(void* dest, uintptr_t offset, SIZE_T size) {
+    SIZE_T bytesRead = 0;
     ReadProcessMemory(hProcess, (LPCVOID)offset, dest, size, &bytesRead);
     return bytesRead == size;
 }
 
 // === Main ===
 
-void TelemetryReader::ConvertCarData(const struct CarData& carData) {
+void TelemetryReader::ConvertCarData() {
     // Set variables to be used everywhere else
     // Little bit of math to make the data sensible. Save big calculations for specific "Calculation" sets
     out.dlong = static_cast<double>(carData.data[4]);
@@ -240,8 +240,6 @@ void TelemetryReader::ConvertTireData() {
 }
 
 bool TelemetryReader::ReadCarData() {
-    CarData carData;
-
     if (!ReadRaw(&carData,offs.cars_data_offset,sizeof(CarData))) {
         LogMessage(L"[ERROR] Failed to read car0 data. GetLastError(): " + std::to_wstring(GetLastError()));
         CloseHandle(hProcess);
@@ -249,7 +247,7 @@ bool TelemetryReader::ReadCarData() {
         return false;
     }
 
-    ConvertCarData(carData);
+    ConvertCarData();
     return true;
 }
 

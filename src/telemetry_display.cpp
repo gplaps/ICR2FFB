@@ -2,6 +2,7 @@
 #include "main.h"
 #include "window.h"
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 
 std::mutex displayMutex;

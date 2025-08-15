@@ -31,7 +31,7 @@ void FFBProcessor::Update() {
 
     ffbOutput.Start();
     
-    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) and the FFBDevice implements the routing effect specific processing without any "vehicle dynamics" / "application" logic
+    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) and the FFBDevice implements the routing of effect specific processing without any "vehicle dynamics" / "application" logic
      
     // Update Effects
     if (ffbOutput.device.damperEffect && ffbOutput.enableDamperEffect)
