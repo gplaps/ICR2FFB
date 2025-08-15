@@ -3,9 +3,10 @@
 #include <string>
 
 // Include logging
-void LogMessage(const std::wstring& msg);
+void LogMessage(const std::wstring &msg);
 
-struct CalculatedVehicleDynamics {
+struct CalculatedVehicleDynamics
+{
     double lateralG = 0.0;
     int directionVal = 0;
     double yaw = 0.0;
@@ -30,4 +31,4 @@ struct CalculatedVehicleDynamics {
     double frontRightForce_N;
 };
 
-bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedVehicleDynamics& out);
+bool CalculateVehicleDynamics(const RawTelemetry &current, RawTelemetry &previous, bool &firstReading, CalculatedVehicleDynamics &out);

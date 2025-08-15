@@ -11,6 +11,7 @@
 
 #include "telemetry_reader.h"
 #include "ffb_setup.h"
+#include "wstring_helpers.h"
 
 /*
  * Copyright 2025 gplaps
@@ -32,7 +33,8 @@ static DWORD carsDataAddr = 0;
 static bool telemetryInitialized = false;
 
 // Things to look for in the Memory to make it tick
-struct GameOffsets {
+struct GameOffsets
+{
     uintptr_t signatureOffset;
     DWORD cars_data_offset;
     DWORD tire_data_offsetfl;
@@ -50,38 +52,34 @@ struct GameOffsets {
 
 // Rendition EXE
 constexpr GameOffsets Offsets_REND = {
-     0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
-    //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
+    0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
+    // 0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
 };
 
 // DOS4G Exe, should be 1.02
 constexpr GameOffsets Offsets_DOS = {
     0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14
-    //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
+    // 0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
 };
 
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-const char* signatureStr = "license with Bob";
+const char *signatureStr = "license with Bob";
 
 // === Helpers ===
 
-std::wstring ToLower(const std::wstring& str) {
-    std::wstring result = str;
-    for (wchar_t& ch : result) ch = towlower(ch);
-    return result;
-}
-
-
 // Gets the process ID of indycar
-DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
-    struct FindWindowData {
+DWORD FindProcessIdByWindow(const std::vector<std::wstring> &keywords)
+{
+    struct FindWindowData
+    {
         std::vector<std::wstring> keywords;
         DWORD pid = 0;
-    } data{ keywords, 0 };
+    } data{keywords, 0};
 
-    EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL {
+    EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL
+                {
         auto* data = reinterpret_cast<FindWindowData*>(lParam);
         wchar_t title[256];
         GetWindowTextW(hwnd, title, sizeof(title) / sizeof(wchar_t));
@@ -92,14 +90,14 @@ DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
         }
 
         GetWindowThreadProcessId(hwnd, &data->pid);
-        return FALSE;
-        }, reinterpret_cast<LPARAM>(&data));
+        return FALSE; }, reinterpret_cast<LPARAM>(&data));
 
     return data.pid;
 }
 
 // Really don't understand this, but here is where we scan the memory for the data needed
-uintptr_t ScanSignature(HANDLE hProcess) {
+uintptr_t ScanSignature(HANDLE hProcess)
+{
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -113,15 +111,21 @@ uintptr_t ScanSignature(HANDLE hProcess) {
     MEMORY_BASIC_INFORMATION mbi;
     const size_t targetLen = strlen(signatureStr);
 
-    while (addr < maxAddr) {
-        if (VirtualQueryEx(hProcess, (LPCVOID)addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
-            if ((mbi.State == MEM_COMMIT) && !(mbi.Protect & PAGE_NOACCESS)) {
+    while (addr < maxAddr)
+    {
+        if (VirtualQueryEx(hProcess, (LPCVOID)addr, &mbi, sizeof(mbi)) == sizeof(mbi))
+        {
+            if ((mbi.State == MEM_COMMIT) && !(mbi.Protect & PAGE_NOACCESS))
+            {
                 std::vector<BYTE> buffer(mbi.RegionSize);
                 SIZE_T bytesRead = 0;
 
-                if (ReadProcessMemory(hProcess, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead)) {
-                    for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i) {
-                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0) {
+                if (ReadProcessMemory(hProcess, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead))
+                {
+                    for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i)
+                    {
+                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0)
+                        {
                             std::wstringstream ss;
                             ss << L"[MATCH] Found Game at 0x" << std::hex << (addr + i);
                             LogMessage(ss.str());
@@ -132,7 +136,8 @@ uintptr_t ScanSignature(HANDLE hProcess) {
             }
             addr += mbi.RegionSize;
         }
-        else {
+        else
+        {
             addr += 0x1000;
         }
     }
@@ -143,7 +148,8 @@ uintptr_t ScanSignature(HANDLE hProcess) {
 
 // === Main ===
 
-bool ReadTelemetryData(RawTelemetry& out) {
+bool ReadTelemetryData(RawTelemetry &out)
+{
     static uintptr_t carsDataAddr = 0;
     static uintptr_t tireLoadAddrLF = 0;
     static uintptr_t tireLoadAddrFR = 0;
@@ -155,31 +161,35 @@ bool ReadTelemetryData(RawTelemetry& out) {
     static uintptr_t tireMagLatAddrRR = 0;
     static uintptr_t carLongitudeAddr = 0;
 
-
     SIZE_T bytesRead = 0;
     int16_t loadLF = 0, loadFR = 0, loadLR = 0, loadRR = 0;
     int16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
     int16_t longiF = 0;
 
     // Select between Dos and Rendition version. Rendition is default
-    const GameOffsets& offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
+    const GameOffsets &offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
 
-    if (!hProcess) {
-        if (targetGameWindowName.empty()) {
+    if (!hProcess)
+    {
+        if (targetGameWindowName.empty())
+        {
             LogMessage(L"[ERROR] targetGameWindowName is not set.");
             return false;
         }
 
         // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
-        std::vector<std::wstring> keywords = { L"dosbox", targetGameWindowName };
+        std::vector<std::wstring> keywords = {L"dosbox", targetGameWindowName};
         DWORD pid = FindProcessIdByWindow(keywords);
-        if (!pid) return false;
+        if (!pid)
+            return false;
 
         hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
-        if (!hProcess) return false;
+        if (!hProcess)
+            return false;
 
         uintptr_t sigAddr = ScanSignature(hProcess);
-        if (!sigAddr) {
+        if (!sigAddr)
+        {
             CloseHandle(hProcess);
             hProcess = nullptr;
             return false;
@@ -198,11 +208,12 @@ bool ReadTelemetryData(RawTelemetry& out) {
         carLongitudeAddr = exeBase + offsets.car_longitude_offset;
 
         LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
-            L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
+                   L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
     }
 
-    int32_t car0_data[12] = { 0 };
-    if (!ReadProcessMemory(hProcess, (LPCVOID)carsDataAddr, &car0_data, sizeof(car0_data), &bytesRead)) {
+    int32_t car0_data[12] = {0};
+    if (!ReadProcessMemory(hProcess, (LPCVOID)carsDataAddr, &car0_data, sizeof(car0_data), &bytesRead))
+    {
         LogMessage(L"[ERROR] Failed to read car0 data. GetLastError(): " + std::to_wstring(GetLastError()));
         CloseHandle(hProcess);
         hProcess = nullptr;
@@ -219,11 +230,13 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.steering_raw = static_cast<double>(car0_data[10]);
 
     ReadProcessMemory(hProcess, (LPCVOID)carLongitudeAddr, &longiF, sizeof(longiF), &bytesRead);
-    if (bytesRead != sizeof(longiF)) {
+    if (bytesRead != sizeof(longiF))
+    {
         LogMessage(L"[ERROR] Failed to read longitude force. Bytes read: " + std::to_wstring(bytesRead));
         out.long_force = 0.0;
     }
-    else {
+    else
+    {
         out.long_force = static_cast<double>(longiF);
     }
 
@@ -237,7 +250,8 @@ bool ReadTelemetryData(RawTelemetry& out) {
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLR, &magLatLR, sizeof(magLatLR), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrRR, &magLatRR, sizeof(magLatRR), &bytesRead);
 
-    if (!tireOK) {
+    if (!tireOK)
+    {
         LogMessage(L"[ERROR] Failed to read one or more tire loads.");
         return false;
     }

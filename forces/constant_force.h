@@ -6,22 +6,21 @@
 #include <string>
 
 // Include logging
-void LogMessage(const std::wstring& msg);
+void LogMessage(const std::wstring &msg);
 
-extern IDirectInputEffect* constantForceEffect;
+extern IDirectInputEffect *constantForceEffect;
 
 void ApplyConstantForceEffect(
-    const RawTelemetry& current,
-    const CalculatedLateralLoad& load,
-    const CalculatedSlip& slip,
-    const CalculatedVehicleDynamics& vehicleDynamics,
+    const RawTelemetry &current,
+    const CalculatedLateralLoad &load,
+    const CalculatedSlip &slip,
+    const CalculatedVehicleDynamics &vehicleDynamics,
     double speed_mph,
     double steering_deg,
-    IDirectInputEffect* constantForceEffect,
+    IDirectInputEffect *constantForceEffect,
     bool enableWeightForce,
     bool enableRateLimit,
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
-    double weightForceScale
-    );
+    double weightForceScale);

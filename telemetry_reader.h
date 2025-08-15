@@ -2,7 +2,8 @@
 #include <string>
 #pragma once
 
-struct RawTelemetry {
+struct RawTelemetry
+{
     double dlat;
     double dlong;
     double rotation_deg;
@@ -22,7 +23,7 @@ struct RawTelemetry {
 };
 
 // Include logging
-void LogMessage(const std::wstring& msg);
+void LogMessage(const std::wstring &msg);
 
 // Returns true if data was read successfully
-bool ReadTelemetryData(RawTelemetry& out);
+bool ReadTelemetryData(RawTelemetry &out);

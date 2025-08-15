@@ -9,14 +9,16 @@
 constexpr int VELOCITY_HISTORY_SIZE = 5;
 static std::deque<double> velocityAngleHistory;
 
-struct DecodedSlip {
-    double signedNorm;  // -1.0 to +1.0
-    double magnitude;   // 0.0 to 1.0
+struct DecodedSlip
+{
+    double signedNorm; // -1.0 to +1.0
+    double magnitude;  // 0.0 to 1.0
 };
 
 // Just based on observation
 // It seems the raw tires never really go above 4,000 'units' of whatever they are, so we assume this is max
-inline DecodedSlip decodeSlip(uint16_t raw) {
+inline DecodedSlip decodeSlip(uint16_t raw)
+{
     constexpr double MAX_EXPECTED_SLIP = 4000.0;
 
     bool right = raw > 0x8000;
@@ -24,11 +26,13 @@ inline DecodedSlip decodeSlip(uint16_t raw) {
     double normalized = static_cast<double>(mag) / MAX_EXPECTED_SLIP;
     normalized = std::clamp(normalized, 0.0, 1.0);
     double signedNorm = right ? -normalized : normalized;
-    return { signedNorm, normalized };
+    return {signedNorm, normalized};
 }
 
-bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedSlip& out) {
-    if (firstReading) {
+bool CalculateSlipAngle(const RawTelemetry &current, RawTelemetry &previous, bool &firstReading, CalculatedSlip &out)
+{
+    if (firstReading)
+    {
         previous = current;
         firstReading = false;
         return false;
@@ -59,9 +63,9 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, boo
     // Finding a real slip parameter would help a lot here
     // Based on observation of raw tire data it seems rears are like ~50% lower than fronts in mostly normal conditions
     // If the rears get close to front or exceed front you are definitely spinning
-    constexpr double rearBiasCorrection = 0.6;  // Tune between 0.5–0.8 based on testing
+    constexpr double rearBiasCorrection = 0.6; // Tune between 0.5–0.8 based on testing
     double adjustedFrontSlip = frontSlip * rearBiasCorrection;
-    double slipDelta = rearSlip - adjustedFrontSlip;  // Positive = oversteer, Negative = understeer
+    double slipDelta = rearSlip - adjustedFrontSlip; // Positive = oversteer, Negative = understeer
 
     // Normalize and scale
     double slipAngleDeg = std::clamp(slipDelta * 180.0, -90.0, 90.0);
