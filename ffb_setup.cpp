@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "constant_force.h"
+#include "wstring_helpers.h"
 
 /*
  * Copyright 2025 gplaps
@@ -184,5 +185,5 @@ bool InitializeDevice()
 
 bool FFBShouldInvert()
 {
-    return (targetInvertFFB == L"true" || targetInvertFFB == L"True");
+    return ToLower(targetInvertFFB) == L"true";
 }

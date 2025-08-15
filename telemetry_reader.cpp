@@ -11,6 +11,7 @@
 
 #include "telemetry_reader.h"
 #include "ffb_setup.h"
+#include "wstring_helpers.h"
 
 /*
  * Copyright 2025 gplaps
@@ -67,14 +68,6 @@ constexpr GameOffsets Offsets_DOS = {
 const char *signatureStr = "license with Bob";
 
 // === Helpers ===
-
-std::wstring ToLower(const std::wstring &str)
-{
-    std::wstring result = str;
-    for (wchar_t &ch : result)
-        ch = towlower(ch);
-    return result;
-}
 
 // Gets the process ID of indycar
 DWORD FindProcessIdByWindow(const std::vector<std::wstring> &keywords)
