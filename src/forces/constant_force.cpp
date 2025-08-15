@@ -1,8 +1,11 @@
-﻿#include "constant_force.h"
+#include "constant_force.h"
+#include "constants.h"
+#include "helpers.h"
 #include <iostream>
 #include <algorithm>
 #include <deque>
 #include <numeric>
+#include <cmath>
 
 /*
  * Copyright 2025 gplaps
@@ -26,18 +29,18 @@ extern std::wstring targetInvertFFB;
 extern int g_currentFFBForce;
 
 void ApplyConstantForceEffect(const RawTelemetry& current,
-    const CalculatedLateralLoad& load, const CalculatedSlip& slip,
+    const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
     const CalculatedVehicleDynamics& vehicleDynamics,
-    double speed_mph, double steering_deg, IDirectInputEffect* constantForceEffect,
-    bool enableWeightForce,
+    double speed_mph, double /*steering_deg*/, IDirectInputEffect* effect,
+    bool /*enableWeightForce*/,
     bool enableRateLimit,
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
-    double weightForceScale
+    double /*weightForceScale*/
     ) {
 
-    if (!constantForceEffect) return;
+    if (!effect) return;
 
     // Beta 0.5
     // This is a bunch of logic to pause/unpause or prevent forces when the game isn't running
@@ -45,13 +48,13 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     // It works right now though, although it feels a bit delayed
 
     static double lastDlong = 0.0;
-    static bool hasEverMoved = false;
+    static bool hasEverMoved = false; (void)hasEverMoved; // unused currently
     static int noMovementFrames = 0;
     static bool isPaused = true;
     static bool pauseForceSet = false;
     static bool isFirstReading = true;
-    constexpr int movementThreshold = 10;  // Frames to consider "paused"
-    constexpr double movementThreshold_value = 0.001;  // Very small movement threshold
+    const int movementThreshold = 10;  // Frames to consider "paused"
+    const double movementThreshold_value = 0.001;  // Very small movement threshold
 
     if (isFirstReading) {
         lastDlong = current.dlong;  // Set baseline from first real data
@@ -62,7 +65,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.dwSize = sizeof(DIEFFECT);
             eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
             eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
+            eff.dwGain = DEFAULT_DINPUT_GAIN;
             eff.dwTriggerButton = DIEB_NOTRIGGER;
             eff.cAxes = 1;
             DWORD axes[1] = { DIJOFS_X };
@@ -71,7 +74,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.rglDirection = dir;
             eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
             eff.lpvTypeSpecificParams = &cf;
-            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
             pauseForceSet = true;
         }
         return;
@@ -107,7 +110,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.dwSize = sizeof(DIEFFECT);
             eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
             eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
+            eff.dwGain = DEFAULT_DINPUT_GAIN;
             eff.dwTriggerButton = DIEB_NOTRIGGER;
             eff.cAxes = 1;
             DWORD axes[1] = { DIJOFS_X };
@@ -116,7 +119,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.rglDirection = dir;
             eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
             eff.lpvTypeSpecificParams = &cf;
-            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
             pauseForceSet = true;
         }
         return;
@@ -132,7 +135,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.dwSize = sizeof(DIEFFECT);
             eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
             eff.dwDuration = INFINITE;
-            eff.dwGain = 10000;
+            eff.dwGain = DEFAULT_DINPUT_GAIN;
             eff.dwTriggerButton = DIEB_NOTRIGGER;
             eff.cAxes = 1;
             DWORD axes[1] = { DIJOFS_X };
@@ -141,7 +144,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             eff.rglDirection = dir;
             eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
             eff.lpvTypeSpecificParams = &cf;
-            constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
             wasLowSpeed = true;
         }
         return;
@@ -390,7 +393,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     if (magnitudeHistory.size() > 2) {
         magnitudeHistory.pop_front();
     }
-    signedMagnitude = static_cast<int>(std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0.0) / magnitudeHistory.size());
+    signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
  
 
     // === CALC 3 Weight Force ===
@@ -510,16 +513,16 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
     if (enableRateLimit) {
         // Direction calculation and smoothing for rate limiting
-        LONG targetDir = (smoothed > 0.0 ? -1 : (smoothed < 0.0 ? 1 : 0)) * 10000;
+        LONG targetDir = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
         static LONG lastDirection = 0;
 
         // Direction smoothing - this prevents rapid direction changes
-        constexpr double directionSmoothingFactor = 0.3;
+        const double directionSmoothingFactor = 0.3;
         lastDirection = static_cast<LONG>((1.0 - directionSmoothingFactor) * lastDirection + directionSmoothingFactor * targetDir);
 
         // Rate limiting with direction smoothing
         static int lastSentMagnitude = -1;
-        static int lastSentSignedMagnitude = 0;
+        static int lastSentSignedMagnitude = 0; (void) lastSentSignedMagnitude; // unused currently
         static LONG lastSentDirection = 0;  // Track smoothed direction
         static int lastProcessedMagnitude = -1;
         static int framesSinceLastUpdate = 0;
@@ -595,7 +598,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     eff.dwSize = sizeof(DIEFFECT);
     eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
     eff.dwDuration = INFINITE;
-    eff.dwGain = 10000;
+    eff.dwGain = DEFAULT_DINPUT_GAIN;
     eff.dwTriggerButton = DIEB_NOTRIGGER;
     eff.cAxes = 1;
     DWORD axes[1] = { DIJOFS_X };
@@ -606,7 +609,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     eff.lpvTypeSpecificParams = &cf;
 
     // Only set magnitude params, skip direction
-    HRESULT hr = constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);  // ← Removed | DIEP_DIRECTION
+    HRESULT hr = effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);  // ← Removed | DIEP_DIRECTION
 
     if (FAILED(hr)) {
         std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;

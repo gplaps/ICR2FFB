@@ -1,4 +1,6 @@
 #include "damper_effect.h"
+#include "constants.h"
+#include "helpers.h"
 #include <dinput.h>
 #include <iostream>
 #include <algorithm>
@@ -11,7 +13,7 @@ void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double mast
     if (!effect) return;
 
     double maxSpeed = 40.0;
-    double minDamper = 0.0;
+    double minDamper = 0.0; (void)minDamper; // unused currently
     double maxDamper = 5000.0;
 
     double t = std::clamp(speedMph / maxSpeed, 0.0, 1.0);
@@ -21,8 +23,8 @@ void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double mast
     condition.lOffset = 0;
     condition.lPositiveCoefficient = damperStrength;
     condition.lNegativeCoefficient = damperStrength;
-    condition.dwPositiveSaturation = 10000;
-    condition.dwNegativeSaturation = 10000;
+    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
+    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0;
 
     DIEFFECT eff = {};

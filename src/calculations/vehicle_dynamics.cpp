@@ -1,10 +1,8 @@
 #include "vehicle_dynamics.h"
+#include "constants.h"
+#include "helpers.h"
 #include <cmath>
 #include <algorithm>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 // SAE Convention
 // Lateral force 
@@ -21,12 +19,12 @@
 // May or may not be used
 namespace VehicleConstants {
     const double VEHICLE_MASS = 700.0 + 60.0 + 76.0; // kg (car + fuel + driver) - Can add real fuel later
-    const double FRONT_TRACK = 1.753; // m
-    const double REAR_TRACK = 1.638; // m  
+    // const double FRONT_TRACK = 1.753; // m
+    // const double REAR_TRACK = 1.638; // m  
     const double WHEELBASE = 3.048; // m
-    const double YAW_INERTIA = 1100.0; // kg⋅m² (estimated for IndyCar)
-    const double CG_FROM_FRONT = 1.3; // m (43% of wheelbase, typical for IndyCar)
-    const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
+    // const double YAW_INERTIA = 1100.0; // kg⋅m² (estimated for IndyCar)
+    // const double CG_FROM_FRONT = 1.3; // m (43% of wheelbase, typical for IndyCar)
+    // const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
     const double GRAVITY = 9.81; // m/s²
 
     // Tire guesswork since we do not know precise load in Newtons
@@ -38,13 +36,11 @@ namespace VehicleConstants {
 }
 
 // Helper function to convert raw tire data to usable data
-double convertTireForceToNewtons(int16_t tire_force_raw) {
-    // DON'T remove the sign - preserve it!
-    double force_with_sign = static_cast<double>(tire_force_raw);
-    return force_with_sign * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
+static double convertTireForceToNewtons(double tire_force_raw) {
+    return tire_force_raw * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
 }
 
-int getTurnDirection(int16_t lf, int16_t rf, int16_t lr, int16_t rr) {
+static int getTurnDirection(double lf, double rf, double lr, double rr) {
     // Determine if we're turning left or right based on force signs
     // Most of your forces will have the same sign during a turn
     int negative_count = 0;
@@ -78,10 +74,10 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     double wheel_angle_rad = wheel_angle_deg * M_PI / 180.0;
 
     // Force Assignments
-    out.force_lf = static_cast<int16_t>(current.tiremaglat_lf);
-    out.force_rf = static_cast<int16_t>(current.tiremaglat_rf);
-    out.force_lr = static_cast<int16_t>(current.tiremaglat_lr);
-    out.force_rr = static_cast<int16_t>(current.tiremaglat_rr);
+    out.force_lf = current.tiremaglat_lf;
+    out.force_rf = current.tiremaglat_rf;
+    out.force_lr = current.tiremaglat_lr;
+    out.force_rr = current.tiremaglat_rr;
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
@@ -115,18 +111,15 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     if (std::abs(out.lateralG) < 0.05) {
         out.directionVal = 0; // Straight
     }
-    else if (out.totalLateralForce > 0) {
-        out.directionVal = 10000; // Left (positive totalLateralForce)
-    }
     else {
-        out.directionVal = -10000; // Right (negative totalLateralForce)
+        out.directionVal = sign(out.totalLateralForce);
     }
 
     // CALC 2
     //===== SLIP ANGLE ======
 
     // This is to cut out random noise
-    if (speed_ms > 2.0 && std::abs(out.lateralG) > 0.1) { // Only calculate when moving and turning
+    if (speed_ms > STANDSTILL_SPEED && std::abs(out.lateralG) > MIN_LAT_G) { // Only calculate when moving and turning
 
         // Calculate front and rear lateral forces
         double front_lateral_force = force_lf_N + force_rf_N;
@@ -167,10 +160,10 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
 
         // Response method: too much response = oversteer, too little = understeer
         // Tune this to make slip match reality
-        if (response_ratio > 1.02) {
+        if (response_ratio > 1.0 + RESPONSE_THRESHOLD) {
             slip_indicator += (response_ratio - 1.0) * 0.5; // Oversteer
         }
-        else if (response_ratio < 0.98) {
+        else if (response_ratio < 1.0 - RESPONSE_THRESHOLD) {
             slip_indicator += (response_ratio - 1.0) * 0.5; // Understeer (negative)
         }
 
@@ -200,18 +193,18 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     }
 
     // Apply bounds to outputs
-    out.lateralG = std::clamp(out.lateralG, -8.0, 8.0); // Reasonable G range for IndyCar
+    out.lateralG = std::clamp(out.lateralG, -MAX_USEFUL_G, MAX_USEFUL_G); // Reasonable G range for IndyCar
     //out.yaw = std::clamp(out.yaw, -180.0, 180.0); // Limit yaw acceleration
     out.slip = std::clamp(out.slip, -45.0, 45.0); // Limit slip angle
 
     // Calculate force magnitude for FFB
     // Scale based on absolute lateral G, with max at 4G (typical for IndyCar cornering)
-    double gForceScale = std::clamp(std::abs(out.lateralG) / 4.0, 0.0, 1.0);
+    double gForceScale = std::clamp(std::abs(out.lateralG) / TYPICAL_G, 0.0, 1.0);
 
     // Apply speed scaling (reduce forces at low speeds like your other calculations)
-    double speedScale = (current.speed_mph < 20.0) ? 0.0 : std::min((current.speed_mph - 20.0) / 40.0, 1.0);
+    double speedScale = std::clamp((current.speed_mph - SPEED_THRESHOLD) / SPEED_SCALE_RAMP_RANGE, 0.0, 1.0);
 
-    out.forceMagnitude = static_cast<int>(gForceScale * speedScale * 10000.0);
+    out.forceMagnitude = gForceScale * speedScale;
 
     // Store basic telemetry for output
     out.speedMph = current.speed_mph;

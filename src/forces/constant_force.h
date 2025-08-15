@@ -8,8 +8,6 @@
 // Include logging
 void LogMessage(const std::wstring& msg);
 
-extern IDirectInputEffect* constantForceEffect;
-
 void ApplyConstantForceEffect(
     const RawTelemetry& current,
     const CalculatedLateralLoad& load,
@@ -17,7 +15,7 @@ void ApplyConstantForceEffect(
     const CalculatedVehicleDynamics& vehicleDynamics,
     double speed_mph,
     double steering_deg,
-    IDirectInputEffect* constantForceEffect,
+    IDirectInputEffect* effect,
     bool enableWeightForce,
     bool enableRateLimit,
     double masterForceScale,

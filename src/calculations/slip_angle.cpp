@@ -1,12 +1,12 @@
-﻿#include "slip_angle.h"
+#include "slip_angle.h"
+#include "constants.h"
+#include "helpers.h"
 #include <cmath>
 #include <algorithm>
 #include <deque>
 
-#define M_PI 3.14159265358979323846
-
 // Some variables for smoothing
-constexpr int VELOCITY_HISTORY_SIZE = 5;
+// const int VELOCITY_HISTORY_SIZE = 5;
 static std::deque<double> velocityAngleHistory;
 
 struct DecodedSlip {
@@ -16,8 +16,8 @@ struct DecodedSlip {
 
 // Just based on observation
 // It seems the raw tires never really go above 4,000 'units' of whatever they are, so we assume this is max
-inline DecodedSlip decodeSlip(uint16_t raw) {
-    constexpr double MAX_EXPECTED_SLIP = 4000.0;
+static DecodedSlip decodeSlip(uint16_t raw) {
+    const double MAX_EXPECTED_SLIP = 4000.0;
 
     bool right = raw > 0x8000;
     int32_t mag = right ? (0x10000 - raw) : raw;
@@ -59,7 +59,7 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, boo
     // Finding a real slip parameter would help a lot here
     // Based on observation of raw tire data it seems rears are like ~50% lower than fronts in mostly normal conditions
     // If the rears get close to front or exceed front you are definitely spinning
-    constexpr double rearBiasCorrection = 0.6;  // Tune between 0.5–0.8 based on testing
+    const double rearBiasCorrection = 0.6;  // Tune between 0.5–0.8 based on testing
     double adjustedFrontSlip = frontSlip * rearBiasCorrection;
     double slipDelta = rearSlip - adjustedFrontSlip;  // Positive = oversteer, Negative = understeer
 
@@ -68,14 +68,15 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, boo
 
     // Compute output force scaling
     double absSlipDeg = std::abs(slipAngleDeg);
-    double slipScale = (current.speed_mph < 20.0) ? 0.0 : std::min((current.speed_mph - 20.0) / 20.0, 1.0);
-    int force = static_cast<int>(std::clamp(absSlipDeg * 400 * slipScale, 0.0, 10000.0));
+    double slipScale = std::clamp((current.speed_mph - SPEED_THRESHOLD) / SLIP_SPEED_RAMP_RANGE, 0.0, 1.0);
+    double force = std::clamp(absSlipDeg * 400.0 * slipScale, 0.0, 1.0);
+    (void)force; // unused currently
 
     // Output
     out.slipAngle = slipAngleDeg;
     out.absSlipDeg = std::abs(slipAngleDeg);
-    out.forceMagnitude = static_cast<int>(std::clamp(out.absSlipDeg / 90.0, 0.0, 1.0) * 10000.0);
-    out.directionVal = (slipAngleDeg > 0) ? -10000 : (slipAngleDeg < 0 ? 10000 : 0);
+    out.forceMagnitude = std::clamp(out.absSlipDeg / 90.0, 0.0, 1.0);
+    out.directionVal = (slipAngleDeg > 0) ? -1 : (slipAngleDeg < 0 ? 1 : 0);
 
     previous = current;
     return true;
