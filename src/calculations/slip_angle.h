@@ -2,9 +2,6 @@
 #include "telemetry_reader.h"
 #include <string>
 
-// Include logging
-void LogMessage(const std::wstring& msg);
-
 struct CalculatedSlip {
     double slipAngle;
     double absSlipDeg;

@@ -3,9 +3,6 @@
 #include "slip_angle.h"
 #include <string>
 
-// Include logging
-void LogMessage(const std::wstring& msg);
-
 struct CalculatedLateralLoad {
     double steeringDeg;
     double speedMph;

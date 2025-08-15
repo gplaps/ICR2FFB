@@ -2,9 +2,6 @@
 #include "telemetry_reader.h"
 #include <string>
 
-// Include logging
-void LogMessage(const std::wstring& msg);
-
 struct CalculatedVehicleDynamics {
     double lateralG;
     int directionVal;
