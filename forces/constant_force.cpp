@@ -279,26 +279,20 @@ void ApplyConstantForceEffect(const RawTelemetry &current,
     }
 
     // Cap maximum force magnitude while preserving sign
-    if (std::abs(force) > 10000.0)
-    {
-        force = (force >= 0) ? 10000.0 : -10000.0;
-    }
+    if (std::abs(force) > MAXIMUM_FORCE)
+        force = (force >= 0) ? MAXIMUM_FORCE : -MAXIMUM_FORCE;
 
     // Handle invert option (no more complex direction logic needed!)
-    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
+    bool invert = FFBShouldInvert();
     if (invert)
-    {
         force = -force;
-    }
 
     // Convert to signed magnitude
     double smoothed = force;
     int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
     int signedMagnitude = static_cast<int>(magnitude);
     if (smoothed < 0.0)
-    {
         signedMagnitude = -signedMagnitude;
-    }
 
     // === Self-Aligning Torque ===
     /*
