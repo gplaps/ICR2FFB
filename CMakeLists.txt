@@ -11,12 +11,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 file(GLOB_RECURSE SOURCES src/*.cpp)
 set(PROJECT_BINARY_NAME ${PROJECT_NAME})
 add_executable(${PROJECT_BINARY_NAME} ${SOURCES})
-target_include_directories(${PROJECT_BINARY_NAME} PRIVATE src src/calculations src/forces thirdparty)
+target_include_directories(${PROJECT_BINARY_NAME} PRIVATE src src/calculations src/forces)
 # enable all possible warnings from compilers and disable those that you don't want or can't fix
 # thereby getting best help ... but also some distracting and unimportant warnings that might hinder progress on the actual topics you care about
 if(MSVC)
     target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x500) # _WIN32_WINNT_WIN2K
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall /wd4514 /wd4668 /wd4710 /wd4711 /wd4820 /wd5039 /wd5045 /wd5105)
+    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105)
     target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
 else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -35,6 +35,7 @@ else()
         target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 endif()
+target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800)
 target_link_libraries(${PROJECT_BINARY_NAME} PRIVATE dinput8)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.exe DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
 install(FILES ffb.ini LICENSE README.md DESTINATION .)
