@@ -1,17 +1,15 @@
-// telemetry_reader.cpp
-#include <windows.h>
+#include "telemetry_reader.h"
+#include "ffb_config.h"
+#include "helpers.h"
+#include "log.h"
+
+#include "project_dependencies.h"
 #include <tlhelp32.h>
 #include <psapi.h>
-#include <string>
+
 #include <vector>
-#include <iostream>
-#include <cstdint>
 #include <sstream>
 #include <cwctype>
-
-#include "telemetry_reader.h"
-#include "ffb_setup.h"
-#include "helpers.h"
 
 /*
  * Copyright 2025 gplaps
@@ -27,39 +25,45 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-// === Globals ===
-static HANDLE hProcess = NULL;
-// static DWORD carsDataAddr = 0;
-// static bool telemetryInitialized = false;
-
-// Things to look for in the Memory to make it tick
-struct GameOffsets {
-    uintptr_t signatureOffset;
-    DWORD cars_data_offset;
-    DWORD tire_data_offsetfl;
-    DWORD tire_data_offsetfr;
-    DWORD tire_data_offsetrl;
-    DWORD tire_data_offsetrr;
-    DWORD tire_maglat_offsetfl;
-    DWORD tire_maglat_offsetfr;
-    DWORD tire_maglat_offsetrl;
-    DWORD tire_maglat_offsetrr;
-    DWORD car_longitude_offset;
-};
-
 // Offsets for different version of the game
 
 // Rendition EXE
-const GameOffsets Offsets_REND = {
+static const GameOffsets Offsets_REND = {
      0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
     //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
 };
 
 // DOS4G Exe, should be 1.02
-const GameOffsets Offsets_DOS = {
+static const GameOffsets Offsets_DOS = {
     0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14
     //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
 };
+
+void GameOffsets::ApplySignature(uintptr_t sigAddr) {
+    uintptr_t exeBase = sigAddr - signatureOffset;
+    signatureOffset = exeBase;
+    cars_data_offset += exeBase;
+    tire_data_offsetfl += exeBase;
+    tire_data_offsetfr += exeBase;
+    tire_data_offsetrl += exeBase;
+    tire_data_offsetrr += exeBase;
+    tire_maglat_offsetfl += exeBase;
+    tire_maglat_offsetfr += exeBase;
+    tire_maglat_offsetrl += exeBase;
+    tire_maglat_offsetrr += exeBase;
+    car_longitude_offset += exeBase;
+}
+
+GameOffsets GetGameOffsets(GameVersion version) {
+    switch(version) {
+        case GameVersion::ICR2_DOS4G_1_02:
+            return Offsets_DOS;
+        case GameVersion::ICR2_RENDITION:
+        default:
+            return Offsets_REND;
+        break;
+    }
+}
 
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
@@ -153,118 +157,138 @@ static uintptr_t ScanSignature(HANDLE processHandle) {
     return 0;
 }
 
-// === Main ===
-
-bool ReadTelemetryData(RawTelemetry& out) {
-    static uintptr_t carsDataAddr = 0;
-    static uintptr_t tireLoadAddrLF = 0;
-    static uintptr_t tireLoadAddrFR = 0;
-    static uintptr_t tireLoadAddrLR = 0;
-    static uintptr_t tireLoadAddrRR = 0;
-    static uintptr_t tireMagLatAddrLF = 0;
-    static uintptr_t tireMagLatAddrFR = 0;
-    static uintptr_t tireMagLatAddrLR = 0;
-    static uintptr_t tireMagLatAddrRR = 0;
-    static uintptr_t carLongitudeAddr = 0;
-
-
-    SIZE_T bytesRead = 0;
-    int16_t loadLF = 0, loadFR = 0, loadLR = 0, loadRR = 0;
-    int16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
-    int16_t longiF = 0;
-
-    // Select between Dos and Rendition version. Rendition is default
-    const GameOffsets& offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
-
-    if (!hProcess) {
-        if (targetGameWindowName.empty()) {
-            LogMessage(L"[ERROR] targetGameWindowName is not set.");
-            return false;
-        }
-
-        // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
-        const std::vector<std::wstring> keywords = { L"dosbox", targetGameWindowName };
-        DWORD pid = FindProcessIdByWindow(keywords);
-        if (!pid) return false;
-
-        hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
-        if (!hProcess) return false;
-
-        uintptr_t sigAddr = ScanSignature(hProcess);
-        if (!sigAddr) {
-            CloseHandle(hProcess);
-            hProcess = NULL;
-            return false;
-        }
-
-        uintptr_t exeBase = sigAddr - offsets.signatureOffset;
-        carsDataAddr = exeBase + offsets.cars_data_offset;
-        tireLoadAddrLF = exeBase + offsets.tire_data_offsetfl;
-        tireLoadAddrFR = exeBase + offsets.tire_data_offsetfr;
-        tireLoadAddrLR = exeBase + offsets.tire_data_offsetrl;
-        tireLoadAddrRR = exeBase + offsets.tire_data_offsetrr;
-        tireMagLatAddrLF = exeBase + offsets.tire_maglat_offsetfl;
-        tireMagLatAddrFR = exeBase + offsets.tire_maglat_offsetfr;
-        tireMagLatAddrLR = exeBase + offsets.tire_maglat_offsetrl;
-        tireMagLatAddrRR = exeBase + offsets.tire_maglat_offsetrr;
-        carLongitudeAddr = exeBase + offsets.car_longitude_offset;
-
-        LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
-            L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
+TelemetryReader::TelemetryReader(const FFBConfig& config) {
+    if (config.targetGameWindowName.empty()) {
+        LogMessage(L"[ERROR] targetGameWindowName is not set.");
+        return;
     }
 
-    int32_t car0_data[12] = { 0 };
-    if (!ReadProcessMemory(hProcess, (LPCVOID)carsDataAddr, &car0_data, sizeof(car0_data), &bytesRead)) {
+    // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
+    const std::vector<std::wstring> keywords = { L"dosbox", config.targetGameWindowName };
+    DWORD pid = FindProcessIdByWindow(keywords);
+    if (!pid) return;
+
+    hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
+    if (!hProcess) return;
+
+    uintptr_t sigAddr = ScanSignature(hProcess);
+    if (!sigAddr) {
+        CloseHandle(hProcess);
+        hProcess = NULL;
+        return;
+    }
+
+    offs = GetGameOffsets(config.version);
+    offs.ApplySignature(sigAddr);
+
+    LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offs.signatureOffset) +
+        L" | cars_data @ 0x" + std::to_wstring(offs.cars_data_offset));
+    
+    mInitialized = true;
+}
+
+TelemetryReader::~TelemetryReader() {
+    if(hProcess)
+    {
+        CloseHandle(hProcess);
+        hProcess = NULL;
+    }
+}
+
+bool TelemetryReader::Initialized() const {
+    return mInitialized;
+}
+
+bool TelemetryReader::Valid() const {
+    return mInitialized && hProcess;
+}
+
+const RawTelemetry& TelemetryReader::Data() const {
+    return out;
+}
+
+bool TelemetryReader::ReadRaw(void* dest, uintptr_t offset, size_t size) {
+    size_t bytesRead = 0;
+    ReadProcessMemory(hProcess, (LPCVOID)offset, dest, size, &bytesRead);
+    return bytesRead == size;
+}
+
+// === Main ===
+
+void TelemetryReader::ConvertCarData(const struct CarData& carData) {
+    // Set variables to be used everywhere else
+    // Little bit of math to make the data sensible. Save big calculations for specific "Calculation" sets
+    out.dlong = static_cast<double>(carData.data[4]);
+    out.dlat = static_cast<double>(carData.data[5]);
+    out.rotation_deg = static_cast<double>(carData.data[7]) / 2147483648.0 /* static_cast<double>(INT_MAX) */ * 180.0;
+    out.speed_mph = static_cast<double>(carData.data[8]) / 75.0;
+    out.steering_deg = static_cast<double>(carData.data[10]) / 11600000.0;
+    out.steering_raw = static_cast<double>(carData.data[10]);
+}
+
+void TelemetryReader::ConvertTireData() {
+    // Tire data! Probably not loads, we dont know what it is
+
+    out.tireload_lf = static_cast<double>(rawData.loadLF);
+    out.tireload_rf = static_cast<double>(rawData.loadFR);
+    out.tireload_lr = static_cast<double>(rawData.loadLR);
+    out.tireload_rr = static_cast<double>(rawData.loadRR);
+    out.tiremaglat_lf = static_cast<double>(rawData.magLatLF);
+    out.tiremaglat_rf = static_cast<double>(rawData.magLatFR);
+    out.tiremaglat_lr = static_cast<double>(rawData.magLatLR);
+    out.tiremaglat_rr = static_cast<double>(rawData.magLatRR);
+}
+
+bool TelemetryReader::ReadCarData() {
+    CarData carData;
+
+    if (!ReadRaw(&carData,offs.cars_data_offset,sizeof(CarData))) {
         LogMessage(L"[ERROR] Failed to read car0 data. GetLastError(): " + std::to_wstring(GetLastError()));
         CloseHandle(hProcess);
         hProcess = NULL;
         return false;
     }
 
-    // Set variables to be used everywhere else
-    // Little bit of math to make the data sensible. Save big calculations for specific "Calculation" sets
-    out.dlong = static_cast<double>(car0_data[4]);
-    out.dlat = static_cast<double>(car0_data[5]);
-    out.rotation_deg = static_cast<double>(car0_data[7]) / 2147483648.0 * 180.0;
-    out.speed_mph = static_cast<double>(car0_data[8]) / 75.0;
-    out.steering_deg = static_cast<double>(car0_data[10]) / 11600000.0;
-    out.steering_raw = static_cast<double>(car0_data[10]);
+    ConvertCarData(carData);
+    return true;
+}
 
-    ReadProcessMemory(hProcess, (LPCVOID)carLongitudeAddr, &longiF, sizeof(longiF), &bytesRead);
-    if (bytesRead != sizeof(longiF)) {
-        LogMessage(L"[ERROR] Failed to read longitude force. Bytes read: " + std::to_wstring(bytesRead));
+bool TelemetryReader::ReadLongitudinalForce() {
+    if (!ReadValue(rawData.longiF, offs.car_longitude_offset)) {
+        LogMessage(L"[ERROR] Failed to read longitude force");
         out.long_force = 0.0;
+        return false;
     }
     else {
-        out.long_force = static_cast<double>(longiF);
+        out.long_force = static_cast<double>(rawData.longiF);
+        return true;
     }
+}
 
+bool TelemetryReader::ReadTireData() {
     bool tireOK =
-        ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLF, &loadLF, sizeof(loadLF), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrFR, &loadFR, sizeof(loadFR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLR, &loadLR, sizeof(loadLR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrRR, &loadRR, sizeof(loadRR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLF, &magLatLF, sizeof(magLatLF), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrFR, &magLatFR, sizeof(magLatFR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLR, &magLatLR, sizeof(magLatLR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrRR, &magLatRR, sizeof(magLatRR), &bytesRead);
+        ReadValue(rawData.loadLF, offs.tire_data_offsetfl) &&
+        ReadValue(rawData.loadFR, offs.tire_data_offsetfr) &&
+        ReadValue(rawData.loadLR, offs.tire_data_offsetrl) &&
+        ReadValue(rawData.loadRR, offs.tire_data_offsetrr) && 
+
+        ReadValue(rawData.magLatLF, offs.tire_maglat_offsetfl) &&
+        ReadValue(rawData.magLatLR, offs.tire_maglat_offsetfr) &&
+        ReadValue(rawData.magLatLR, offs.tire_maglat_offsetrl) &&
+        ReadValue(rawData.magLatRR, offs.tire_maglat_offsetrr) ;
 
     if (!tireOK) {
         LogMessage(L"[ERROR] Failed to read one or more tire loads.");
         return false;
     }
-
-    // Tire data! Probably not loads, we dont know what it is
-
-    out.tireload_lf = static_cast<double>(loadLF);
-    out.tireload_rf = static_cast<double>(loadFR);
-    out.tireload_lr = static_cast<double>(loadLR);
-    out.tireload_rr = static_cast<double>(loadRR);
-    out.tiremaglat_lf = static_cast<double>(magLatLF);
-    out.tiremaglat_rf = static_cast<double>(magLatFR);
-    out.tiremaglat_lr = static_cast<double>(magLatLR);
-    out.tiremaglat_rr = static_cast<double>(magLatRR);
-    out.valid = true;
-
+    ConvertTireData();
     return true;
+}
+
+bool TelemetryReader::Update() {
+    out.valid = 
+        ReadCarData() &&
+        ReadLongitudinalForce() &&
+        ReadTireData();
+    return out.valid;
 }

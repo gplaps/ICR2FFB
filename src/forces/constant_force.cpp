@@ -1,6 +1,7 @@
 #include "constant_force.h"
 #include "constants.h"
 #include "helpers.h"
+#include "main.h"
 #include <iostream>
 #include <algorithm>
 #include <deque>
@@ -22,11 +23,6 @@
  */
 
 
-// Get config data
-extern std::wstring targetInvertFFB;
-
-// To be used in reporting
-extern int g_currentFFBForce;
 
 void ApplyConstantForceEffect(const RawTelemetry& current,
     const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
@@ -37,7 +33,8 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
-    double /*weightForceScale*/
+    double /*weightForceScale*/,
+    bool invert
     ) {
 
     if (!effect) return;
@@ -262,7 +259,6 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     }
 
     // Handle invert option (no more complex direction logic needed!)
-    bool invert = (targetInvertFFB == L"true" || targetInvertFFB == L"True");
     if (invert) {
         force = -force;
     }

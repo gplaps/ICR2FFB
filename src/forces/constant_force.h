@@ -5,9 +5,6 @@
 #include <dinput.h>
 #include <string>
 
-// Include logging
-void LogMessage(const std::wstring& msg);
-
 void ApplyConstantForceEffect(
     const RawTelemetry& current,
     const CalculatedLateralLoad& load,
@@ -21,5 +18,6 @@ void ApplyConstantForceEffect(
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
-    double weightForceScale
+    double weightForceScale,
+    bool invert
     );

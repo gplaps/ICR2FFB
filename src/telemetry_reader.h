@@ -1,6 +1,8 @@
-// telemetry_reader.h
-#include <string>
 #pragma once
+#include "ffb_config.h"
+#include <cstdint>
+#include <string>
+#include <windows.h>
 
 struct RawTelemetry {
     double dlat;
@@ -21,8 +23,66 @@ struct RawTelemetry {
     bool valid;
 };
 
-// Include logging
-void LogMessage(const std::wstring& msg);
+// Things to look for in the Memory to make it tick
+struct GameOffsets {
+    uintptr_t signatureOffset;
+    uintptr_t cars_data_offset;
+    uintptr_t tire_data_offsetfl;
+    uintptr_t tire_data_offsetfr;
+    uintptr_t tire_data_offsetrl;
+    uintptr_t tire_data_offsetrr;
+    uintptr_t tire_maglat_offsetfl;
+    uintptr_t tire_maglat_offsetfr;
+    uintptr_t tire_maglat_offsetrl;
+    uintptr_t tire_maglat_offsetrr;
+    uintptr_t car_longitude_offset;
 
-// Returns true if data was read successfully
-bool ReadTelemetryData(RawTelemetry& out);
+    void ApplySignature(uintptr_t sigAddr);
+};
+
+struct TelemetryReader {
+public:
+    TelemetryReader(const FFBConfig& config);
+    ~TelemetryReader();
+
+    bool Update();
+    bool Initialized() const;
+    bool Valid() const;
+    const RawTelemetry& Data() const; 
+
+private:
+    struct CarData {
+        int32_t data[12] = { 0 };
+    } carData;
+
+    void ConvertCarData(const CarData& carData);
+    void ConvertTireData();
+    bool ReadLongitudinalForce();
+    bool ReadCarData();
+    bool ReadTireData();
+    template<typename T>
+    bool ReadValue(T& dest, uintptr_t offset) {
+        size_t bytesRead = 0;
+        return ReadProcessMemory(hProcess, (LPCVOID)offset, &dest, sizeof(dest), &bytesRead) == sizeof(dest);
+    }
+    bool ReadRaw(void* dest, uintptr_t offset, size_t size);
+
+    // TODO: consistency in order of front/rear and left/right
+    struct RawData {
+        int16_t loadLF = 0;
+        int16_t loadFR = 0;
+        int16_t loadLR = 0;
+        int16_t loadRR = 0;
+        int16_t magLatLF = 0;
+        int16_t magLatFR = 0;
+        int16_t magLatLR = 0;
+        int16_t magLatRR = 0;
+        int16_t longiF = 0;
+    };
+
+    HANDLE hProcess;
+    bool mInitialized;
+    GameOffsets offs;
+    RawTelemetry out;
+    RawData rawData;
+};

@@ -14,13 +14,13 @@ struct CalculatedVehicleDynamics {
     double speedMph;
     double steeringDeg;
 
-    // Individual tire forces for debugging
+    // Individual tire forces
     double force_lf;
     double force_rf;
     double force_lr;
     double force_rr;
 
-    // Additional calculated values
+    // Aggregate forces / Additional calculated values
     double frontLateralForce;
     double rearLateralForce;
     double totalLateralForce;

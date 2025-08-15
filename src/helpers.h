@@ -2,6 +2,11 @@
 #include <cstdlib>
 #include <string>
 
+// a function-like macro to check return code like FAILED/SUCCESS for HRESULT
+#define STATUS_CHECK(func)\
+    res = (func);\
+    if(res) return res
+
 template<typename T>
 int sign(T input) {
     return (input > (T)0) ? 1 : (input < 0 ? -1 : 0);
