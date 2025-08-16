@@ -175,9 +175,11 @@
     const double CURVE_STEEPNESS = 1.0e-4;
     const double MAX_THEORETICAL = 8500;
     const double SCALE_FACTOR = 1.20;
+     // that part that should be moved to the end of the processing chain in FFBOutput when sending to FFBDevice 
+    const double DIRECT_INPUT_GAIN_SCALE = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
 
     // Calculate magnitude using physics formula
-    const double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
+    const double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * DIRECT_INPUT_GAIN_SCALE;
 
     // Apply the natural sign from the tire load sum
     const double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
@@ -189,8 +191,8 @@
         const double deadzoneScale = deadzoneForcePercentage / 100.0;
 
         // Calculate deadzone threshold using magnitude
-        const double maxPossibleForce = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
-        const double deadzoneThreshold = maxPossibleForce * deadzonePercentage;
+        const double maxPossibleForce = DIRECT_INPUT_GAIN_SCALE; // ~10200
+        const double deadzoneThreshold = maxPossibleForce * deadzoneScale;
 
         // Apply deadzone: remove bottom X% and rescale remaining range
         if (std::abs(physicsForce) <= deadzoneThreshold)
