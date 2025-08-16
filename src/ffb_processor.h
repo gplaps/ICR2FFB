@@ -16,6 +16,7 @@ struct FFBProcessor {
 
 private:
     void UpdateDisplayData();
+    bool ProcessTelemetryInput();
 
     //Get some data from RawTelemetry -> not 100% sure what this does
     RawTelemetry current{};
@@ -30,7 +31,7 @@ private:
     RawTelemetry previousPos{};
     bool firstPos = true;
 
-    int lastConstantForceMagnitude = 0; // does not seem right to have a variable for this
+    ConstantForceEffectResult constantForceCalculation;
     CalculatedSlip slip{};
     CalculatedVehicleDynamics vehicleDynamics{};
     CalculatedLateralLoad load{};

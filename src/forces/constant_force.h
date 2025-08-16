@@ -2,19 +2,22 @@
 #include "calculations/slip_angle.h"
 #include "calculations/lateral_load.h"
 #include "calculations/vehicle_dynamics.h"
-#include "ffb_device.h"
 #include "project_dependencies.h"
 #include <string>
 
+struct ConstantForceEffectResult {
+    ConstantForceEffectResult()=default;
+    ConstantForceEffectResult(int magnitude, bool isPaused) : magnitude10000(magnitude), paused(isPaused) {}
+    int magnitude10000; // ideally redo the calculation in [0..1] scale (floating point) and let the directInput part do the scaling
+    bool paused;
+};
+
 struct ConstantForceEffect {
-    int Apply(
+    ConstantForceEffectResult Apply(
         const RawTelemetry& current,
         const CalculatedLateralLoad& load,
         const CalculatedSlip& slip,
         const CalculatedVehicleDynamics& vehicleDynamics,
-        double speed_mph,
-        double steering_deg,
-        FFBDevice& device,
         bool enableWeightForce,
         bool enableRateLimit,
         double masterForceScale,

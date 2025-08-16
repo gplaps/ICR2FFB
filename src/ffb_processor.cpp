@@ -44,30 +44,19 @@ void FFBProcessor::Update() {
         firstReading = false;
     }
     else {
-        // Do Force calculations based on raw data
-        // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
-        slip = {};
-        slip.Calculate(current, previous);
-
-        vehicleDynamics = {};
-        vehicleDynamics.Calculate(current, previous);
-
-        load = {};
-        if (load.Calculate(current, previous, slip)) {
+        if(ProcessTelemetryInput()) {
             // seperation of concern not applied fully yet ... what is processing, what is "send effect" ... accessing members of members of data is a clear indication that some better structuring needs to take place! don't "reaching through" modules
 
-            // Start constant force once telemetry is valid 
-            if (ffbOutput.enableConstantForce) {
-                ffbOutput.device.StartConstant();
-
+            if(ffbOutput.enableConstantForce) {
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
-                 lastConstantForceMagnitude = constantForceEffect.Apply(current, load, slip, 
-                    vehicleDynamics, current.speed_mph, current.steering_deg, ffbOutput.device, ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, 
+                constantForceCalculation = constantForceEffect.Apply(current, load, slip, 
+                    vehicleDynamics, ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, 
                     ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
                     ffbOutput.constantForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
                 previousPos = current;
 
+                ffbOutput.UpdateConstantForce(constantForceCalculation);
             }
 
             /*
@@ -111,6 +100,19 @@ void FFBProcessor::Update() {
     }
 }
 
+bool FFBProcessor::ProcessTelemetryInput() {
+    // Do Force calculations based on raw data
+    // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
+    slip = {};
+    slip.Calculate(current, previous);
+
+    vehicleDynamics = {};
+    vehicleDynamics.Calculate(current, previous);
+
+    load = {};
+    return load.Calculate(current, previous, slip);
+}
+
 void FFBProcessor::UpdateDisplayData() {
     // Update telemetry for display
     std::lock_guard<std::mutex> lock(displayMutex);
@@ -120,7 +122,7 @@ void FFBProcessor::UpdateDisplayData() {
     displayData.vehicleDynamics = vehicleDynamics;
 
     displayData.masterForceValue = ffbOutput.masterForceValue;
-    displayData.constantForceMagnitude = lastConstantForceMagnitude;
+    displayData.constantForce = constantForceCalculation;
 }
 
 const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const {

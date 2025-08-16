@@ -25,10 +25,9 @@
 
 
 
-int ConstantForceEffect::Apply(const RawTelemetry& current,
+ ConstantForceEffectResult ConstantForceEffect::Apply(const RawTelemetry& current,
     const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
     const CalculatedVehicleDynamics& vehicleDynamics,
-    double speed_mph, double /*steering_deg*/, FFBDevice& device,
     bool /*enableWeightForce*/,
     bool enableRateLimit,
     double masterForceScale,
@@ -39,6 +38,9 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
     ) {
 
     int signedMagnitude = 0;
+
+    const double speed_mph = current.speed_mph;
+    // const double steering_deg = current.steering_deg; 
 
     // Beta 0.5
     // This is a bunch of logic to pause/unpause or prevent forces when the game isn't running
@@ -58,10 +60,9 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
         lastDlong = current.dlong;  // Set baseline from first real data
         isFirstReading = false;
         if (!pauseForceSet) {
-            device.UpdateConstantForceEffect(signedMagnitude, true);
             pauseForceSet = true;
         }
-        return signedMagnitude;
+        return { signedMagnitude,true };
     }
 
     const bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
@@ -89,10 +90,9 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
     // If paused, send zero force and return
     if (isPaused) {
         if (!pauseForceSet) {
-            device.UpdateConstantForceEffect(signedMagnitude, true);
             pauseForceSet = true;
         }
-        return signedMagnitude;
+        return { signedMagnitude,true };
     }
 
     // Low speed filtering
@@ -100,10 +100,9 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
         static bool wasLowSpeed = false;
         if (!wasLowSpeed) {
             // Send zero force when entering low speed
-            device.UpdateConstantForceEffect(signedMagnitude, true);
             wasLowSpeed = true;
         }
-        return signedMagnitude;
+        return { signedMagnitude,true };
     }
 
     static bool wasLowSpeed = false;
@@ -514,7 +513,7 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
 
         if (!shouldUpdate) {
             lastProcessedMagnitude = magnitude;
-            return 0;  // Skip this frame
+            return { 0, false };  // Skip this frame
         }
 
         // Reset tracking when we send an update
@@ -540,7 +539,5 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
 
     // Use signed magnitude
     // Only set magnitude params, skip direction
-    device.UpdateConstantForceEffect(signedMagnitude, false);
-
-    return signedMagnitude;
+    return { signedMagnitude, false };
 }

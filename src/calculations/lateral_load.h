@@ -12,7 +12,7 @@ struct CalculatedLateralLoad {
     double steeringRaw;
     double dlong;
     double dlat; 
-};
 
-bool CalculatedLateralLoad::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/,
-    const CalculatedSlip& slip);
+    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/,
+        const CalculatedSlip& slip);
+};

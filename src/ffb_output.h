@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constant_force.h"
 #include "damper_effect.h"
 #include "project_dependencies.h"
 #include "ffb_device.h"
@@ -33,6 +34,7 @@ struct FFBOutput {
     void Update();
     void Poll();
 
+    void UpdateConstantForce(const ConstantForceEffectResult& result);
     void UpdateDamper(double speed_mph);
     void UpdateSpring();
 

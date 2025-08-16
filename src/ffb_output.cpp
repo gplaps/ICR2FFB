@@ -77,6 +77,15 @@ void FFBOutput::Poll() {
     device.Poll();
 }
 
+void FFBOutput::UpdateConstantForce(const ConstantForceEffectResult& result) {
+    // Start constant force once telemetry is valid 
+    if (enableConstantForce) {
+        device.StartConstant();
+
+        device.UpdateConstantForceEffect(static_cast<LONG>(result.magnitude10000), result.paused);
+    }
+}
+
 void FFBOutput::UpdateDamper(double speed_mph) {
     if(enableDamperEffect)
     {

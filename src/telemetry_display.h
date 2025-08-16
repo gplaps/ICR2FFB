@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constant_force.h"
 #include "slip_angle.h"
 #include "telemetry_reader.h"
 #include "vehicle_dynamics.h"
@@ -12,7 +13,7 @@ struct TelemetryDisplay {
         CalculatedSlip slip; // Legacy calculated data
         CalculatedVehicleDynamics vehicleDynamics;
         double masterForceValue; // or create another struct containing this if more data is of interest for display
-        int constantForceMagnitude;
+        ConstantForceEffectResult constantForce;
     };
 
     TelemetryDisplayData displayData;

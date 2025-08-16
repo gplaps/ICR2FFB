@@ -61,14 +61,14 @@ bool CalculatedSlip::Calculate(const RawTelemetry& current, RawTelemetry& /*prev
     const double slipAngleDeg = std::clamp(slipDelta * 180.0, -90.0, 90.0);
 
     // Compute output force scaling
-    const double absSlipDeg = std::abs(slipAngleDeg);
+    const double absSlipDeg_ = std::abs(slipAngleDeg);
     const double slipScale = saturate((current.speed_mph - SPEED_THRESHOLD) / SLIP_SPEED_RAMP_RANGE);
-    const double force = saturate(absSlipDeg * 400.0 * slipScale);
+    const double force = saturate(absSlipDeg_ * 400.0 * slipScale);
     (void)force; // unused currently
 
     // Output
     slipAngle = slipAngleDeg;
-    absSlipDeg = std::abs(slipAngleDeg);
+    absSlipDeg = absSlipDeg_;
     forceMagnitude = saturate(absSlipDeg / 90.0);
     directionVal = -sign(slipAngleDeg);
 
