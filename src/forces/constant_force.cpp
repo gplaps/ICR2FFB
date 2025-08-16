@@ -59,9 +59,8 @@
     if (isFirstReading) {
         lastDlong = current.dlong;  // Set baseline from first real data
         isFirstReading = false;
-        if (!pauseForceSet) {
+        if (!pauseForceSet)
             pauseForceSet = true;
-        }
         return { signedMagnitude,true };
     }
 
@@ -89,25 +88,23 @@
 
     // If paused, send zero force and return
     if (isPaused) {
-        if (!pauseForceSet) {
-            pauseForceSet = true;
-        }
+        pauseForceSet = true;
         return { signedMagnitude,true };
     }
 
     // Low speed filtering
     if (speed_mph < 5.0) {
-        static bool wasLowSpeed = false;
-        if (!wasLowSpeed) {
-            // Send zero force when entering low speed
-            wasLowSpeed = true;
-        }
+        // static bool wasLowSpeed = false;
+        // if (!wasLowSpeed) {
+        //     // Send zero force when entering low speed
+        //     wasLowSpeed = true;
+        // }
         return { signedMagnitude,true };
     }
 
-    static bool wasLowSpeed = false;
-    if (wasLowSpeed)
-        wasLowSpeed = false;  // Reset when speed picks up
+    // static bool wasLowSpeed = false;
+    // if (wasLowSpeed)
+    //     wasLowSpeed = false;  // Reset when speed picks up
 
 
 // === CALC 1 - Lateral G ===
