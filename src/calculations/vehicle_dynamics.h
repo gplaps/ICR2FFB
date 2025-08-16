@@ -25,6 +25,6 @@ struct CalculatedVehicleDynamics {
 
     double frontLeftForce_N;
     double frontRightForce_N;
-};
 
-bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedVehicleDynamics& out);
+    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/);
+};

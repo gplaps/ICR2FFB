@@ -47,14 +47,13 @@ void FFBProcessor::Update() {
         // Do Force calculations based on raw data
         // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
         slip = {};
-        CalculateSlipAngle(current, previous, slip);
+        slip.Calculate(current, previous);
 
         vehicleDynamics = {};
-        CalculateVehicleDynamics(current, previous, vehicleDynamics);
+        vehicleDynamics.Calculate(current, previous);
 
         load = {};
-        if (CalculateLateralLoad(current, previous, slip, load)) {
-            
+        if (load.Calculate(current, previous, slip)) {
             // seperation of concern not applied fully yet ... what is processing, what is "send effect" ... accessing members of members of data is a clear indication that some better structuring needs to take place! don't "reaching through" modules
 
             // Start constant force once telemetry is valid 

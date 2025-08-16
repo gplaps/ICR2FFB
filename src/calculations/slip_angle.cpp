@@ -27,22 +27,22 @@ static DecodedSlip decodeSlip(uint16_t raw) {
     return { signedNorm, normalized };
 }
 
-bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedSlip& out) {
+bool CalculatedSlip::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/) {
     // Decode tire slip values
     DecodedSlip lf = decodeSlip(static_cast<uint16_t>(current.tireload_lf));
     DecodedSlip rf = decodeSlip(static_cast<uint16_t>(current.tireload_rf));
     DecodedSlip lr = decodeSlip(static_cast<uint16_t>(current.tireload_lr));
     DecodedSlip rr = decodeSlip(static_cast<uint16_t>(current.tireload_rr));
 
-    out.slipNorm_lf = lf.signedNorm;
-    out.slipNorm_rf = rf.signedNorm;
-    out.slipNorm_lr = lr.signedNorm;
-    out.slipNorm_rr = rr.signedNorm;
+    slipNorm_lf = lf.signedNorm;
+    slipNorm_rf = rf.signedNorm;
+    slipNorm_lr = lr.signedNorm;
+    slipNorm_rr = rr.signedNorm;
 
-    out.slipMag_lf = lf.magnitude;
-    out.slipMag_rf = rf.magnitude;
-    out.slipMag_lr = lr.magnitude;
-    out.slipMag_rr = rr.magnitude;
+    slipMag_lf = lf.magnitude;
+    slipMag_rf = rf.magnitude;
+    slipMag_lr = lr.magnitude;
+    slipMag_rr = rr.magnitude;
 
     // Compute average slip at front and rear
     const double frontSlip = (lf.signedNorm + rf.signedNorm) * 0.5;
@@ -67,10 +67,10 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& /*previous*/,
     (void)force; // unused currently
 
     // Output
-    out.slipAngle = slipAngleDeg;
-    out.absSlipDeg = std::abs(slipAngleDeg);
-    out.forceMagnitude = saturate(out.absSlipDeg / 90.0);
-    out.directionVal = -sign(slipAngleDeg);
+    slipAngle = slipAngleDeg;
+    absSlipDeg = std::abs(slipAngleDeg);
+    forceMagnitude = saturate(absSlipDeg / 90.0);
+    directionVal = -sign(slipAngleDeg);
 
     return true;
 }

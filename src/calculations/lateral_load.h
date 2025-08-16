@@ -14,5 +14,5 @@ struct CalculatedLateralLoad {
     double dlat; 
 };
 
-bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& /*previous*/,
-    const CalculatedSlip& slip, CalculatedLateralLoad& out);
+bool CalculatedLateralLoad::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/,
+    const CalculatedSlip& slip);

@@ -57,7 +57,7 @@ static int getTurnDirection(double lf, double rf, double lr, double rr) {
     }
 }
 
-bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedVehicleDynamics& out) {
+bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/) {
     // Convert units
     const double speed_ms = current.speed_mph * MPH_TO_MS;
 
@@ -68,20 +68,20 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previ
     const double wheel_angle_rad = wheel_angle_deg * M_PI / 180.0;
 
     // Force Assignments
-    out.force_lf = current.tiremaglat_lf;
-    out.force_rf = current.tiremaglat_rf;
-    out.force_lr = current.tiremaglat_lr;
-    out.force_rr = current.tiremaglat_rr;
+    force_lf = current.tiremaglat_lf;
+    force_rf = current.tiremaglat_rf;
+    force_lr = current.tiremaglat_lr;
+    force_rr = current.tiremaglat_rr;
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
-    const double force_lf_N = convertTireForceToNewtons(out.force_lf);
-    const double force_rf_N = convertTireForceToNewtons(out.force_rf);
-    const double force_lr_N = convertTireForceToNewtons(out.force_lr);
-    const double force_rr_N = convertTireForceToNewtons(out.force_rr);
+    const double force_lf_N = convertTireForceToNewtons(force_lf);
+    const double force_rf_N = convertTireForceToNewtons(force_rf);
+    const double force_lr_N = convertTireForceToNewtons(force_lr);
+    const double force_rr_N = convertTireForceToNewtons(force_rr);
 
-    out.frontLeftForce_N = convertTireForceToNewtons(out.force_lf);
-    out.frontRightForce_N = convertTireForceToNewtons(out.force_rf);
+    frontLeftForce_N = convertTireForceToNewtons(force_lf);
+    frontRightForce_N = convertTireForceToNewtons(force_rf);
 
     // CALC 1
     //===== LATERAL FORCE CALC ======
@@ -90,28 +90,28 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previ
     const double total_lateral_force_N = force_lf_N + force_rf_N + force_lr_N + force_rr_N;
 
     // Determine turn direction and apply sign
-    const int turn_direction = getTurnDirection(out.force_lf, out.force_rf, out.force_lr, out.force_rr);
+    const int turn_direction = getTurnDirection(force_lf, force_rf, force_lr, force_rr);
 
     // Calculate lateral acceleration: F = ma, so a = F/m
     const double lateral_acceleration = (total_lateral_force_N * turn_direction) / VehicleConstants::VEHICLE_MASS;
 
     // Calculate total lateral force (maybe unneeded)
-    out.totalLateralForce = out.force_lf + out.force_rf + out.force_lr + out.force_rr;
+    totalLateralForce = force_lf + force_rf + force_lr + force_rr;
     
     // Convert to G-force
-    out.lateralG = lateral_acceleration / VehicleConstants::GRAVITY;
+    lateralG = lateral_acceleration / VehicleConstants::GRAVITY;
 
     // Calculate direction value
-    if (std::abs(out.lateralG) < 0.05)
-        out.directionVal = 0; // Straight
+    if (std::abs(lateralG) < 0.05)
+        directionVal = 0; // Straight
     else
-        out.directionVal = sign(out.totalLateralForce);
+        directionVal = sign(totalLateralForce);
 
     // CALC 2
     //===== SLIP ANGLE ======
 
     // This is to cut out random noise
-    if (speed_ms > STANDSTILL_SPEED && std::abs(out.lateralG) > MIN_LAT_G) { // Only calculate when moving and turning
+    if (speed_ms > STANDSTILL_SPEED && std::abs(lateralG) > MIN_LAT_G) { // Only calculate when moving and turning
 
         // Calculate front and rear lateral forces
         const double front_lateral_force = force_lf_N + force_rf_N;
@@ -124,7 +124,7 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previ
             expected_lateral_accel = (speed_ms * speed_ms * std::tan(std::abs(wheel_angle_rad))) / VehicleConstants::WHEELBASE;
         }
 
-        const double actual_lateral_accel = std::abs(out.lateralG) * VehicleConstants::GRAVITY;
+        const double actual_lateral_accel = std::abs(lateralG) * VehicleConstants::GRAVITY;
 
         // Response ratio
         const double response_ratio = expected_lateral_accel > 0.1 ? actual_lateral_accel / expected_lateral_accel : 1.0;
@@ -174,30 +174,30 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previ
         }
         // For left turns (turn_direction < 0), keep signs as calculated
 
-        out.slip = slip_degrees;
+        slip = slip_degrees;
 
     }
     else {
-        out.slip = 0.0; // No slip when not moving or turning
+        slip = 0.0; // No slip when not moving or turning
     }
 
     // Apply bounds to outputs
-    out.lateralG = std::clamp(out.lateralG, -MAX_USEFUL_G, MAX_USEFUL_G); // Reasonable G range for IndyCar
-    //out.yaw = std::clamp(out.yaw, -180.0, 180.0); // Limit yaw acceleration
-    out.slip = std::clamp(out.slip, -45.0, 45.0); // Limit slip angle
+    lateralG = std::clamp(lateralG, -MAX_USEFUL_G, MAX_USEFUL_G); // Reasonable G range for IndyCar
+    //yaw = std::clamp(yaw, -180.0, 180.0); // Limit yaw acceleration
+    slip = std::clamp(slip, -45.0, 45.0); // Limit slip angle
 
     // Calculate force magnitude for FFB
     // Scale based on absolute lateral G, with max at 4G (typical for IndyCar cornering)
-    const double gForceScale = saturate(std::abs(out.lateralG) / TYPICAL_G);
+    const double gForceScale = saturate(std::abs(lateralG) / TYPICAL_G);
 
     // Apply speed scaling (reduce forces at low speeds like your other calculations)
     const double speedScale = saturate((current.speed_mph - SPEED_THRESHOLD) / SPEED_SCALE_RAMP_RANGE);
 
-    out.forceMagnitude = gForceScale * speedScale;
+    forceMagnitude = gForceScale * speedScale;
 
     // Store basic telemetry for output
-    out.speedMph = current.speed_mph;
-    out.steeringDeg = current.steering_deg;
+    speedMph = current.speed_mph;
+    steeringDeg = current.steering_deg;
 
     return true;
 }

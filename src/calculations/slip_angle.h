@@ -10,6 +10,6 @@ struct CalculatedSlip {
     bool suppressFrame;
     double slipNorm_lf, slipNorm_rf, slipNorm_lr, slipNorm_rr;
     double slipMag_lf, slipMag_rf, slipMag_lr, slipMag_rr;
-};
 
-bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedSlip& out);
+    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/);
+};
