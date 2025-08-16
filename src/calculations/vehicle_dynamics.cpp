@@ -57,13 +57,7 @@ static int getTurnDirection(double lf, double rf, double lr, double rr) {
     }
 }
 
-bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedVehicleDynamics& out) {
-    if (firstReading) {
-        previous = current;
-        firstReading = false;
-        return false;
-    }
-
+bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedVehicleDynamics& out) {
     // Convert units
     double speed_ms = current.speed_mph * 0.44704; // mph to m/s
 
@@ -210,6 +204,5 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     out.speedMph = current.speed_mph;
     out.steeringDeg = current.steering_deg;
 
-    previous = current;
     return true;
 }

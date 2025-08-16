@@ -27,13 +27,7 @@ static DecodedSlip decodeSlip(uint16_t raw) {
     return { signedNorm, normalized };
 }
 
-bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedSlip& out) {
-    if (firstReading) {
-        previous = current;
-        firstReading = false;
-        return false;
-    }
-
+bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedSlip& out) {
     // Decode tire slip values
     DecodedSlip lf = decodeSlip(static_cast<uint16_t>(current.tireload_lf));
     DecodedSlip rf = decodeSlip(static_cast<uint16_t>(current.tireload_rf));
@@ -78,6 +72,5 @@ bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, boo
     out.forceMagnitude = std::clamp(out.absSlipDeg / 90.0, 0.0, 1.0);
     out.directionVal = (slipAngleDeg > 0) ? -1 : (slipAngleDeg < 0 ? 1 : 0);
 
-    previous = current;
     return true;
 }

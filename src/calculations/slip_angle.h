@@ -12,4 +12,4 @@ struct CalculatedSlip {
     double slipMag_lf, slipMag_rf, slipMag_lr, slipMag_rr;
 };
 
-bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading, CalculatedSlip& out);
+bool CalculateSlipAngle(const RawTelemetry& current, RawTelemetry& /*previous*/, CalculatedSlip& out);

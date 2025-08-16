@@ -15,14 +15,9 @@ struct FFBProcessor {
 private:
     //Get some data from RawTelemetry -> not 100% sure what this does
     RawTelemetry current{};
-    RawTelemetry previousLat{};
-    RawTelemetry previousSlip{};
-    RawTelemetry previousVD{};
-    bool firstReadingLat = true;
-    bool firstReadingSlip = true;
-    bool firstReadingVD = true;
+    RawTelemetry previous{};
+    bool firstReading = true;
 
-    double previousDlong = 0.0;
     int noMovementFrames = 0;
     const int movementThreshold = 3;  // number of frames to consider "stopped"
     bool effectPaused = false;

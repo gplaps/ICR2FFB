@@ -11,14 +11,8 @@
 // Idea is the force should be a direct opposite to the lateral G so the driver "Feels" the pull of the forces
 // You should have to push your wheel against the force
 
-bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& previous, bool& firstReading,
+bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& /*previous*/,
     const CalculatedSlip& slip, CalculatedLateralLoad& out) {
-    if (firstReading) {
-        previous = current;
-        firstReading = false;
-        return false;
-    }
-
     // Estimates based on "Slip"
     // Take the forces the tires do and figure out the difference between front and back
     double avgSlip = (slip.slipNorm_lf + slip.slipNorm_rf) * 0.5;
@@ -39,6 +33,5 @@ bool CalculateLateralLoad(const RawTelemetry& current, RawTelemetry& previous, b
     // You want the wheel to push against you
     out.directionVal = -sign(lateralG);
 
-    previous = current;
     return true;
 }
