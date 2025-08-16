@@ -31,7 +31,7 @@
     bool /*enableWeightForce*/,
     bool enableRateLimit,
     double masterForceScale,
-    double deadzoneForceScale,
+    double deadzoneForcePercentage,
     double constantForceScale,
     double /*weightForceScale*/,
     bool invert
@@ -184,9 +184,9 @@
 
     // Apply proportional deadzone
     double force = physicsForce;
-    if (deadzoneForceScale > 0.0) {
-        // Convert deadzoneForceScale (0-100) to percentage (0.0-1.0)
-        const double deadzonePercentage = deadzoneForceScale / 100.0;
+    if (deadzoneForcePercentage > 0.0) {
+        // Convert deadzoneForcePercentage (0-100) to scale (0.0-1.0)
+        const double deadzoneScale = deadzoneForcePercentage / 100.0;
 
         // Calculate deadzone threshold using magnitude
         const double maxPossibleForce = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
