@@ -8,7 +8,7 @@ FFBDevice::FFBDevice(const FFBConfig& configIn) : config(configIn) {}
 
 // === Force Effect Creators ===
 void FFBDevice::CreateConstantForceEffect() {
-    if (!matchedDevice) return;
+    if (!diDevice) return;
 
     DICONSTANTFORCE cf = { 0 };
 
@@ -33,9 +33,9 @@ void FFBDevice::CreateConstantForceEffect() {
     diprg.diph.dwObj = DIJOFS_X;
     diprg.lMin = -static_cast<LONG>(DEFAULT_DINPUT_GAIN);
     diprg.lMax = DEFAULT_DINPUT_GAIN;
-    matchedDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
+    diDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
 
-    HRESULT hr = matchedDevice->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
+    HRESULT hr = diDevice->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
     if (FAILED(hr))
         LogMessage(L"[ERROR] Failed to create constant force effect. HRESULT: 0x" + std::to_wstring(hr));
     else
@@ -43,7 +43,7 @@ void FFBDevice::CreateConstantForceEffect() {
 }
 
 void FFBDevice::CreateDamperEffect() {
-    if (!matchedDevice) return;
+    if (!diDevice) return;
 
     DICONDITION condition = {};
     condition.lOffset = 0;
@@ -67,7 +67,7 @@ void FFBDevice::CreateDamperEffect() {
     eff.cbTypeSpecificParams = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams = &condition;
 
-    HRESULT hr = matchedDevice->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
+    HRESULT hr = diDevice->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
     if (FAILED(hr) || !damperEffect)
         LogMessage(L"[ERROR] Failed to create damper effect. HRESULT: 0x" + std::to_wstring(hr));
     else
@@ -75,7 +75,7 @@ void FFBDevice::CreateDamperEffect() {
 }
 
 void FFBDevice::CreateSpringEffect() {
-    if (!matchedDevice) return;
+    if (!diDevice) return;
 
     DICONDITION condition = {};
     condition.lOffset = 0;
@@ -99,7 +99,7 @@ void FFBDevice::CreateSpringEffect() {
     eff.cbTypeSpecificParams = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams = &condition;
 
-    HRESULT hr = matchedDevice->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
+    HRESULT hr = diDevice->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
     if (FAILED(hr) || !springEffect)
         LogMessage(L"[ERROR] Failed to create spring effect. HRESULT: 0x" + std::to_wstring(hr));
     else
@@ -248,7 +248,7 @@ int FFBDevice::InitDevice() {
 int FFBDevice::DirectInputSetup() {
     // ONLY configure device if it was found successfully
     HRESULT hr;
-    hr = matchedDevice->SetDataFormat(&c_dfDIJoystick2);
+    hr = diDevice->SetDataFormat(&c_dfDIJoystick2);
     if (FAILED(hr)) {
         LogMessage(L"[ERROR] Failed to set data format: 0x" + std::to_wstring(hr));
         
@@ -258,7 +258,7 @@ int FFBDevice::DirectInputSetup() {
         return 1;
     }
 
-    hr = matchedDevice->SetCooperativeLevel(GetConsoleWindow(), DISCL_BACKGROUND | DISCL_EXCLUSIVE);
+    hr = diDevice->SetCooperativeLevel(GetConsoleWindow(), DISCL_BACKGROUND | DISCL_EXCLUSIVE);
     if (FAILED(hr)) {
         LogMessage(L"[ERROR] Failed to set cooperative level: 0x" + std::to_wstring(hr));
         LogMessage(L"[ERROR] Another application may be using the device exclusively");
@@ -270,7 +270,7 @@ int FFBDevice::DirectInputSetup() {
         return 1;
     }
 
-    hr = matchedDevice->Acquire();
+    hr = diDevice->Acquire();
     if (FAILED(hr))
         LogMessage(L"[WARNING] Initial acquire failed: 0x" + std::to_wstring(hr) + L" (this is often normal)");
     else
@@ -289,9 +289,9 @@ void FFBDevice::Update() {
 
 void FFBDevice::Poll() {
     // Poll input state
-    if (FAILED(matchedDevice->Poll())) {
-        matchedDevice->Acquire();
-        matchedDevice->Poll();
+    if (FAILED(diDevice->Poll())) {
+        diDevice->Acquire();
+        diDevice->Poll();
     }
-    matchedDevice->GetDeviceState(sizeof(DIJOYSTATE2), &js);
+    diDevice->GetDeviceState(sizeof(DIJOYSTATE2), &js);
 }

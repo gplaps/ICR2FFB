@@ -6,7 +6,7 @@
 struct FFBDevice {
     FFBDevice(const FFBConfig& config);
     FFBDevice()=delete;
-    IDirectInputDevice8* matchedDevice = NULL;
+    IDirectInputDevice8* diDevice = NULL;
 
     // === Force Effect Creators ===
     void CreateConstantForceEffect();

@@ -27,7 +27,7 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
     EnumDeviceHelper* edh = (EnumDeviceHelper*)content;
     if (deviceName == edh->targetDeviceName) {
         LogMessage(L"[INFO] Found matching device: " + deviceName);
-        HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->matchedDevice, NULL);
+        HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);
         if (FAILED(hr)) {
             LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
             return DIENUM_CONTINUE;
@@ -86,7 +86,7 @@ bool DirectInput::InitializeDevice(FFBDevice& device) {
         return false;
     }
 
-    if (device.matchedDevice == NULL) {
+    if (device.diDevice == NULL) {
         LogMessage(L"[ERROR] Device not found: " + device.config.targetDeviceName);
         return false;
     }
