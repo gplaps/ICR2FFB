@@ -11,7 +11,7 @@
 static const double maxDamper = 5000.0; // or move to constants.h
 double LowSpeedDamperStrength(double speedMph) {
     double maxSpeed = 40.0;
-    double minDamper = 0.0; (void)minDamper; // unused currently
+    // double minDamper = 0.0;
 
     double t = std::clamp(speedMph / maxSpeed, 0.0, 1.0);
     return t;
