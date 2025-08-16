@@ -8,7 +8,7 @@
 #include <algorithm>
 
 FFBOutput::FFBOutput(const FFBConfig& config) : device(config) { 
-    if(!Init(config))
+    if(Init(config))
         return;
     mInitialized = true;
 }

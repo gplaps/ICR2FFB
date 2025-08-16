@@ -208,8 +208,7 @@ const RawTelemetry& TelemetryReader::Data() const {
 
 bool TelemetryReader::ReadRaw(void* dest, uintptr_t offset, SIZE_T size) {
     SIZE_T bytesRead = 0;
-    ReadProcessMemory(hProcess, (LPCVOID)offset, dest, size, &bytesRead);
-    return bytesRead == size;
+    return ReadProcessMemory(hProcess, (LPCVOID)offset, dest, size, &bytesRead) && bytesRead == size;
 }
 
 // === Main ===

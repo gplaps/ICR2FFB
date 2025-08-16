@@ -64,7 +64,7 @@ private:
     template<typename T>
     bool ReadValue(T& dest, uintptr_t offset) {
         SIZE_T bytesRead = 0;
-        return ReadProcessMemory(hProcess, (LPCVOID)offset, &dest, sizeof(dest), &bytesRead) == sizeof(dest);
+        return ReadProcessMemory(hProcess, (LPCVOID)offset, &dest, sizeof(dest), &bytesRead) && bytesRead == sizeof(dest);
     }
     bool ReadRaw(void* dest, uintptr_t offset, SIZE_T size);
 
