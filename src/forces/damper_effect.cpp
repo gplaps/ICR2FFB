@@ -17,10 +17,8 @@ double LowSpeedDamperStrength(double speedMph) {
     return t;
 }
 
-void UpdateDamperEffect(double damperScale, IDirectInputEffect* effect, double masterForceScale, double damperForceScale) {
+static void UpdateDamperEffectImpl(double damperStrength, IDirectInputEffect* effect) {
     if (!effect) return;
-    
-    LONG damperStrength = static_cast<LONG>(((1.0 - damperScale) * maxDamper * masterForceScale) * damperForceScale);
 
     DICONDITION condition = {};
     condition.lOffset = 0;
@@ -45,5 +43,10 @@ void UpdateDamperEffect(double damperScale, IDirectInputEffect* effect, double m
     if (FAILED(hr)) {
         std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << std::endl;
     }
-    if (!effect) return;
+}
+
+void UpdateDamperEffect(double damperScale, IDirectInputEffect* effect, double masterForceScale, double damperForceScale) {
+    LONG damperStrength = static_cast<LONG>(((1.0 - damperScale) * maxDamper * masterForceScale) * damperForceScale);
+
+    UpdateDamperEffectImpl(damperStrength, effect);
 }

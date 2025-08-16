@@ -24,6 +24,24 @@
 
 
 
+static DIEFFECT CreateConstantForceEffect(LONG magnitude) {
+    DICONSTANTFORCE cf = { magnitude };
+    DIEFFECT eff = {};
+    eff.dwSize = sizeof(DIEFFECT);
+    eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
+    eff.dwDuration = INFINITE;
+    eff.dwGain = DEFAULT_DINPUT_GAIN;
+    eff.dwTriggerButton = DIEB_NOTRIGGER;
+    eff.cAxes = 1;
+    DWORD axes[1] = { DIJOFS_X };
+    LONG dir[1] = { 0 }; // ← Always zero direction now, this broke Moza wheels
+    eff.rgdwAxes = axes;
+    eff.rglDirection = dir;
+    eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
+    eff.lpvTypeSpecificParams = &cf;
+    return eff;
+}
+
 void ApplyConstantForceEffect(const RawTelemetry& current,
     const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
     const CalculatedVehicleDynamics& vehicleDynamics,
@@ -57,20 +75,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         lastDlong = current.dlong;  // Set baseline from first real data
         isFirstReading = false;
         if (!pauseForceSet) {
-            DICONSTANTFORCE cf = { 0 };
-            DIEFFECT eff = {};
-            eff.dwSize = sizeof(DIEFFECT);
-            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-            eff.dwDuration = INFINITE;
-            eff.dwGain = DEFAULT_DINPUT_GAIN;
-            eff.dwTriggerButton = DIEB_NOTRIGGER;
-            eff.cAxes = 1;
-            DWORD axes[1] = { DIJOFS_X };
-            LONG dir[1] = { 0 };
-            eff.rgdwAxes = axes;
-            eff.rglDirection = dir;
-            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-            eff.lpvTypeSpecificParams = &cf;
+            DIEFFECT eff = CreateConstantForceEffect(0);
             effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
             pauseForceSet = true;
         }
@@ -102,20 +107,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     // If paused, send zero force and return
     if (isPaused) {
         if (!pauseForceSet) {
-            DICONSTANTFORCE cf = { 0 };
-            DIEFFECT eff = {};
-            eff.dwSize = sizeof(DIEFFECT);
-            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-            eff.dwDuration = INFINITE;
-            eff.dwGain = DEFAULT_DINPUT_GAIN;
-            eff.dwTriggerButton = DIEB_NOTRIGGER;
-            eff.cAxes = 1;
-            DWORD axes[1] = { DIJOFS_X };
-            LONG dir[1] = { 0 };
-            eff.rgdwAxes = axes;
-            eff.rglDirection = dir;
-            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-            eff.lpvTypeSpecificParams = &cf;
+            DIEFFECT eff = CreateConstantForceEffect(0);
             effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
             pauseForceSet = true;
         }
@@ -127,20 +119,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         static bool wasLowSpeed = false;
         if (!wasLowSpeed) {
             // Send zero force when entering low speed
-            DICONSTANTFORCE cf = { 0 };
-            DIEFFECT eff = {};
-            eff.dwSize = sizeof(DIEFFECT);
-            eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-            eff.dwDuration = INFINITE;
-            eff.dwGain = DEFAULT_DINPUT_GAIN;
-            eff.dwTriggerButton = DIEB_NOTRIGGER;
-            eff.cAxes = 1;
-            DWORD axes[1] = { DIJOFS_X };
-            LONG dir[1] = { 0 };
-            eff.rgdwAxes = axes;
-            eff.rglDirection = dir;
-            eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-            eff.lpvTypeSpecificParams = &cf;
+            DIEFFECT eff = CreateConstantForceEffect(0);
             effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
             wasLowSpeed = true;
         }
@@ -588,22 +567,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     }
     debugCounter++;
 
-
-    DICONSTANTFORCE cf = { signedMagnitude };  // Use signed magnitude
-    DIEFFECT eff = {};
-    eff.dwSize = sizeof(DIEFFECT);
-    eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration = INFINITE;
-    eff.dwGain = DEFAULT_DINPUT_GAIN;
-    eff.dwTriggerButton = DIEB_NOTRIGGER;
-    eff.cAxes = 1;
-    DWORD axes[1] = { DIJOFS_X };
-    LONG dir[1] = { 0 };  // ← Always zero direction now, this broke Moza wheels
-    eff.rgdwAxes = axes;
-    eff.rglDirection = dir;
-    eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-    eff.lpvTypeSpecificParams = &cf;
-
+    DIEFFECT eff = CreateConstantForceEffect(signedMagnitude); // Use signed magnitude
     // Only set magnitude params, skip direction
     HRESULT hr = effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);  // ← Removed | DIEP_DIRECTION
 
