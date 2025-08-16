@@ -185,7 +185,7 @@ void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection) {
     eff.lpvTypeSpecificParams = &cf;
 
     // Only set magnitude params, skip direction
-    const DWORD parameters = withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS;
+    const DWORD parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
     HRESULT hr = constantForceEffect->SetParameters(&eff, parameters);
     if (FAILED(hr))
         std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;

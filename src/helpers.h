@@ -1,4 +1,5 @@
 #pragma once
+#include "project_dependencies.h"
 #include <algorithm>
 #include <cstdlib>
 #include <string>

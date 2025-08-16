@@ -93,5 +93,3 @@ void FFBOutput::UpdateSpring() {
         device.UpdateSpringEffect(static_cast<LONG>(springStrength));
     }
 }
-
-}
