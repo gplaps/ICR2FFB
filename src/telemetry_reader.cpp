@@ -269,7 +269,7 @@ bool TelemetryReader::ReadTireData() {
         ReadValue(rawData.loadRR, offs.tire_data_offsetrr) && 
 
         ReadValue(rawData.magLatLF, offs.tire_maglat_offsetfl) &&
-        ReadValue(rawData.magLatLR, offs.tire_maglat_offsetfr) &&
+        ReadValue(rawData.magLatRF, offs.tire_maglat_offsetfr) &&
         ReadValue(rawData.magLatLR, offs.tire_maglat_offsetrl) &&
         ReadValue(rawData.magLatRR, offs.tire_maglat_offsetrr) ;
 
