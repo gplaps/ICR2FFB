@@ -86,7 +86,7 @@ static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
         TCHAR title[256];
         GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
 #if !defined(UNICODE)
-        std::wstring titleStr = ToLower(ansiToWide(title));
+        std::wstring titleStr = ToLower(AnsiToWide(title));
 #else
         std::wstring titleStr = ToLower(title);
 #endif

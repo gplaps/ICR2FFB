@@ -9,7 +9,7 @@ static std::wstring targetDeviceNameLocal; // only needed because of function si
 
 static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
     #if !defined(UNICODE)
-        std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
+        std::wstring deviceName = AnsiToWide(pdidInstance->tszProductName);
     #else
         std::wstring deviceName = pdidInstance->tszProductName;
     #endif
@@ -19,7 +19,7 @@ static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInst
     
 static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* content) {
     #if !defined(UNICODE)
-            std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
+            std::wstring deviceName = AnsiToWide(pdidInstance->tszProductName);
     #else
             std::wstring deviceName = pdidInstance->tszProductName;
     #endif
@@ -42,7 +42,7 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
 // Device lists for better error messages
 static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
 #if !defined(UNICODE)
-    std::wstring deviceName = ansiToWide(pdidInstance->tszProductName);
+    std::wstring deviceName = AnsiToWide(pdidInstance->tszProductName);
 #else
     std::wstring deviceName = pdidInstance->tszProductName;
 #endif

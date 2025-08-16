@@ -32,7 +32,7 @@ inline std::string ToLower(const std::string& str) {
     return result;
 }
 
-inline std::wstring ansiToWide(const char* str) {
+inline std::wstring AnsiToWide(const char* str) {
     size_t len = std::mbstowcs(NULL,str,0);
     std::wstring asWide(len,L'\0');
     std::mbstowcs(const_cast<wchar_t*>(asWide.data()),str,len+1);
