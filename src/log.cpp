@@ -29,26 +29,22 @@ void LogMessage(const std::wstring& msg) {
 
 void PrintToLogFile() {
     //Print log data
-    {
-        std::lock_guard<std::mutex> lock(logMutex);
-        unsigned int maxDisplayLines = 1; //how many lines to display
-        std::vector<std::wstring> recentUniqueLines;
-        std::unordered_set<std::wstring> seen;
+    std::lock_guard<std::mutex> lock(logMutex);
+    const unsigned int maxDisplayLines = 1; //how many lines to display
+    std::vector<std::wstring> recentUniqueLines;
+    std::unordered_set<std::wstring> seen;
 
-        // Go backward to find most recent unique messages
-        for (auto it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it) {
-            if (seen.insert(*it).second) {
-                recentUniqueLines.push_back(*it);
-            }
+    // Go backward to find most recent unique messages
+    for (auto it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it) {
+        if (seen.insert(*it).second) {
+            recentUniqueLines.push_back(*it);
         }
+    }
 
-        // Reverse to show most recent at bottom
-        std::reverse(recentUniqueLines.begin(), recentUniqueLines.end());
-        
-        for (const auto& line : recentUniqueLines) {
-            std::wstring padded = line;
-            padded.resize(80, L' ');  // pad to 80 characters to clear old line leftovers
-            std::wcout << padded << L"\n";
-        }
+    for (auto it = recentUniqueLines.rbegin(); it != recentUniqueLines.rend(); ++it) {
+        const auto& line = *it;
+        std::wstring padded = line;
+        padded.resize(80, L' ');  // pad to 80 characters to clear old line leftovers
+        std::wcout << padded << L"\n";
     }
 }
