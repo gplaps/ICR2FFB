@@ -23,12 +23,10 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) {
     // Helper lambda to pad lines
     auto padLine = [&](const std::wstring& text) {
         std::wstring padded = text;
-        if (padded.length() < CONSOLE_WIDTH) {
+        if (padded.length() < CONSOLE_WIDTH)
             padded.append(CONSOLE_WIDTH - padded.length(), L' ');
-        }
-        else if (padded.length() > CONSOLE_WIDTH) {
+        else if (padded.length() > CONSOLE_WIDTH)
             padded = padded.substr(0, CONSOLE_WIDTH);  // Truncate if too long
-        }
         return padded;
         };
 
@@ -173,10 +171,10 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) {
 }
 
 void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn) {
-    //Trigger display
     {
         std::lock_guard<std::mutex> lock(displayMutex);
         displayData = displayDataIn;
     }
+    //Trigger display
     DisplayTelemetry(config);
 }

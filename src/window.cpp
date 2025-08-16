@@ -135,12 +135,10 @@ static void DisableConsoleQuickEdit() {
     mode &= static_cast<DWORD>(~(ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE));
     mode |= ENABLE_EXTENDED_FLAGS;
 
-    if (!SetConsoleMode(hInput, mode)) { 
+    if (!SetConsoleMode(hInput, mode))
         LogMessage(L"[ERROR] Failed to set console mode");
-    }
-    else {
+    else
         LogMessage(L"[INFO] Console Quick Edit Mode disabled");
-    }
 }
 
 void MoveCursorToTop() {
@@ -169,12 +167,10 @@ static void HideConsoleCursor() {
     }
 
     cursorInfo.bVisible = FALSE;
-    if (!SetConsoleCursorInfo(hOut, &cursorInfo)) {
+    if (!SetConsoleCursorInfo(hOut, &cursorInfo))
         LogMessage(L"[ERROR] Failed to hide cursor");
-    }
-    else {
+    else
         LogMessage(L"[INFO] Cursor hidden successfully");
-    }
 }
 
 static BOOL WINAPI ConsoleHandler(DWORD CEvent) noexcept

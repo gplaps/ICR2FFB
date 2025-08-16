@@ -148,9 +148,8 @@ static uintptr_t ScanSignature(HANDLE processHandle) {
             }
             addr += mbi.RegionSize;
         }
-        else {
+        else
             addr += 0x1000;
-        }
     }
 
     LogMessage(L"[ERROR] Signature not found in game.");
@@ -264,7 +263,7 @@ bool TelemetryReader::ReadLongitudinalForce() {
 }
 
 bool TelemetryReader::ReadTireData() {
-    bool tireOK =
+    const bool tireOK =
         ReadValue(rawData.loadLF, offs.tire_data_offsetfl) &&
         ReadValue(rawData.loadRF, offs.tire_data_offsetfr) &&
         ReadValue(rawData.loadLR, offs.tire_data_offsetrl) &&

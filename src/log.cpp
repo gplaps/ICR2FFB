@@ -22,9 +22,8 @@ void LogMessage(const std::wstring& msg) {
 
     // Append to log.txt
     std::wofstream logFile("log.txt", std::ios::app);
-    if (logFile.is_open()) {
+    if (logFile.is_open())
         logFile << msg << std::endl;
-    }
 }
 
 void PrintToLogFile() {
@@ -36,9 +35,8 @@ void PrintToLogFile() {
 
     // Go backward to find most recent unique messages
     for (auto it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it) {
-        if (seen.insert(*it).second) {
+        if (seen.insert(*it).second)
             recentUniqueLines.push_back(*it);
-        }
     }
 
     for (auto it = recentUniqueLines.rbegin(); it != recentUniqueLines.rend(); ++it) {
