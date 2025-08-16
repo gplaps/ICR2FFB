@@ -66,7 +66,7 @@ void FFBProcessor::Update() {
 
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
-                constantForceEffect.Apply(current, load, slip, 
+                 lastConstantForceMagnitude = constantForceEffect.Apply(current, load, slip, 
                     vehicleDynamics, current.speed_mph, current.steering_deg, ffbOutput.device, ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, 
                     ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
                     ffbOutput.constantForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
@@ -124,6 +124,7 @@ void FFBProcessor::UpdateDisplayData() {
     displayData.vehicleDynamics = vehicleDynamics;
 
     displayData.masterForceValue = ffbOutput.masterForceValue;
+    displayData.constantForceMagnitude = lastConstantForceMagnitude;
 }
 
 const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const {

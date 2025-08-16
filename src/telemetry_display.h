@@ -12,6 +12,7 @@ struct TelemetryDisplay {
         CalculatedSlip slip; // Legacy calculated data
         CalculatedVehicleDynamics vehicleDynamics;
         double masterForceValue; // or create another struct containing this if more data is of interest for display
+        int constantForceMagnitude;
     };
 
     TelemetryDisplayData displayData;

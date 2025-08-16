@@ -527,8 +527,6 @@ int ConstantForceEffect::Apply(const RawTelemetry& current,
         lastProcessedMagnitude = magnitude;
     }
 
-    g_currentFFBForce = signedMagnitude;
-
     //Logging
     static int debugCounter = 0;
     if (debugCounter % 30 == 0) {  // Every 30 frames

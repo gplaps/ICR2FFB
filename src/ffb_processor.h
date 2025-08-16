@@ -32,6 +32,7 @@ private:
     RawTelemetry previousPos{};
     bool firstPos = true;
 
+    int lastConstantForceMagnitude = 0; // does not seem right to have a variable for this
     CalculatedSlip slip{};
     CalculatedVehicleDynamics vehicleDynamics{};
     CalculatedLateralLoad load{};

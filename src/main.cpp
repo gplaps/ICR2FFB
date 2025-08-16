@@ -42,8 +42,6 @@
 // === Shared Globals ===
 std::atomic<bool> shouldExit = {};
 
-int g_currentFFBForce = 0; // this needs to be refactor and moved into the TelemetryDisplay
-
 // Where it all happens
 int main() {
     int res;
