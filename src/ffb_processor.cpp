@@ -31,15 +31,12 @@ void FFBProcessor::Update() {
 
     ffbOutput.Poll();
 
-    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) with final effect scales, move  and the FFBDevice implements the routing of directInput API / effect specific processing without any "vehicle dynamics" / "application" logic
+    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) with final effect scales, the FFBDevice implements the directInput API / effect specific processing without any "vehicle dynamics" / "application" logic. structuring of FFBOutput and FFBProcessor is not good yet
      
     // Update Effects
-    if (ffbOutput.enableDamperEffect)
-        damperEffect.Update(damperEffect.LowSpeedDamperStrength(current.speed_mph), ffbOutput.device, ffbOutput.masterForceScale, ffbOutput.damperForceScale);
+    ffbOutput.UpdateDamper(current.speed_mph);
+    ffbOutput.UpdateSpring();
     
-    if (ffbOutput.enableSpringEffect)
-        springEffect.Update(ffbOutput.device, ffbOutput.masterForceScale);
-
     ffbOutput.Update();
 
     if (firstReading) {

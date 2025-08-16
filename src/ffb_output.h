@@ -1,7 +1,9 @@
 #pragma once
 
+#include "damper_effect.h"
 #include "project_dependencies.h"
 #include "ffb_device.h"
+#include "spring_effect.h"
 
 struct FFBOutput {
     FFBOutput(const FFBConfig& config);
@@ -30,6 +32,12 @@ struct FFBOutput {
     void Start();
     void Update();
     void Poll();
+
+    void UpdateDamper(double speed_mph);
+    void UpdateSpring();
+
+    DamperEffect damperEffect;
+    SpringEffect springEffect;
 
     // init with zero to be safe
     double masterForceValue = 0.0;

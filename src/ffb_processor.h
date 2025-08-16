@@ -1,12 +1,9 @@
 #pragma once
 
 #include "direct_input.h"
-#include "constant_force.h"
-#include "damper_effect.h"
 #include "ffb_config.h"
 #include "ffb_output.h"
 #include "lateral_load.h"
-#include "spring_effect.h"
 #include "telemetry_reader.h"
 #include "telemetry_display.h"
 
@@ -38,9 +35,7 @@ private:
     CalculatedLateralLoad load{};
 
     ConstantForceEffect constantForceEffect;
-    DamperEffect damperEffect;
-    SpringEffect springEffect;
-
+    
     TelemetryReader telemetryReader;
     FFBOutput ffbOutput;
     TelemetryDisplay::TelemetryDisplayData displayData;

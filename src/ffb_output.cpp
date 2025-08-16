@@ -76,3 +76,22 @@ void FFBOutput::Update() {
 void FFBOutput::Poll() {
     device.Poll();
 }
+
+void FFBOutput::UpdateDamper(double speed_mph) {
+    if(enableDamperEffect)
+    {
+        const double damperStrength = damperEffect.Calculate(speed_mph, masterForceScale, damperForceScale);
+        device.UpdateDamperEffect(static_cast<LONG>(damperStrength));
+    }
+        
+}
+
+void FFBOutput::UpdateSpring() {
+    if (enableSpringEffect)
+    {
+        const double springStrength = springEffect.Calculate(masterForceScale);
+        device.UpdateSpringEffect(static_cast<LONG>(springStrength));
+    }
+}
+
+}
