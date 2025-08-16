@@ -230,11 +230,11 @@ void TelemetryReader::ConvertTireData() {
     // Tire data! Probably not loads, we dont know what it is
 
     out.tireload_lf = static_cast<double>(rawData.loadLF);
-    out.tireload_rf = static_cast<double>(rawData.loadFR);
+    out.tireload_rf = static_cast<double>(rawData.loadRF);
     out.tireload_lr = static_cast<double>(rawData.loadLR);
     out.tireload_rr = static_cast<double>(rawData.loadRR);
     out.tiremaglat_lf = static_cast<double>(rawData.magLatLF);
-    out.tiremaglat_rf = static_cast<double>(rawData.magLatFR);
+    out.tiremaglat_rf = static_cast<double>(rawData.magLatRF);
     out.tiremaglat_lr = static_cast<double>(rawData.magLatLR);
     out.tiremaglat_rr = static_cast<double>(rawData.magLatRR);
 }
@@ -266,7 +266,7 @@ bool TelemetryReader::ReadLongitudinalForce() {
 bool TelemetryReader::ReadTireData() {
     bool tireOK =
         ReadValue(rawData.loadLF, offs.tire_data_offsetfl) &&
-        ReadValue(rawData.loadFR, offs.tire_data_offsetfr) &&
+        ReadValue(rawData.loadRF, offs.tire_data_offsetfr) &&
         ReadValue(rawData.loadLR, offs.tire_data_offsetrl) &&
         ReadValue(rawData.loadRR, offs.tire_data_offsetrr) && 
 

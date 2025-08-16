@@ -68,14 +68,13 @@ private:
     }
     bool ReadRaw(void* dest, uintptr_t offset, SIZE_T size);
 
-    // TODO: consistency in order of front/rear and left/right
     struct RawData {
         int16_t loadLF = 0;
-        int16_t loadFR = 0;
+        int16_t loadRF = 0;
         int16_t loadLR = 0;
         int16_t loadRR = 0;
         int16_t magLatLF = 0;
-        int16_t magLatFR = 0;
+        int16_t magLatRF = 0;
         int16_t magLatLR = 0;
         int16_t magLatRR = 0;
         int16_t longiF = 0;
