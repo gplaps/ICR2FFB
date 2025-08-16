@@ -13,7 +13,7 @@ struct ConstantForceEffectResult {
 };
 
 struct ConstantForceEffect {
-    ConstantForceEffectResult Apply(
+    ConstantForceEffectResult Calculate(
         const RawTelemetry& current,
         const CalculatedLateralLoad& load,
         const CalculatedSlip& slip,

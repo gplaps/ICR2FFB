@@ -25,7 +25,7 @@
 
 
 
- ConstantForceEffectResult ConstantForceEffect::Apply(const RawTelemetry& current,
+ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& current,
     const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
     const CalculatedVehicleDynamics& vehicleDynamics,
     bool /*enableWeightForce*/,

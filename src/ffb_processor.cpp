@@ -50,8 +50,9 @@ void FFBProcessor::Update() {
             if(ffbOutput.enableConstantForce) {
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
-                constantForceCalculation = constantForceEffect.Apply(current, load, slip, 
-                    vehicleDynamics, ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, 
+                constantForceCalculation = constantForceEffect.Calculate(
+                    current, load, slip, vehicleDynamics, // inputs
+                    ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, // settings - thats where it might need restructuring of the implementation, probably all the scales should be kept in FFBOutput and not be added in this function. likely make the Result struct contain seperate channels and do the multiply with scales in FFBOutput depending on the enable flags
                     ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
                     ffbOutput.constantForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
                 previousPos = current;
