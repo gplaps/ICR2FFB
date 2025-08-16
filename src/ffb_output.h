@@ -26,6 +26,7 @@ struct FFBOutput {
     int ApplyFFBSettings(const FFBConfig& config);
     int Init(const FFBConfig& config);
     bool Valid() const;
+
     void Start();
     void Update();
     void Poll();

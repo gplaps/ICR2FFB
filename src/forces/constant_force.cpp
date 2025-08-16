@@ -25,28 +25,10 @@
 
 
 
-static DIEFFECT CreateConstantForceEffect(LONG magnitude) {
-    DICONSTANTFORCE cf = { magnitude };
-    DIEFFECT eff = {};
-    eff.dwSize = sizeof(DIEFFECT);
-    eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration = INFINITE;
-    eff.dwGain = DEFAULT_DINPUT_GAIN;
-    eff.dwTriggerButton = DIEB_NOTRIGGER;
-    eff.cAxes = 1;
-    DWORD axes[1] = { DIJOFS_X };
-    LONG dir[1] = { 0 }; // ← Always zero direction now, this broke Moza wheels
-    eff.rgdwAxes = axes;
-    eff.rglDirection = dir;
-    eff.cbTypeSpecificParams = sizeof(DICONSTANTFORCE);
-    eff.lpvTypeSpecificParams = &cf;
-    return eff;
-}
-
-void ApplyConstantForceEffect(const RawTelemetry& current,
+int ConstantForceEffect::Apply(const RawTelemetry& current,
     const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
     const CalculatedVehicleDynamics& vehicleDynamics,
-    double speed_mph, double /*steering_deg*/, IDirectInputEffect* effect,
+    double speed_mph, double /*steering_deg*/, FFBDevice& device,
     bool /*enableWeightForce*/,
     bool enableRateLimit,
     double masterForceScale,
@@ -56,7 +38,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     bool invert
     ) {
 
-    if (!effect) return;
+    int signedMagnitude = 0;
 
     // Beta 0.5
     // This is a bunch of logic to pause/unpause or prevent forces when the game isn't running
@@ -76,14 +58,13 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         lastDlong = current.dlong;  // Set baseline from first real data
         isFirstReading = false;
         if (!pauseForceSet) {
-            DIEFFECT eff = CreateConstantForceEffect(0);
-            effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            device.UpdateConstantForceEffect(signedMagnitude, true);
             pauseForceSet = true;
         }
-        return;
+        return signedMagnitude;
     }
 
-    bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
+    const bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
 
     if (isStationary) {
         noMovementFrames++;
@@ -108,11 +89,10 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     // If paused, send zero force and return
     if (isPaused) {
         if (!pauseForceSet) {
-            DIEFFECT eff = CreateConstantForceEffect(0);
-            effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            device.UpdateConstantForceEffect(signedMagnitude, true);
             pauseForceSet = true;
         }
-        return;
+        return signedMagnitude;
     }
 
     // Low speed filtering
@@ -120,17 +100,15 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
         static bool wasLowSpeed = false;
         if (!wasLowSpeed) {
             // Send zero force when entering low speed
-            DIEFFECT eff = CreateConstantForceEffect(0);
-            effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION);
+            device.UpdateConstantForceEffect(signedMagnitude, true);
             wasLowSpeed = true;
         }
-        return;
+        return signedMagnitude;
     }
 
     static bool wasLowSpeed = false;
-    if (wasLowSpeed) {
+    if (wasLowSpeed)
         wasLowSpeed = false;  // Reset when speed picks up
-    }
 
 
 // === CALC 1 - Lateral G ===
@@ -189,13 +167,13 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // No issues with oscillations anymore
 
 // Get the sum with signs preserved
-    double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+    const double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
 
     // Use the magnitude for physics calculation
-    double frontTireLoadMagnitude = std::abs(frontTireLoadSum);
+    const double frontTireLoadMagnitude = std::abs(frontTireLoadSum);
 
     // Keep frontTireLoad for logging compatibility
-    double frontTireLoad = frontTireLoadMagnitude;
+    const double frontTireLoad = frontTireLoadMagnitude;
 
     // Physics constants from your engineer friend
     const double CURVE_STEEPNESS = 1.0e-4;
@@ -203,30 +181,29 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     const double SCALE_FACTOR = 1.20;
 
     // Calculate magnitude using physics formula
-    double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
+    const double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * MAX_THEORETICAL * SCALE_FACTOR;
 
     // Apply the natural sign from the tire load sum
-    double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
+    const double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
 
     // Apply proportional deadzone
     double force = physicsForce;
     if (deadzoneForceScale > 0.0) {
         // Convert deadzoneForceScale (0-100) to percentage (0.0-1.0)
-        double deadzonePercentage = deadzoneForceScale / 100.0;
+        const double deadzonePercentage = deadzoneForceScale / 100.0;
 
         // Calculate deadzone threshold using magnitude
-        double maxPossibleForce = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
-        double deadzoneThreshold = maxPossibleForce * deadzonePercentage;
+        const double maxPossibleForce = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
+        const double deadzoneThreshold = maxPossibleForce * deadzonePercentage;
 
         // Apply deadzone: remove bottom X% and rescale remaining range
-        if (std::abs(physicsForce) <= deadzoneThreshold) {
+        if (std::abs(physicsForce) <= deadzoneThreshold)
             force = 0.0;  // Force is in deadzone - zero output
-        }
         else {
             // Rescale remaining force range to maintain full output range
-            double remainingRange = maxPossibleForce - deadzoneThreshold;
-            double adjustedInput = std::abs(physicsForce) - deadzoneThreshold;
-            double scaledMagnitude = (adjustedInput / remainingRange) * maxPossibleForce;
+            const double remainingRange = maxPossibleForce - deadzoneThreshold;
+            const double adjustedInput = std::abs(physicsForce) - deadzoneThreshold;
+            const double scaledMagnitude = (adjustedInput / remainingRange) * maxPossibleForce;
 
             // Restore original sign
             force = (physicsForce >= 0) ? scaledMagnitude : -scaledMagnitude;
@@ -234,22 +211,19 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     }
 
     // Cap maximum force magnitude while preserving sign
-    if (std::abs(force) > 10000.0) {
-        force = (force >= 0) ? 10000.0 : -10000.0;
-    }
+    if (std::abs(force) > static_cast<double>(DEFAULT_DINPUT_GAIN))
+        force = (force >= 0) ? static_cast<double>(DEFAULT_DINPUT_GAIN) : -static_cast<double>(DEFAULT_DINPUT_GAIN);
 
     // Handle invert option (no more complex direction logic needed!)
-    if (invert) {
+    if (invert)
         force = -force;
-    }
 
     // Convert to signed magnitude
-    double smoothed = force;
+    const double smoothed = force;
     int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
-    int signedMagnitude = static_cast<int>(magnitude);
-    if (smoothed < 0.0) {
+    signedMagnitude = magnitude;
+    if (smoothed < 0.0)
         signedMagnitude = -signedMagnitude;
-    }
 
 
 
@@ -346,7 +320,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // Damping that opposes any steering input
     if (speed_mph > 10.0 && std::abs(vehicleDynamics.lateralG) < 0.15) {
         // Add baseline steering resistance at speed (not centering force)
-        double speedResistance = std::clamp(speed_mph / 80.0, 0.0, 1.0) * 300.0;
+        double speedResistance = saturate(speed_mph / 80.0) * 300.0;
 
         // Only add resistance if current force is very small
         if (std::abs(signedMagnitude) < speedResistance) {
@@ -366,9 +340,8 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
     static std::deque<int> magnitudeHistory;
     magnitudeHistory.push_back(signedMagnitude);
-    if (magnitudeHistory.size() > 2) {
+    if (magnitudeHistory.size() > 2)
         magnitudeHistory.pop_front();
-    }
     signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
  
 
@@ -532,9 +505,8 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             shouldUpdate = true;
         }
         // 4. Timeout
-        else if (framesSinceLastUpdate >= 12) {
+        else if (framesSinceLastUpdate >= 12)
             shouldUpdate = true;
-        }
         // 5. Zero force
         else if (magnitude == 0 && lastSentMagnitude != 0) {
             shouldUpdate = true;
@@ -542,7 +514,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 
         if (!shouldUpdate) {
             lastProcessedMagnitude = magnitude;
-            return;  // Skip this frame
+            return 0;  // Skip this frame
         }
 
         // Reset tracking when we send an update
@@ -568,11 +540,9 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     }
     debugCounter++;
 
-    DIEFFECT eff = CreateConstantForceEffect(signedMagnitude); // Use signed magnitude
+    // Use signed magnitude
     // Only set magnitude params, skip direction
-    HRESULT hr = effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);  // ← Removed | DIEP_DIRECTION
+    device.UpdateConstantForceEffect(signedMagnitude, false);
 
-    if (FAILED(hr)) {
-        std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;
-    }
+    return signedMagnitude;
 }

@@ -1,9 +1,6 @@
 #include "ffb_processor.h"
-#include "constant_force.h"
-#include "damper_effect.h"
 #include "lateral_load.h"
 #include "log.h"
-#include "spring_effect.h"
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
@@ -34,17 +31,14 @@ void FFBProcessor::Update() {
 
     ffbOutput.Poll();
 
-    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) and the FFBDevice implements the routing of effect specific processing without any "vehicle dynamics" / "application" logic
+    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) with final effect scales, move  and the FFBDevice implements the routing of directInput API / effect specific processing without any "vehicle dynamics" / "application" logic
      
     // Update Effects
-    if (ffbOutput.device.damperEffect && ffbOutput.enableDamperEffect)
-    {
-        double damperStrength = LowSpeedDamperStrength(current.speed_mph);
-        UpdateDamperEffect(damperStrength, ffbOutput.device.damperEffect, ffbOutput.masterForceScale, ffbOutput.damperForceScale);
-    }
+    if (ffbOutput.enableDamperEffect)
+        damperEffect.Update(damperEffect.LowSpeedDamperStrength(current.speed_mph), ffbOutput.device, ffbOutput.masterForceScale, ffbOutput.damperForceScale);
     
-    if (ffbOutput.device.springEffect && ffbOutput.enableSpringEffect)
-        UpdateSpringEffect(ffbOutput.device.springEffect, ffbOutput.masterForceScale);
+    if (ffbOutput.enableSpringEffect)
+        springEffect.Update(ffbOutput.device, ffbOutput.masterForceScale);
 
     ffbOutput.Update();
 
@@ -55,29 +49,25 @@ void FFBProcessor::Update() {
     else {
         // Do Force calculations based on raw data
         // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
-        CalculatedSlip slip{};
+        slip = {};
         CalculateSlipAngle(current, previous, slip);
 
-        CalculatedVehicleDynamics vehicleDynamics{};
-        bool vehicleDynamicsValid = CalculateVehicleDynamics(current, previous, vehicleDynamics);
+        vehicleDynamics = {};
+        CalculateVehicleDynamics(current, previous, vehicleDynamics);
 
-        CalculatedLateralLoad load{};
+        load = {};
         if (CalculateLateralLoad(current, previous, slip, load)) {
             
-            // seperation of concern not applied correctly yet ... what is processing, what is "send effect" ... accessing members of members of data is a clear indication that some better structuring needs to take place here!
+            // seperation of concern not applied fully yet ... what is processing, what is "send effect" ... accessing members of members of data is a clear indication that some better structuring needs to take place! don't "reaching through" modules
 
             // Start constant force once telemetry is valid 
-            if (ffbOutput.enableConstantForce && ffbOutput.device.constantForceEffect) {
-                if (!ffbOutput.device.constantStarted) {
-                    ffbOutput.device.constantForceEffect->Start(1, 0);
-                    ffbOutput.device.constantStarted = true;
-                    LogMessage(L"[INFO] Constant force started");
-                }
+            if (ffbOutput.enableConstantForce) {
+                ffbOutput.device.StartConstant();
 
                 //This is what will add the "Constant Force" effect if all the calculations work. 
                 // Probably could smooth all this out
-                ApplyConstantForceEffect(current, load, slip, 
-                    vehicleDynamics, current.speed_mph, current.steering_deg, ffbOutput.device.constantForceEffect, ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, 
+                constantForceEffect.Apply(current, load, slip, 
+                    vehicleDynamics, current.speed_mph, current.steering_deg, ffbOutput.device, ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, 
                     ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
                     ffbOutput.constantForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
                 previousPos = current;
@@ -120,19 +110,20 @@ void FFBProcessor::Update() {
             }
             */
 
-            // Update telemetry for display
-            {
-                std::lock_guard<std::mutex> lock(displayMutex);
-                displayData.raw = current;
-                displayData.slip = slip;
-                // NEW: Vehicle dynamics data (only update if calculation was successful)
-                if (vehicleDynamicsValid) {
-                    displayData.vehicleDynamics = vehicleDynamics;
-                }
-                displayData.masterForceValue = ffbOutput.masterForceValue;
-            }
+            UpdateDisplayData();
         }
     }
+}
+
+void FFBProcessor::UpdateDisplayData() {
+    // Update telemetry for display
+    std::lock_guard<std::mutex> lock(displayMutex);
+    displayData.raw = current;
+    displayData.slip = slip;
+    // NEW: Vehicle dynamics data (only update if calculation was successful)
+    displayData.vehicleDynamics = vehicleDynamics;
+
+    displayData.masterForceValue = ffbOutput.masterForceValue;
 }
 
 const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const {

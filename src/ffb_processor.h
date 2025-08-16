@@ -1,8 +1,12 @@
 #pragma once
 
 #include "direct_input.h"
+#include "constant_force.h"
+#include "damper_effect.h"
 #include "ffb_config.h"
 #include "ffb_output.h"
+#include "lateral_load.h"
+#include "spring_effect.h"
 #include "telemetry_reader.h"
 #include "telemetry_display.h"
 
@@ -13,6 +17,8 @@ struct FFBProcessor {
     const TelemetryDisplay::TelemetryDisplayData& DisplayData() const;
 
 private:
+    void UpdateDisplayData();
+
     //Get some data from RawTelemetry -> not 100% sure what this does
     RawTelemetry current{};
     RawTelemetry previous{};
@@ -25,6 +31,14 @@ private:
     //Added for feedback skipping if stopped
     RawTelemetry previousPos{};
     bool firstPos = true;
+
+    CalculatedSlip slip{};
+    CalculatedVehicleDynamics vehicleDynamics{};
+    CalculatedLateralLoad load{};
+
+    ConstantForceEffect constantForceEffect;
+    DamperEffect damperEffect;
+    SpringEffect springEffect;
 
     TelemetryReader telemetryReader;
     FFBOutput ffbOutput;

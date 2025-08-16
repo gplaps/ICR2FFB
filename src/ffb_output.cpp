@@ -43,11 +43,11 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config) {
     damperForceValue = std::stod(config.targetDamperScale);
 
     // Master force scale -> Keeping Hands Safe
-    masterForceScale = std::clamp(masterForceValue / 100.0, 0.0, 1.0);
-    deadzoneForceScale = std::clamp(deadzoneForceValue / 100.0, 0.0, 1.0);
-    constantForceScale = std::clamp(constantForceValue / 100.0, 0.0, 1.0);
-    weightForceScale = std::clamp(weightForceValue / 100.0, 0.0, 1.0);
-    damperForceScale = std::clamp(damperForceValue / 100.0, 0.0, 1.0);
+    masterForceScale = saturate(masterForceValue / 100.0);
+    deadzoneForceScale = saturate(deadzoneForceValue / 100.0);
+    constantForceScale = saturate(constantForceValue / 100.0);
+    weightForceScale = saturate(weightForceValue / 100.0);
+    damperForceScale = saturate(damperForceValue / 100.0);
     
     return 0;
 }
@@ -61,20 +61,12 @@ int FFBOutput::Init(const FFBConfig& config) {
 
 void FFBOutput::Start() {
     device.Start();
+
     // Start damper/spring effects once telemetry is valid
     // Probably need to also figure out how to stop these when the game pauses
     // Also need to maybe fade in and out the effects when waking/sleeping
-    if (!device.damperStarted && device.damperEffect && enableDamperEffect) {
-        device.damperEffect->Start(1, 0);
-        device.damperStarted = true;
-        LogMessage(L"[INFO] Damper effect started");
-    }
-
-    if (!device.springStarted && device.springEffect && enableSpringEffect) {
-        device.springEffect->Start(1, 0);
-        device.springStarted = true;
-        LogMessage(L"[INFO] Spring effect started");
-    }
+    if(enableDamperEffect) device.StartDamper();
+    if(enableSpringEffect) device.StartSpring();
 }
 
 void FFBOutput::Update() {

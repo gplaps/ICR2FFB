@@ -2,6 +2,8 @@
 
 const unsigned int DEFAULT_DINPUT_GAIN=10000;
 
+const double MPH_TO_MS=0.44704;
+
 const double MAX_USEFUL_G=8.0;
 const double TYPICAL_G=4.0;
 

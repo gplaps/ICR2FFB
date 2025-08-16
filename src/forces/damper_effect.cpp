@@ -9,44 +9,15 @@
 // Create damper to make it feel like the steering is not powered, mostly for pitlane, maybe hairpin use
 // Only goes to '40mph'
 static const double maxDamper = 5000.0; // or move to constants.h
-double LowSpeedDamperStrength(double speedMph) {
-    double maxSpeed = 40.0;
-    // double minDamper = 0.0;
+double DamperEffect::LowSpeedDamperStrength(double speedMph) {
+    const double maxSpeed = 40.0;
+    // const double minDamper = 0.0;
 
-    double t = std::clamp(speedMph / maxSpeed, 0.0, 1.0);
+    const double t = saturate(speedMph / maxSpeed);
     return t;
 }
 
-static void UpdateDamperEffectImpl(double damperStrength, IDirectInputEffect* effect) {
-    if (!effect) return;
-
-    DICONDITION condition = {};
-    condition.lOffset = 0;
-    condition.lPositiveCoefficient = static_cast<LONG>(damperStrength);
-    condition.lNegativeCoefficient = static_cast<LONG>(damperStrength);
-    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
-    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
-    condition.lDeadBand = 0;
-
-    DIEFFECT eff = {};
-    eff.dwSize = sizeof(DIEFFECT);
-    eff.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.cAxes = 1;
-    DWORD axes[1] = { DIJOFS_X };
-    LONG dir[1] = { 0 };
-    eff.rgdwAxes = axes;
-    eff.rglDirection = dir;
-    eff.cbTypeSpecificParams = sizeof(DICONDITION);
-    eff.lpvTypeSpecificParams = &condition;
-
-    HRESULT hr = effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-    if (FAILED(hr)) {
-        std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << std::endl;
-    }
-}
-
-void UpdateDamperEffect(double damperScale, IDirectInputEffect* effect, double masterForceScale, double damperForceScale) {
-    LONG damperStrength = static_cast<LONG>(((1.0 - damperScale) * maxDamper * masterForceScale) * damperForceScale);
-
-    UpdateDamperEffectImpl(damperStrength, effect);
+void DamperEffect::Update(double damperScale, FFBDevice& device, double masterForceScale, double damperForceScale) {
+    const LONG damperStrength = static_cast<LONG>(((1.0 - damperScale) * maxDamper * masterForceScale) * damperForceScale);
+    device.UpdateDamperEffect(damperStrength);
 }

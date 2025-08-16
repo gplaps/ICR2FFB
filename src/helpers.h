@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstdlib>
 #include <string>
 
@@ -20,6 +21,9 @@ namespace std {
 }
 #endif
 
+template<typename T>
+T saturate(T v) { return std::clamp(v,static_cast<T>(0),static_cast<T>(1)); }
+
 inline std::wstring ToLower(const std::wstring& str) {
     std::wstring result = str;
     for (wchar_t& ch : result) ch = towlower(ch);
@@ -38,3 +42,9 @@ inline std::wstring AnsiToWide(const char* str) {
     std::mbstowcs(const_cast<wchar_t*>(asWide.data()),str,len+1);
     return asWide;
 }
+
+#if defined(UNICODE)
+    inline std::wstring ToWideString(const TCHAR* s) { return std::wstring(s); }
+#else
+    inline std::wstring ToWideString(const TCHAR* s) { return AnsiToWide(s); }
+#endif

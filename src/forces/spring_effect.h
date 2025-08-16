@@ -1,5 +1,8 @@
 #pragma once
 #include "project_dependencies.h"
+#include "ffb_device.h"
 #include <string>
 
-void UpdateSpringEffect(IDirectInputEffect* effect, double masterForceScale);
+struct SpringEffect {
+    void Update(FFBDevice& device, double masterForceScale);
+};
