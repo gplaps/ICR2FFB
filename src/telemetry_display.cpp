@@ -9,8 +9,11 @@ std::mutex displayMutex;
 
 // New display
 void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) {
+    // make sure we stay at most recent display update
+    MoveCursorToLine(0);
     // Move cursor to top and set up formatting
     MoveCursorToTop();
+
     std::cout << std::fixed << std::setprecision(2);
     std::wcout << std::fixed << std::setprecision(2);  // Also set for wide cout
 
@@ -170,9 +173,6 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) {
 }
 
 void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn) {
-    // make sure we stay at most recent display update
-    MoveCursorToLine(0);
-
     //Trigger display
     {
         std::lock_guard<std::mutex> lock(displayMutex);
