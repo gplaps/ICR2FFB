@@ -22,8 +22,8 @@ static void UpdateDamperEffectImpl(double damperStrength, IDirectInputEffect* ef
 
     DICONDITION condition = {};
     condition.lOffset = 0;
-    condition.lPositiveCoefficient = damperStrength;
-    condition.lNegativeCoefficient = damperStrength;
+    condition.lPositiveCoefficient = static_cast<LONG>(damperStrength);
+    condition.lNegativeCoefficient = static_cast<LONG>(damperStrength);
     condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
     condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0;

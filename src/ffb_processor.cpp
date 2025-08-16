@@ -2,6 +2,7 @@
 #include "constant_force.h"
 #include "damper_effect.h"
 #include "lateral_load.h"
+#include "log.h"
 #include "spring_effect.h"
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
@@ -118,9 +119,6 @@ void FFBProcessor::Update() {
                 }   
             }
             */
-            //Setting variables for next update
-            previousDlong = current.dlong;
-            // currentSpeed - either move into this class or consider keeping a copy of the whole telemtery data for next loop
 
             // Update telemetry for display
             {

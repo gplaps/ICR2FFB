@@ -1,6 +1,7 @@
 #include "constant_force.h"
 #include "constants.h"
 #include "helpers.h"
+#include "log.h"
 #include "main.h"
 #include <iostream>
 #include <algorithm>

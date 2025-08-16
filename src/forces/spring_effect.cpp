@@ -12,8 +12,8 @@ void UpdateSpringEffectImpl(IDirectInputEffect* effect, double springStrength) {
 
     DICONDITION condition = {};
     condition.lOffset = 0;
-    condition.lPositiveCoefficient = springStrength;
-    condition.lNegativeCoefficient = springStrength;
+    condition.lPositiveCoefficient = static_cast<LONG>(springStrength);
+    condition.lNegativeCoefficient = static_cast<LONG>(springStrength);
     condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
     condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
     condition.lDeadBand = 0; // Reduce deadzone
