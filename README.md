@@ -45,6 +45,19 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ---
 
+## Build from source 
+
+0. Prerequisites: CMake and a version of MSVC compiler (>=2013) or MinGW GCC / MinGW Clang
+1. mkdir build && cd build
+2. configure:
+    1. cmake ..
+    2. cmake -DCMAKE_TOOLCHAIN_FILE=MinGW.cmake -DTOOLCHAIN_PREFIX=<path-to-mingw>/bin/x86_64-w64-mingw32 -DCMAKE_INSTALL_PREFIX=<path-is-your-choice e.g. ./installed> ..
+3. build:
+    1. cmake --build . -j4 --target install
+4. Start program as usual. MSVC variants need the runtime toolsets installed and may give errors for missing DLLs in debug builds as those should not be redistributed
+
+---
+
 ## Version History
 
 ### Betas
