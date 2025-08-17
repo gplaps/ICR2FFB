@@ -96,17 +96,20 @@ static BOOL
     FindWindowData* wdata = reinterpret_cast<FindWindowData*>(lParam);
     TCHAR           title[256];
     GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
-    std::wstring titleStr = ToWideString(title);
-    LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
-    for (size_t i = 0; i < wdata->keywords.size(); ++i)
+    const std::wstring titleStr = ToWideString(title);
+    const std::wstring wTitle   = ToLower(titleStr);
+    if (titleStr.size())
     {
-        const std::wstring& key   = ToLower(wdata->keywords[i]);
-        const std::wstring& query = ToLower(key);
-        if (titleStr.find(query) != std::wstring::npos)
+        LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
+        for (size_t i = 0; i < wdata->keywords.size(); ++i)
         {
-            LogMessage((L"[DEBUG] Window \"" + titleStr) + (L"\" matches \"" + key + L'\"'));
-            GetWindowThreadProcessId(hwnd, &wdata->pid);
-            return FALSE;
+            const std::wstring& key = ToLower(wdata->keywords[i]);
+            if (wTitle.find(key) != std::wstring::npos)
+            {
+                LogMessage((L"[DEBUG] Window \"" + wTitle) + (L"\" matches \"" + key + L'\"'));
+                GetWindowThreadProcessId(hwnd, &wdata->pid);
+                return FALSE;
+            }
         }
     }
 
@@ -196,7 +199,11 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     keywords.emplace_back(L"dosbox");
     keywords.emplace_back(config.targetGameWindowName);
     const DWORD pid = FindProcessIdByWindow(keywords);
-    if (!pid) { return; }
+    if (!pid)
+    {
+        LogMessage(L"[ERROR] Game window not found.");
+        return;
+    }
 
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) { return; }
