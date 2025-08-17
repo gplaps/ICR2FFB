@@ -17,8 +17,6 @@ struct EnumDeviceHelper
     std::wstring targetDeviceName;
 };
 
-static std::wstring targetDeviceNameLocal; // only needed because of function signature of callback ... should be avoided if it can be expressed differently ... like making the "content" void* a struct to it to get it out of global namespace
-
 static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*)
 {
     const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);

@@ -135,7 +135,6 @@ void FFBProcessor::UpdateDisplayData()
     const std::lock_guard<std::mutex> lock(displayMutex);
     displayData.raw  = current;
     displayData.slip = slip;
-    // NEW: Vehicle dynamics data (only update if calculation was successful)
     displayData.vehicleDynamics  = vehicleDynamics;
 
     displayData.masterForceValue = ffbOutput.masterForceValue;

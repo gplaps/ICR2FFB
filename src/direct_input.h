@@ -10,6 +10,5 @@ struct DirectInput
 
     static void ListAvailableDevices();
     static void ShowAvailableDevicesOnConsole();
-    // Kick-off DirectInput
     static bool InitializeDevice(FFBDevice& device);
 };
