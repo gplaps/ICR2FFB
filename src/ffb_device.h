@@ -7,7 +7,7 @@
 
 struct FFBDevice
 {
-    FFBDevice(const FFBConfig& configIn);
+    explicit FFBDevice(const FFBConfig& configIn);
     FFBDevice()                   = delete;
     IDirectInputDevice8* diDevice = NULL;
 

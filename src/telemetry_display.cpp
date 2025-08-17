@@ -10,7 +10,7 @@
 std::mutex displayMutex;
 
 // New display
-void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config)
+void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 {
     // make sure we stay at most recent display update
     MoveCursorToLine(0);
@@ -188,7 +188,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config)
 void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn)
 {
     {
-        std::lock_guard<std::mutex> lock(displayMutex);
+        const std::lock_guard<std::mutex> lock(displayMutex);
         displayData = displayDataIn;
     }
     //Trigger display

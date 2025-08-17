@@ -22,7 +22,7 @@ struct TelemetryDisplay
     TelemetryDisplayData displayData;
 
     // New display
-    void DisplayTelemetry(const FFBConfig& config);
+    void DisplayTelemetry(const FFBConfig& config) const;
     void Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn);
 };
 

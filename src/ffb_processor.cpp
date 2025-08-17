@@ -7,7 +7,8 @@
 
 FFBProcessor::FFBProcessor(const FFBConfig& config) :
     telemetryReader(TelemetryReader(config)),
-    ffbOutput(config)
+    ffbOutput(config),
+    displayData()
 {
     if (!telemetryReader.Valid())
     {
@@ -131,7 +132,7 @@ bool FFBProcessor::ProcessTelemetryInput()
 void FFBProcessor::UpdateDisplayData()
 {
     // Update telemetry for display
-    std::lock_guard<std::mutex> lock(displayMutex);
+    const std::lock_guard<std::mutex> lock(displayMutex);
     displayData.raw  = current;
     displayData.slip = slip;
     // NEW: Vehicle dynamics data (only update if calculation was successful)

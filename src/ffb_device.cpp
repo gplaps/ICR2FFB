@@ -40,7 +40,7 @@ void FFBDevice::CreateConstantForceEffect()
     diprg.lMax                = DEFAULT_DINPUT_GAIN;
     diDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
 
-    HRESULT hr = diDevice->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
+    const HRESULT hr = diDevice->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
     if (FAILED(hr))
         LogMessage(L"[ERROR] Failed to create constant force effect. HRESULT: 0x" + std::to_wstring(hr));
     else
@@ -73,7 +73,7 @@ void FFBDevice::CreateDamperEffect()
     eff.cbTypeSpecificParams       = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams      = &condition;
 
-    HRESULT hr                     = diDevice->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
+    const HRESULT hr               = diDevice->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
     if (FAILED(hr) || !damperEffect)
         LogMessage(L"[ERROR] Failed to create damper effect. HRESULT: 0x" + std::to_wstring(hr));
     else
@@ -106,7 +106,7 @@ void FFBDevice::CreateSpringEffect()
     eff.cbTypeSpecificParams       = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams      = &condition;
 
-    HRESULT hr                     = diDevice->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
+    const HRESULT hr               = diDevice->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
     if (FAILED(hr) || !springEffect)
         LogMessage(L"[ERROR] Failed to create spring effect. HRESULT: 0x" + std::to_wstring(hr));
     else
@@ -136,7 +136,7 @@ void FFBDevice::UpdateDamperEffect(LONG damperStrength)
     eff.cbTypeSpecificParams       = sizeof(DICONDITION);
     eff.lpvTypeSpecificParams      = &condition;
 
-    HRESULT hr                     = damperEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+    const HRESULT hr               = damperEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
         std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << std::endl;
 }
@@ -170,7 +170,7 @@ void FFBDevice::UpdateSpringEffect(LONG springStrength)
     eff.lpvTypeSpecificParams      = &condition;
     eff.dwStartDelay               = 0;
 
-    HRESULT hr                     = springEffect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
+    const HRESULT hr               = springEffect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
         std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << std::endl;
 }
@@ -195,8 +195,8 @@ void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection)
     eff.lpvTypeSpecificParams = &cf;
 
     // Only set magnitude params, skip direction
-    const DWORD parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
-    HRESULT     hr         = constantForceEffect->SetParameters(&eff, parameters);
+    const DWORD   parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
+    const HRESULT hr         = constantForceEffect->SetParameters(&eff, parameters);
     if (FAILED(hr))
         std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;
 }

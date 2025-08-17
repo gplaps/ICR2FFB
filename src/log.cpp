@@ -15,7 +15,7 @@ const size_t                    maxLogLines = 1000; // Show last 1000 log lines
 // Write to log.txt
 void LogMessage(const std::wstring& msg)
 {
-    std::lock_guard<std::mutex> lock(logMutex);
+    const std::lock_guard<std::mutex> lock(logMutex);
 
     // Add to in-memory deque for optional UI display (if needed)
     logLines.push_back(msg);
@@ -31,10 +31,10 @@ void LogMessage(const std::wstring& msg)
 void PrintToLogFile()
 {
     //Print log data
-    std::lock_guard<std::mutex>      lock(logMutex);
-    const unsigned int               maxDisplayLines = 1; //how many lines to display
-    std::vector<std::wstring>        recentUniqueLines;
-    std::unordered_set<std::wstring> seen;
+    const std::lock_guard<std::mutex> lock(logMutex);
+    const unsigned int                maxDisplayLines = 1; //how many lines to display
+    std::vector<std::wstring>         recentUniqueLines;
+    std::unordered_set<std::wstring>  seen;
 
     // Go backward to find most recent unique messages
     for (auto it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it)

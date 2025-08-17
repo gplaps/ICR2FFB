@@ -52,7 +52,9 @@ int main()
     STATUS_CHECK(InitConsole());
 
     //clear last log
-    std::wofstream clearLog("log.txt", std::ios::trunc);
+    {
+        const std::wofstream clearLog("log.txt", std::ios::trunc);
+    }
 
     const FFBConfig config;
     if (!config.Valid())

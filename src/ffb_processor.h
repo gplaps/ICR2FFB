@@ -12,7 +12,7 @@
 
 struct FFBProcessor
 {
-    FFBProcessor(const FFBConfig& config);
+    explicit FFBProcessor(const FFBConfig& config);
     bool                                          Valid() const;
     void                                          Update();
     const TelemetryDisplay::TelemetryDisplayData& DisplayData() const;

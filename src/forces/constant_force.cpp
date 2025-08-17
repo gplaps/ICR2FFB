@@ -63,8 +63,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     {
         lastDlong      = current.dlong; // Set baseline from first real data
         isFirstReading = false;
-        if (!pauseForceSet)
-            pauseForceSet = true;
+        pauseForceSet  = true;
         return {signedMagnitude, true};
     }
 
@@ -474,7 +473,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     if (enableRateLimit)
     {
         // Direction calculation and smoothing for rate limiting
-        LONG        targetDir     = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
+        const LONG  targetDir     = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
         static LONG lastDirection = 0;
 
         // Direction smoothing - this prevents rapid direction changes

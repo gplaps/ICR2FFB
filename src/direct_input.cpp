@@ -21,7 +21,7 @@ static std::wstring targetDeviceNameLocal; // only needed because of function si
 
 static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*)
 {
-    std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
+    const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
     std::wcout << L"  - " << deviceName << std::endl;
     return DIENUM_CONTINUE;
 }
@@ -30,13 +30,13 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
 {
     if (!content) return DIENUM_CONTINUE;
 
-    std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
+    const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
 
-    EnumDeviceHelper* edh   = static_cast<EnumDeviceHelper*>(content);
+    EnumDeviceHelper* edh         = static_cast<EnumDeviceHelper*>(content);
     if (deviceName == edh->targetDeviceName)
     {
         LogMessage(L"[INFO] Found matching device: " + deviceName);
-        HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);
+        const HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);
         if (FAILED(hr))
         {
             LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
@@ -52,7 +52,7 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
 // Device lists for better error messages
 static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*)
 {
-    std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
+    const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
 
     LogMessage(L"[INFO] Available device: " + deviceName);
     return DIENUM_CONTINUE; // Continue enumerating all devices
@@ -63,7 +63,7 @@ void DirectInput::ListAvailableDevices()
     if (directInput)
     {
         LogMessage(L"[INFO] Enumerating available game controllers:");
-        HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
+        const HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
         if (FAILED(hr))
             LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
         else
@@ -86,7 +86,7 @@ bool DirectInput::InitializeDevice(FFBDevice& device)
 {
     LogMessage(L"[INFO] Initializing DirectInput...");
 
-    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, (VOID**)&directInput, NULL);
+    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, reinterpret_cast<VOID**>(&directInput), NULL);
     if (FAILED(hr))
     {
         LogMessage(L"[ERROR] DirectInput8Create failed: 0x" + std::to_wstring(hr));

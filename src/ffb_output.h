@@ -9,7 +9,7 @@
 
 struct FFBOutput
 {
-    FFBOutput(const FFBConfig& config);
+    explicit FFBOutput(const FFBConfig& config);
     ~FFBOutput();
 
     FFBDevice device;

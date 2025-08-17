@@ -95,7 +95,7 @@ static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords)
 #if !defined(UNICODE)
                     std::wstring titleStr = ToLower(AnsiToWide(title));
 #else
-        std::wstring titleStr = ToLower(title);
+        const std::wstring titleStr = ToLower(title);
 #endif
                     LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
                     for (const auto& key : wdata->keywords)
@@ -184,7 +184,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
 
     // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
     const std::vector<std::wstring> keywords = {L"dosbox", config.targetGameWindowName};
-    DWORD                           pid      = FindProcessIdByWindow(keywords);
+    const DWORD                     pid      = FindProcessIdByWindow(keywords);
     if (!pid) return;
 
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);

@@ -48,7 +48,7 @@ struct GameOffsets
 struct TelemetryReader
 {
 public:
-    TelemetryReader(const FFBConfig& config);
+    explicit TelemetryReader(const FFBConfig& config);
     ~TelemetryReader();
 
     bool                Update();
