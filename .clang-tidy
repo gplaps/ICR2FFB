@@ -52,6 +52,8 @@ Checks:          '
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-use-anonymous-namespace,
+  -performance-avoid-endl,
+  -performance-inefficient-string-concatenation,
   -performance-no-int-to-ptr,
   -performance-unnecessary-value-param,
   -readability-braces-around-statements,

@@ -2,4 +2,4 @@ missingInclude
 missingIncludeSystem
 unusedFunction
 functionStatic
-noExplicitConstructor
+useStlAlgorithm
