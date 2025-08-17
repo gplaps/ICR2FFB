@@ -10,7 +10,9 @@
 
 struct ConstantForceEffectResult
 {
-    ConstantForceEffectResult() : magnitude10000(), paused() {}
+    ConstantForceEffectResult() :
+        magnitude10000(),
+        paused() {}
     ConstantForceEffectResult(int magnitude, bool isPaused) :
         magnitude10000(magnitude),
         paused(isPaused) {}

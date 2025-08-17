@@ -7,8 +7,8 @@
 
 #include <shellapi.h>
 
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 // Check Admin rights
 static bool IsRunningAsAdmin()
@@ -202,9 +202,9 @@ static void HideConsoleCursor()
 }
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
-#define NO_EXCEPT noexcept
+#    define NO_EXCEPT noexcept
 #else
-#define NO_EXCEPT
+#    define NO_EXCEPT
 #endif
 static BOOL WINAPI ConsoleHandler(DWORD CEvent) NO_EXCEPT
 {

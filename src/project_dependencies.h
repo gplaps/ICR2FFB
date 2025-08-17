@@ -12,10 +12,10 @@
 
 // compiler and C++ standard differences
 #if defined(__cplusplus) && __cplusplus >= 201103L && !(defined(_MSC_VER) && _MSC_VER <= 1800)
-#define IS_CPP11_COMPLIANT
+#    define IS_CPP11_COMPLIANT
 #endif
 
 // C++98 does not contain threads and mutexes, so use Windows API instead
 #if defined(__cplusplus) && __cplusplus >= 201103L
-#define HAS_STL_THREAD_MUTEX
+#    define HAS_STL_THREAD_MUTEX
 #endif

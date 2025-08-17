@@ -6,7 +6,7 @@
 #include "vehicle_dynamics.h"
 
 #if !defined(HAS_STL_THREAD_MUTEX)
-#include <cassert>
+#    include <cassert>
 #endif
 
 FFBProcessor::FFBProcessor(const FFBConfig& config) :
@@ -39,7 +39,7 @@ void FFBProcessor::Update()
     if (!hasFirstPos)
     {
         previousPos = current;
-        hasFirstPos    = true;
+        hasFirstPos = true;
     }
 
     ffbOutput.Start();
@@ -56,7 +56,7 @@ void FFBProcessor::Update()
 
     if (!hasFirstReading)
     {
-        previous     = current;
+        previous        = current;
         hasFirstReading = true;
     }
     else
@@ -143,8 +143,8 @@ void FFBProcessor::UpdateDisplayData()
 #endif
 
     // Update telemetry for display
-    displayData.raw  = current;
-    displayData.slip = slip;
+    displayData.raw              = current;
+    displayData.slip             = slip;
     displayData.vehicleDynamics  = vehicleDynamics;
 
     displayData.masterForceValue = ffbOutput.masterForceValue;

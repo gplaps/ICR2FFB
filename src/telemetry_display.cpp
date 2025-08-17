@@ -1,7 +1,7 @@
 #include "telemetry_display.h"
 
-#include "main.h"
 #include "log.h"
+#include "main.h"
 #include "window.h"
 
 #include <iomanip>
@@ -11,8 +11,9 @@
 #if defined(HAS_STL_THREAD_MUTEX)
 std::mutex displayMutex;
 #else
-#include "project_dependencies.h"
-#include <cassert>
+#    include "project_dependencies.h"
+
+#    include <cassert>
 HANDLE displayMutex;
 #endif
 
@@ -20,7 +21,8 @@ HANDLE displayMutex;
 const unsigned int CONSOLE_WIDTH = 80;
 
 // Helper lambda to pad lines
-static std::wstring padLine(const std::wstring& text) {
+static std::wstring padLine(const std::wstring& text)
+{
     std::wstring padded = text;
     if (padded.length() < CONSOLE_WIDTH)
         padded.append(CONSOLE_WIDTH - padded.length(), L' ');
@@ -201,7 +203,7 @@ void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayDat
         assert(WaitForSingleObject(displayMutex, INFINITE) == WAIT_OBJECT_0);
 #endif
         displayData = displayDataIn;
-        
+
 #if !defined(HAS_STL_THREAD_MUTEX)
         ReleaseMutex(logMutex);
 #endif

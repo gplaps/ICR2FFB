@@ -5,9 +5,9 @@
 #include "memoryapi.h"
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
-#include <cstdint>
+#    include <cstdint>
 #else
-#include <stdint.h>
+#    include <stdint.h>
 #endif
 #include <string>
 
@@ -65,7 +65,7 @@ private:
     {
         int32_t data[12]
 #if defined(IS_CPP11_COMPLIANT)
-        = {0}
+            = {0}
 #endif
         ;
     } carData;

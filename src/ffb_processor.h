@@ -24,11 +24,11 @@ private:
     //Get some data from RawTelemetry -> not 100% sure what this does
     RawTelemetry current;
     RawTelemetry previous;
-    bool         hasFirstReading   ;
+    bool         hasFirstReading;
 
-    int       noMovementFrames  ;
-    const int movementThreshold ; // number of frames to consider "stopped" - defaults to 3
-    bool      effectPaused      ;
+    int       noMovementFrames;
+    const int movementThreshold; // number of frames to consider "stopped" - defaults to 3
+    bool      effectPaused;
 
     //Added for feedback skipping if stopped
     RawTelemetry previousPos;

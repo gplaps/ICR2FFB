@@ -4,9 +4,9 @@
 #include "helpers.h"
 
 #include <cmath>
+#include <stdint.h>
 
 #include <algorithm>
-#include <stdint.h>
 
 // SAE Convention
 // Lateral force

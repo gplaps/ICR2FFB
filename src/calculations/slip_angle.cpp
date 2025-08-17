@@ -15,7 +15,9 @@
 
 struct DecodedSlip
 {
-    DecodedSlip(double sgnNorm, double mag) : signedNorm(sgnNorm), magnitude(mag) {}
+    DecodedSlip(double sgnNorm, double mag) :
+        signedNorm(sgnNorm),
+        magnitude(mag) {}
     double signedNorm; // -1.0 to +1.0
     double magnitude;  // 0.0 to 1.0
 };

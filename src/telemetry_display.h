@@ -6,7 +6,7 @@
 #include "vehicle_dynamics.h"
 
 #if defined(HAS_STL_THREAD_MUTEX)
-#include <mutex>
+#    include <mutex>
 extern std::mutex displayMutex;
 #else
 extern HANDLE displayMutex;

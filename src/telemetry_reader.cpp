@@ -7,10 +7,10 @@
 #include "log.h"
 
 #include <psapi.h>
+#include <stdint.h>
 #include <tlhelp32.h>
 
 #include <cwctype>
-#include <stdint.h>
 #include <sstream>
 #include <vector>
 
@@ -78,18 +78,21 @@ static std::string signatureStr = "license with Bob";
 
 struct FindWindowData
 {
-    FindWindowData(const std::vector<std::wstring>& keyWords, DWORD processId) : keywords(keyWords), pid(processId) {}
+    FindWindowData(const std::vector<std::wstring>& keyWords, DWORD processId) :
+        keywords(keyWords),
+        pid(processId) {}
     std::vector<std::wstring> keywords;
     DWORD                     pid;
 };
 
 static BOOL
 #if defined(__GNUC__) && !defined(__clang__)
-                CALLBACK
+    CALLBACK
 #endif
-    EnumerateWindowsCallback(HWND hwnd, LPARAM lParam) {
+    EnumerateWindowsCallback(HWND hwnd, LPARAM lParam)
+{
     FindWindowData* wdata = reinterpret_cast<FindWindowData*>(lParam);
-    TCHAR title[256];
+    TCHAR           title[256];
     GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
 #if !defined(UNICODE)
     std::wstring titleStr = ToLower(AnsiToWide(title));
@@ -97,8 +100,9 @@ static BOOL
     const std::wstring titleStr = ToLower(title);
 #endif
     LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
-    for (size_t i=0; i< wdata->keywords.size(); ++i) {
-        const std::wstring& key = ToLower(wdata->keywords[i]);
+    for (size_t i = 0; i < wdata->keywords.size(); ++i)
+    {
+        const std::wstring& key   = ToLower(wdata->keywords[i]);
         const std::wstring& query = ToLower(key);
         if (titleStr.find(query) != std::wstring::npos)
         {
@@ -189,7 +193,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     std::vector<std::wstring> keywords;
     keywords.push_back(L"dosbox");
     keywords.push_back(config.targetGameWindowName);
-    const DWORD                     pid      = FindProcessIdByWindow(keywords);
+    const DWORD pid = FindProcessIdByWindow(keywords);
     if (!pid) return;
 
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);

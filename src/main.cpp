@@ -38,8 +38,8 @@
 
 // === Shared Globals ===
 #if defined(HAS_STL_THREAD_MUTEX)
-#include <atomic>
-#include <thread>
+#    include <atomic>
+#    include <thread>
 std::atomic<bool> shouldExit = {};
 #else
 bool shouldExit = false;
@@ -48,7 +48,8 @@ bool shouldExit = false;
 #if !defined(HAS_STL_THREAD_MUTEX)
 static FFBProcessor* ffbProcessor = NULL;
 
-static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/) {
+static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
+{
     // Loop which kicks stuff off and coordinates everything!
     while (!shouldExit)
     {
@@ -64,13 +65,13 @@ int main()
 {
 #if !defined(HAS_STL_THREAD_MUTEX)
     logMutex = CreateMutex(NULL, FALSE, NULL);
-    if(logMutex == NULL)
+    if (logMutex == NULL)
     {
         LogMessage(L"[ERROR] Failed to create log mutex");
         return -1;
     }
     displayMutex = CreateMutex(NULL, FALSE, NULL);
-    if(displayMutex == NULL)
+    if (displayMutex == NULL)
     {
         LogMessage(L"[ERROR] Failed to create display mutex");
         return -1;
@@ -89,7 +90,7 @@ int main()
     const FFBConfig config;
     if (!config.Valid())
         return -1;
-    
+
     // Start telemetry processing!
 #if defined(HAS_STL_THREAD_MUTEX)
     FFBProcessor ffbProcessor(config);
@@ -110,9 +111,9 @@ int main()
     if (!ffbProcessor || !ffbProcessor->Valid())
         return -1;
 
-    DWORD threadID = 0;
-    HANDLE hThread = CreateThread(NULL,0,ProcessLoop,NULL,0,&threadID);
-    if(hThread == NULL)
+    DWORD  threadID = 0;
+    HANDLE hThread  = CreateThread(NULL, 0, ProcessLoop, NULL, 0, &threadID);
+    if (hThread == NULL)
     {
         LogMessage(L"[ERROR] Failed to create thread.");
         return -1;
