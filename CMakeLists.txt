@@ -108,3 +108,27 @@ if(TARGET_PLATFORM STREQUAL "64bit")
 else()
     message(STATUS "32bit build determined")
 endif()
+
+# PDB debug symbols with MSVC and MinGW Clang
+if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(IS_DEBUGABLE_BUILD TRUE)
+else()
+    set(IS_DEBUGABLE_BUILD FALSE)
+endif()
+
+# PDB with MinGW LLVM
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND IS_DEBUGABLE_BUILD)
+    target_compile_options(${PROJECT_BINARY_NAME} PUBLIC -gcodeview)
+    target_link_options(${PROJECT_BINARY_NAME} PUBLIC -Wl,--pdb=)
+endif()
+# PDB with MSVC
+if(MSVC AND IS_DEBUGABLE_BUILD)
+    target_compile_options(${PROJECT_BINARY_NAME} PUBLIC /Zi)
+    set_target_properties(${PROJECT_BINARY_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF")
+endif()
+# install PDBs
+if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR MSVC) AND IS_DEBUGABLE_BUILD)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.pdb
+            DESTINATION .
+            COMPONENT debug)
+endif()
