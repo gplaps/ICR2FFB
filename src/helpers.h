@@ -11,9 +11,9 @@
     if (res) return res
 
 template <typename T>
-int sign(T input)
+T sign(T input)
 {
-    return (input > (T)0) ? 1 : (input < 0 ? -1 : 0);
+    return (input > static_cast<T>(0)) ? static_cast<T>(1) : (input < 0 ? static_cast<T>(-1) : static_cast<T>(0));
 }
 
 #if defined(__cplusplus) && __cplusplus < 201703L

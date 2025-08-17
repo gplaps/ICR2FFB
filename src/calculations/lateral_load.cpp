@@ -29,7 +29,7 @@ bool CalculatedLateralLoad::Calculate(const RawTelemetry& current, RawTelemetry&
 
     // Direction: force toward inside of corner
     // You want the wheel to push against you
-    directionVal = -sign(lateralG);
+    directionVal = static_cast<int>(-sign(lateralG));
 
     return true;
 }

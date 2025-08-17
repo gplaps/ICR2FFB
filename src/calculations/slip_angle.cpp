@@ -80,7 +80,7 @@ bool CalculatedSlip::Calculate(const RawTelemetry& current, RawTelemetry& /*prev
     slipAngle      = slipAngleDeg;
     absSlipDeg     = absSlipDeg_;
     forceMagnitude = saturate(absSlipDeg / 90.0);
-    directionVal   = -sign(slipAngleDeg);
+    directionVal   = static_cast<int>(-sign(slipAngleDeg));
 
     return true;
 }

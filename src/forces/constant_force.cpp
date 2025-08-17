@@ -471,7 +471,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     if (enableRateLimit)
     {
         // Direction calculation and smoothing for rate limiting
-        const LONG  targetDir     = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
+        const LONG  targetDir     = static_cast<LONG>(-sign(smoothed)) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
         static LONG lastDirection = 0;
 
         // Direction smoothing - this prevents rapid direction changes

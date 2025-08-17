@@ -115,7 +115,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     if (std::abs(lateralG) < 0.05)
         directionVal = 0; // Straight
     else
-        directionVal = sign(totalLateralForce);
+        directionVal = static_cast<int>(sign(totalLateralForce));
 
     // CALC 2
     //===== SLIP ANGLE ======

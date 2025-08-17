@@ -79,7 +79,7 @@ private:
     bool ReadValue(T& dest, uintptr_t offset)
     {
         SIZE_T bytesRead = 0;
-        return ReadProcessMemory(hProcess, (LPCVOID)offset, &dest, sizeof(dest), &bytesRead) && bytesRead == sizeof(dest);
+        return ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(offset), &dest, sizeof(dest), &bytesRead) && bytesRead == sizeof(dest);
     }
     bool ReadRaw(void* dest, uintptr_t offset, SIZE_T size);
 
