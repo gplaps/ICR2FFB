@@ -8,15 +8,7 @@
 #include <iostream>
 #include <sstream>
 
-#if defined(HAS_STL_THREAD_MUTEX)
-std::mutex displayMutex;
-#else
-#    include "project_dependencies.h"
-
-#    include <cassert>
-HANDLE displayMutex;
-#endif
-
+DEFINE_MUTEX(displayMutex);
 // Define console width
 const unsigned int CONSOLE_WIDTH = 80;
 
@@ -197,16 +189,9 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn)
 {
     {
-#if defined(HAS_STL_THREAD_MUTEX)
-        const std::lock_guard<std::mutex> lock(displayMutex);
-#else
-        assert(WaitForSingleObject(displayMutex, INFINITE) == WAIT_OBJECT_0);
-#endif
+        LOCK_MUTEX(displayMutex);
         displayData = displayDataIn;
-
-#if !defined(HAS_STL_THREAD_MUTEX)
-        ReleaseMutex(logMutex);
-#endif
+        UNLOCK_MUTEX(displayMutex);
     }
     //Trigger display
     DisplayTelemetry(config);

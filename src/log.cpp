@@ -7,14 +7,7 @@
 #include <vector>
 
 // Global log buffer
-#if defined(HAS_STL_THREAD_MUTEX)
-#    include <mutex>
-static std::mutex logMutex;
-#else
-#    include "project_dependencies.h"
-HANDLE logMutex;
-#    include <cassert>
-#endif
+DEFINE_MUTEX(logMutex);
 static std::deque<std::wstring> logLines;
 const size_t                    maxLogLines = 1000; // Show last 1000 log lines
 
@@ -22,11 +15,7 @@ const size_t                    maxLogLines = 1000; // Show last 1000 log lines
 // Write to log.txt
 void LogMessage(const std::wstring& msg)
 {
-#if defined(HAS_STL_THREAD_MUTEX)
-    const std::lock_guard<std::mutex> lock(logMutex);
-#else
-    assert(WaitForSingleObject(logMutex, INFINITE) == WAIT_OBJECT_0);
-#endif
+    LOCK_MUTEX(logMutex);
 
     // Add to in-memory deque for optional UI display (if needed)
     logLines.push_back(msg);
@@ -38,19 +27,13 @@ void LogMessage(const std::wstring& msg)
     if (logFile.is_open())
         logFile << msg << std::endl;
 
-#if !defined(HAS_STL_THREAD_MUTEX)
-    ReleaseMutex(logMutex);
-#endif
+    UNLOCK_MUTEX(logMutex);
 }
 
 void PrintToLogFile()
 {
     //Print log data
-#if defined(HAS_STL_THREAD_MUTEX)
-    const std::lock_guard<std::mutex> lock(logMutex);
-#else
-    assert(WaitForSingleObject(logMutex, INFINITE) == WAIT_OBJECT_0);
-#endif
+    LOCK_MUTEX(logMutex);
 
     const unsigned int        maxDisplayLines = 1; //how many lines to display
     std::vector<std::wstring> recentUniqueLines;
@@ -73,7 +56,5 @@ void PrintToLogFile()
         std::wcout << padded << L"\n";
     }
 
-#if !defined(HAS_STL_THREAD_MUTEX)
-    ReleaseMutex(logMutex);
-#endif
+    UNLOCK_MUTEX(logMutex);
 }

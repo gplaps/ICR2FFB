@@ -5,12 +5,7 @@
 #include "telemetry_reader.h"
 #include "vehicle_dynamics.h"
 
-#if defined(HAS_STL_THREAD_MUTEX)
-#    include <mutex>
-extern std::mutex displayMutex;
-#else
-extern HANDLE displayMutex;
-#endif
+DECLARE_MUTEX(displayMutex);
 
 struct TelemetryDisplay
 {

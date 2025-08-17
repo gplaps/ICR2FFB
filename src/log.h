@@ -6,6 +6,4 @@
 void LogMessage(const std::wstring& msg);
 void PrintToLogFile();
 
-#if !defined(HAS_STL_THREAD_MUTEX)
-extern HANDLE logMutex;
-#endif
+DECLARE_MUTEX(logMutex);

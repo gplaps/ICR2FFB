@@ -5,10 +5,6 @@
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
-#if !defined(HAS_STL_THREAD_MUTEX)
-#    include <cassert>
-#endif
-
 FFBProcessor::FFBProcessor(const FFBConfig& config) :
     movementThreshold(3),
     telemetryReader(TelemetryReader(config)),
@@ -136,11 +132,7 @@ bool FFBProcessor::ProcessTelemetryInput()
 
 void FFBProcessor::UpdateDisplayData()
 {
-#if defined(HAS_STL_THREAD_MUTEX)
-    const std::lock_guard<std::mutex> lock(displayMutex);
-#else
-    assert(WaitForSingleObject(displayMutex, INFINITE) == WAIT_OBJECT_0);
-#endif
+    LOCK_MUTEX(displayMutex);
 
     // Update telemetry for display
     displayData.raw              = current;
@@ -149,6 +141,8 @@ void FFBProcessor::UpdateDisplayData()
 
     displayData.masterForceValue = ffbOutput.masterForceValue;
     displayData.constantForce    = constantForceCalculation;
+
+    UNLOCK_MUTEX(displayMutex);
 }
 
 const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const
