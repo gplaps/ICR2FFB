@@ -26,29 +26,70 @@ template <typename T> T clamp(T v, const T& lo, const T& hi)
 } // namespace std
 #endif
 
+#if defined(__cplusplus) && __cplusplus < 201103L
+#include <cwchar>
+#include <stdint.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call" // C++98 has no alternative and the "swprintf" is unsafe suggestion is to replace with snprintf, but that doesn't seem right
+#endif
+namespace std
+{
+inline std::wstring to_wstring(int32_t v)
+{
+    wchar_t buf[128];
+    std::swprintf(buf,128,L"%i",v);
+    return std::wstring(buf);
+}
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+#if !defined(__clang__) // clang provided libc++ does have those defined mistakenly in C++98 mode
+// simplified implementation only capable of parsing one number
+inline double stod(const std::wstring& str) {
+    wchar_t* end;
+    return std::wcstod(str.c_str(),&end);
+}
+#endif
+} // namespace std
+#endif
+
 template <typename T>
 T saturate(T v) { return std::clamp(v, static_cast<T>(0), static_cast<T>(1)); }
 
 inline std::wstring ToLower(const std::wstring& str)
 {
     std::wstring result = str;
-    for (wchar_t& ch : result) ch = towlower(ch);
+    for(size_t i=0; i<result.size(); ++i) result[i] = towlower(result[i]);
     return result;
 }
 
 inline std::string ToLower(const std::string& str)
 {
     std::string result = str;
-    for (char& ch : result) ch = static_cast<char>(tolower(ch));
+    for(size_t i=0; i<result.size(); ++i) result[i] = static_cast<char>(tolower(result[i]));
     return result;
 }
 
-inline std::wstring AnsiToWide(const char* str)
-{
-    size_t       len = std::mbstowcs(NULL, str, 0);
-    std::wstring asWide(len, L'\0');
-    std::mbstowcs(const_cast<wchar_t*>(asWide.data()), str, len + 1);
+#if defined(__cplusplus) && __cplusplus < 201103L
+#include <cstdlib>
+#endif
+
+inline std::wstring AnsiToWide(const char* str) {
+#if defined(__cplusplus) && __cplusplus < 201103L
+    size_t len = mbstowcs(NULL,str,0);
+    std::wstring asWide(len,L'\0');
+    mbstowcs(const_cast<wchar_t*>(asWide.data()),str,len+1);
     return asWide;
+#else
+    size_t len = std::mbstowcs(NULL,str,0);
+    std::wstring asWide(len,L'\0');
+    std::mbstowcs(const_cast<wchar_t*>(asWide.data()),str,len+1);
+    return asWide;
+#endif
 }
 
 #if defined(UNICODE)

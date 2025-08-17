@@ -5,7 +5,12 @@
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
+#if !defined(HAS_STL_THREAD_MUTEX)
+#include <cassert>
+#endif
+
 FFBProcessor::FFBProcessor(const FFBConfig& config) :
+    movementThreshold(3),
     telemetryReader(TelemetryReader(config)),
     ffbOutput(config),
     displayData()
@@ -31,10 +36,10 @@ void FFBProcessor::Update()
 
     current = telemetryReader.Data();
 
-    if (firstPos)
+    if (!hasFirstPos)
     {
         previousPos = current;
-        firstPos    = false;
+        hasFirstPos    = true;
     }
 
     ffbOutput.Start();
@@ -49,10 +54,10 @@ void FFBProcessor::Update()
 
     ffbOutput.Update();
 
-    if (firstReading)
+    if (!hasFirstReading)
     {
         previous     = current;
-        firstReading = false;
+        hasFirstReading = true;
     }
     else
     {
@@ -119,20 +124,25 @@ bool FFBProcessor::ProcessTelemetryInput()
 {
     // Do Force calculations based on raw data
     // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
-    slip = {};
+    slip = CalculatedSlip();
     slip.Calculate(current, previous);
 
-    vehicleDynamics = {};
+    vehicleDynamics = CalculatedVehicleDynamics();
     vehicleDynamics.Calculate(current, previous);
 
-    load = {};
+    load = CalculatedLateralLoad();
     return load.Calculate(current, previous, slip);
 }
 
 void FFBProcessor::UpdateDisplayData()
 {
-    // Update telemetry for display
+#if defined(HAS_STL_THREAD_MUTEX)
     const std::lock_guard<std::mutex> lock(displayMutex);
+#else
+    assert(WaitForSingleObject(displayMutex, INFINITE) == WAIT_OBJECT_0);
+#endif
+
+    // Update telemetry for display
     displayData.raw  = current;
     displayData.slip = slip;
     displayData.vehicleDynamics  = vehicleDynamics;

@@ -8,8 +8,12 @@
 struct FFBDevice
 {
     explicit FFBDevice(const FFBConfig& configIn);
-    FFBDevice()                   = delete;
-    IDirectInputDevice8* diDevice = NULL;
+    FFBDevice()                   
+    #if defined(IS_CPP11_COMPLIANT)
+    = delete
+    #endif
+    ;
+    IDirectInputDevice8* diDevice;
 
     // === Force Effect Creators ===
     void CreateConstantForceEffect();
@@ -39,11 +43,11 @@ private:
     DIJOYSTATE2 js; // this is the read state of all axis and buttons
 
     // I think this is how we tell it these things are DirectInput stuff?
-    IDirectInputEffect* constantForceEffect = NULL;
-    IDirectInputEffect* damperEffect        = NULL;
-    IDirectInputEffect* springEffect        = NULL;
+    IDirectInputEffect* constantForceEffect ;
+    IDirectInputEffect* damperEffect        ;
+    IDirectInputEffect* springEffect        ;
 
-    bool constantStarted                    = false;
-    bool damperStarted                      = false;
-    bool springStarted                      = false;
+    bool constantStarted                    ;
+    bool damperStarted                      ;
+    bool springStarted                      ;
 };

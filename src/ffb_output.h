@@ -20,13 +20,13 @@ struct FFBOutput
 
     // Constant force is the most in depth
     // Damper & Spring just use speed to do things
-    bool enableRateLimit     = false;
-    bool enableConstantForce = false;
-    bool enableWeightForce   = false;
-    bool enableDamperEffect  = false;
-    bool enableSpringEffect  = false;
+    bool enableRateLimit    ;
+    bool enableConstantForce;
+    bool enableWeightForce  ;
+    bool enableDamperEffect ;
+    bool enableSpringEffect ;
 
-    bool invert              = false;
+    bool invert             ;
 
     int  ApplyFFBSettings(const FFBConfig& config);
     int  Init(const FFBConfig& config);
@@ -44,17 +44,17 @@ struct FFBOutput
     SpringEffect springEffect;
 
     // init with zero to be safe
-    double masterForceValue   = 0.0;
-    double constantForceValue = 0.0;
-    double deadzoneForceValue = 0.0;
-    double weightForceValue   = 0.0;
-    double damperForceValue   = 0.0;
+    double masterForceValue   ;
+    double constantForceValue ;
+    double deadzoneForceValue ;
+    double weightForceValue   ;
+    double damperForceValue   ;
 
-    double masterForceScale   = 0.0;
-    double deadzoneForceScale = 0.0;
-    double constantForceScale = 0.0;
-    double weightForceScale   = 0.0;
-    double damperForceScale   = 0.0;
+    double masterForceScale   ;
+    double deadzoneForceScale ;
+    double constantForceScale ;
+    double weightForceScale   ;
+    double damperForceScale   ;
 
-    bool mInitialized         = false;
+    bool mInitialized         ;
 };

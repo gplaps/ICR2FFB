@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include <algorithm>
+#include <stdint.h>
 
 // SAE Convention
 // Lateral force

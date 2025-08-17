@@ -1,13 +1,33 @@
 #include "telemetry_display.h"
 
 #include "main.h"
+#include "log.h"
 #include "window.h"
 
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 
+#if defined(HAS_STL_THREAD_MUTEX)
 std::mutex displayMutex;
+#else
+#include "project_dependencies.h"
+#include <cassert>
+HANDLE displayMutex;
+#endif
+
+// Define console width
+const unsigned int CONSOLE_WIDTH = 80;
+
+// Helper lambda to pad lines
+static std::wstring padLine(const std::wstring& text) {
+    std::wstring padded = text;
+    if (padded.length() < CONSOLE_WIDTH)
+        padded.append(CONSOLE_WIDTH - padded.length(), L' ');
+    else if (padded.length() > CONSOLE_WIDTH)
+        padded = padded.substr(0, CONSOLE_WIDTH); // Truncate if too long
+    return padded;
+}
 
 // New display
 void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
@@ -19,19 +39,6 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 
     std::cout << std::fixed << std::setprecision(2);
     std::wcout << std::fixed << std::setprecision(2); // Also set for wide cout
-
-    // Define console width
-    const unsigned int CONSOLE_WIDTH = 80;
-
-    // Helper lambda to pad lines
-    auto padLine = [&](const std::wstring& text) {
-        std::wstring padded = text;
-        if (padded.length() < CONSOLE_WIDTH)
-            padded.append(CONSOLE_WIDTH - padded.length(), L' ');
-        else if (padded.length() > CONSOLE_WIDTH)
-            padded = padded.substr(0, CONSOLE_WIDTH); // Truncate if too long
-        return padded;
-    };
 
     // Header section
     std::wcout << padLine(L"ICR2 FFB Program Version 0.8.8 BETA") << L"\n";
@@ -188,8 +195,16 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn)
 {
     {
+#if defined(HAS_STL_THREAD_MUTEX)
         const std::lock_guard<std::mutex> lock(displayMutex);
+#else
+        assert(WaitForSingleObject(displayMutex, INFINITE) == WAIT_OBJECT_0);
+#endif
         displayData = displayDataIn;
+        
+#if !defined(HAS_STL_THREAD_MUTEX)
+        ReleaseMutex(logMutex);
+#endif
     }
     //Trigger display
     DisplayTelemetry(config);

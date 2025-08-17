@@ -10,6 +10,7 @@
 #include <tlhelp32.h>
 
 #include <cwctype>
+#include <stdint.h>
 #include <sstream>
 #include <vector>
 
@@ -61,10 +62,10 @@ static GameOffsets GetGameOffsets(GameVersion version)
 {
     switch (version)
     {
-        case GameVersion::ICR2_DOS4G_1_02:
+        case ICR2_DOS4G_1_02:
             return Offsets_DOS;
-        case GameVersion::ICR2_RENDITION:
-        case GameVersion::UNINITIALIZED:
+        case ICR2_RENDITION:
+        case VERSION_UNINITIALIZED:
         default:
             return Offsets_REND;
     }
@@ -75,44 +76,46 @@ static GameOffsets GetGameOffsets(GameVersion version)
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
 static std::string signatureStr = "license with Bob";
 
-// Gets the process ID of indycar
-static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords)
+struct FindWindowData
 {
-    struct FindWindowData
-    {
-        std::vector<std::wstring> keywords;
-        DWORD                     pid;
-    } data{keywords, 0};
+    FindWindowData(const std::vector<std::wstring>& keyWords, DWORD processId) : keywords(keyWords), pid(processId) {}
+    std::vector<std::wstring> keywords;
+    DWORD                     pid;
+};
 
-    EnumWindows([]
+static BOOL
 #if defined(__GNUC__) && !defined(__clang__)
                 CALLBACK
 #endif
-                (HWND hwnd, LPARAM lParam) -> BOOL {
-                    auto* wdata = reinterpret_cast<FindWindowData*>(lParam);
-                    TCHAR title[256];
-                    GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
+    EnumerateWindowsCallback(HWND hwnd, LPARAM lParam) {
+    FindWindowData* wdata = reinterpret_cast<FindWindowData*>(lParam);
+    TCHAR title[256];
+    GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
 #if !defined(UNICODE)
-                    std::wstring titleStr = ToLower(AnsiToWide(title));
+    std::wstring titleStr = ToLower(AnsiToWide(title));
 #else
-        const std::wstring titleStr = ToLower(title);
+    const std::wstring titleStr = ToLower(title);
 #endif
-                    LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
-                    for (const auto& key : wdata->keywords)
-                    {
-                        auto query = ToLower(key);
-                        if (titleStr.find(query) != std::wstring::npos)
-                        {
-                            LogMessage(L"[DEBUG] Window \"" + titleStr + L"\" matches \"" + key + L'\"');
-                            GetWindowThreadProcessId(hwnd, &wdata->pid);
-                            return FALSE;
-                        }
-                    }
+    LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
+    for (size_t i=0; i< wdata->keywords.size(); ++i) {
+        const std::wstring& key = ToLower(wdata->keywords[i]);
+        const std::wstring& query = ToLower(key);
+        if (titleStr.find(query) != std::wstring::npos)
+        {
+            LogMessage(L"[DEBUG] Window \"" + titleStr + L"\" matches \"" + key + L'\"');
+            GetWindowThreadProcessId(hwnd, &wdata->pid);
+            return FALSE;
+        }
+    }
 
-                    return TRUE;
-                },
-                reinterpret_cast<LPARAM>(&data));
+    return TRUE;
+}
 
+// Gets the process ID of indycar
+static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords)
+{
+    FindWindowData data(keywords, 0);
+    EnumWindows(EnumerateWindowsCallback, reinterpret_cast<LPARAM>(&data));
     return data.pid;
 }
 
@@ -183,7 +186,9 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     }
 
     // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
-    const std::vector<std::wstring> keywords = {L"dosbox", config.targetGameWindowName};
+    std::vector<std::wstring> keywords;
+    keywords.push_back(L"dosbox");
+    keywords.push_back(config.targetGameWindowName);
     const DWORD                     pid      = FindProcessIdByWindow(keywords);
     if (!pid) return;
 

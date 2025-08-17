@@ -8,6 +8,7 @@
 #include <shellapi.h>
 
 #include <iostream>
+#include <cstdlib>
 
 // Check Admin rights
 static bool IsRunningAsAdmin()

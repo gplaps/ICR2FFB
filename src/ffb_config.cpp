@@ -28,7 +28,7 @@ FFBConfig::FFBConfig() :
         return;
 }
 
-bool FFBConfig::Valid() const { return version != GameVersion::UNINITIALIZED; }
+bool FFBConfig::Valid() const { return version != VERSION_UNINITIALIZED; }
 
 // Search the ini file for settings and find what the user has set them to
 bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
@@ -103,16 +103,16 @@ int FFBConfig::LoadSettingsFromConfig()
 GameVersion FFBConfig::ReadGameVersion(const std::wstring& versionText)
 {
     // Select between Dos and Rendition version. Rendition is default
-    return ToLower(versionText) == L"dos4g" ? GameVersion::ICR2_DOS4G_1_02 : GameVersion::ICR2_RENDITION;
+    return ToLower(versionText) == L"dos4g" ? ICR2_DOS4G_1_02 : ICR2_RENDITION;
 }
 
 std::wstring FFBConfig::PrintGameVersion() const
 {
     switch (version)
     {
-        case GameVersion::ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
-        case GameVersion::ICR2_RENDITION:  return L"ICR2 - Rendition";
-        case GameVersion::UNINITIALIZED:
+        case ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
+        case ICR2_RENDITION:  return L"ICR2 - Rendition";
+        case VERSION_UNINITIALIZED:
         default:
             break;
     }

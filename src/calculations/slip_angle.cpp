@@ -7,6 +7,7 @@
 
 #include <algorithm>
 // #include <deque>
+#include <stdint.h>
 
 // Some variables for smoothing
 // const int VELOCITY_HISTORY_SIZE = 5;
@@ -14,6 +15,7 @@
 
 struct DecodedSlip
 {
+    DecodedSlip(double sgnNorm, double mag) : signedNorm(sgnNorm), magnitude(mag) {}
     double signedNorm; // -1.0 to +1.0
     double magnitude;  // 0.0 to 1.0
 };
@@ -29,7 +31,7 @@ static DecodedSlip decodeSlip(uint16_t raw)
     double        normalized       = static_cast<double>(mag) / MAX_EXPECTED_SLIP;
     normalized                     = saturate(normalized);
     const double signedNorm        = right ? -normalized : normalized;
-    return {signedNorm, normalized};
+    return DecodedSlip(signedNorm, normalized);
 }
 
 bool CalculatedSlip::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/)

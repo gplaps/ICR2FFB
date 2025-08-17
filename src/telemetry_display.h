@@ -5,7 +5,12 @@
 #include "telemetry_reader.h"
 #include "vehicle_dynamics.h"
 
+#if defined(HAS_STL_THREAD_MUTEX)
 #include <mutex>
+extern std::mutex displayMutex;
+#else
+extern HANDLE displayMutex;
+#endif
 
 struct TelemetryDisplay
 {
@@ -25,5 +30,3 @@ struct TelemetryDisplay
     void DisplayTelemetry(const FFBConfig& config) const;
     void Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn);
 };
-
-extern std::mutex displayMutex;

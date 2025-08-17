@@ -4,7 +4,11 @@
 #include "ffb_config.h"
 #include "memoryapi.h"
 
+#if defined(__cplusplus) && __cplusplus >= 201103L
 #include <cstdint>
+#else
+#include <stdint.h>
+#endif
 #include <string>
 
 struct RawTelemetry
@@ -60,7 +64,7 @@ private:
     struct CarData
     {
         int32_t data[12]
-#if !(defined(_MSC_VER) && _MSC_VER <= 1800) // MSVC 2013
+#if defined(IS_CPP11_COMPLIANT)
         = {0}
 #endif
         ;
@@ -81,15 +85,15 @@ private:
 
     struct RawData
     {
-        int16_t loadLF   = 0;
-        int16_t loadRF   = 0;
-        int16_t loadLR   = 0;
-        int16_t loadRR   = 0;
-        int16_t magLatLF = 0;
-        int16_t magLatRF = 0;
-        int16_t magLatLR = 0;
-        int16_t magLatRR = 0;
-        int16_t longiF   = 0;
+        int16_t loadLF;
+        int16_t loadRF;
+        int16_t loadLR;
+        int16_t loadRR;
+        int16_t magLatLF;
+        int16_t magLatRF;
+        int16_t magLatLR;
+        int16_t magLatRR;
+        int16_t longiF;
     };
 
     HANDLE       hProcess;

@@ -63,7 +63,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
         lastDlong      = current.dlong; // Set baseline from first real data
         isFirstReading = false;
         pauseForceSet  = true;
-        return {signedMagnitude, true};
+        return ConstantForceEffectResult(signedMagnitude, true);
     }
 
     const bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
@@ -97,7 +97,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     if (isPaused)
     {
         pauseForceSet = true;
-        return {signedMagnitude, true};
+        return ConstantForceEffectResult(signedMagnitude, true);
     }
 
     // Low speed filtering
@@ -108,7 +108,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
         //     // Send zero force when entering low speed
         //     wasLowSpeed = true;
         // }
-        return {signedMagnitude, true};
+        return ConstantForceEffectResult(signedMagnitude, true);
     }
 
     // static bool wasLowSpeed = false;
@@ -530,7 +530,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
         if (!shouldUpdate)
         {
             lastProcessedMagnitude = magnitude;
-            return {0, false}; // Skip this frame
+            return ConstantForceEffectResult(0, false); // Skip this frame
         }
 
         // Reset tracking when we send an update
@@ -557,5 +557,5 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
 
     // Use signed magnitude
     // Only set magnitude params, skip direction
-    return {signedMagnitude, false};
+    return ConstantForceEffectResult(signedMagnitude, false);
 }

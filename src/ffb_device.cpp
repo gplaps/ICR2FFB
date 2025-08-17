@@ -2,6 +2,7 @@
 
 #include "constants.h"
 #include "direct_input.h"
+#include "helpers.h"
 #include "log.h"
 
 #include <iostream>
