@@ -26,7 +26,7 @@ static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInst
 
 static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* content)
 {
-    if (!content) return DIENUM_CONTINUE;
+    if (!content) { return DIENUM_CONTINUE; }
 
     const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
 
@@ -63,20 +63,30 @@ void DirectInput::ListAvailableDevices()
         LogMessage(L"[INFO] Enumerating available game controllers:");
         const HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
         if (FAILED(hr))
+        {
             LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
+        }
         else
+        {
             LogMessage(L"[INFO] Device enumeration complete");
+        }
     }
     else
+    {
         LogMessage(L"[ERROR] DirectInput not initialized, cannot list devices");
+    }
 }
 
 void DirectInput::ShowAvailableDevicesOnConsole()
 {
     if (directInput)
+    {
         directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
+    }
     else
+    {
         std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << L'\n';
+    }
 }
 
 // Kick-off DirectInput

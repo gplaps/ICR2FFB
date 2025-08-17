@@ -159,9 +159,13 @@ static void DisableConsoleQuickEdit()
     mode |= ENABLE_EXTENDED_FLAGS;
 
     if (!SetConsoleMode(hInput, mode))
+    {
         LogMessage(L"[ERROR] Failed to set console mode");
+    }
     else
+    {
         LogMessage(L"[INFO] Console Quick Edit Mode disabled");
+    }
 }
 
 void MoveCursorToTop()
@@ -196,9 +200,13 @@ static void HideConsoleCursor()
 
     cursorInfo.bVisible = FALSE;
     if (!SetConsoleCursorInfo(hOut, &cursorInfo))
+    {
         LogMessage(L"[ERROR] Failed to hide cursor");
+    }
     else
+    {
         LogMessage(L"[INFO] Cursor hidden successfully");
+    }
 }
 
 #if defined(__cplusplus) && __cplusplus >= 201103L

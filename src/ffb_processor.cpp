@@ -27,7 +27,9 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
         return;
     }
     if (!ffbOutput.Valid())
+    {
         return;
+    }
 
     mInitialized = true;
 }
@@ -38,7 +40,9 @@ void FFBProcessor::Update()
 {
     // Check to see if Telemetry is coming in, but if not then wait for it!
     if (!telemetryReader.Update())
+    {
         return;
+    }
 
     current = telemetryReader.Data();
 

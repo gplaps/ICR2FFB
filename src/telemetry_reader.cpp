@@ -106,7 +106,7 @@ static BOOL
         const std::wstring& query = ToLower(key);
         if (titleStr.find(query) != std::wstring::npos)
         {
-            LogMessage(L"[DEBUG] Window \"" + titleStr + L"\" matches \"" + key + L'\"');
+            LogMessage((L"[DEBUG] Window \"" + titleStr) + (L"\" matches \"" + key + L'\"'));
             GetWindowThreadProcessId(hwnd, &wdata->pid);
             return FALSE;
         }
@@ -172,7 +172,9 @@ static uintptr_t ScanSignature(HANDLE processHandle)
             addr += mbi.RegionSize;
         }
         else
+        {
             addr += 0x1000;
+        }
     }
 
     LogMessage(L"[ERROR] Signature not found in game.");
@@ -196,10 +198,10 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     keywords.push_back(L"dosbox");
     keywords.push_back(config.targetGameWindowName);
     const DWORD pid = FindProcessIdByWindow(keywords);
-    if (!pid) return;
+    if (!pid) { return; }
 
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
-    if (!hProcess) return;
+    if (!hProcess) { return; }
 
     const uintptr_t sigAddr = ScanSignature(hProcess);
     if (!sigAddr)

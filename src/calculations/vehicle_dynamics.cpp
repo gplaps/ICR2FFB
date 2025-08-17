@@ -51,10 +51,10 @@ static int getTurnDirection(double lf, double rf, double lr, double rr)
     // Determine if we're turning left or right based on force signs
     // Most of your forces will have the same sign during a turn
     int negative_count = 0;
-    if (lf < 0) negative_count++;
-    if (rf < 0) negative_count++;
-    if (lr < 0) negative_count++;
-    if (rr < 0) negative_count++;
+    if (lf < 0) { negative_count++; }
+    if (rf < 0) { negative_count++; }
+    if (lr < 0) { negative_count++; }
+    if (rr < 0) { negative_count++; }
 
     if (negative_count >= 2)
     {
@@ -113,9 +113,13 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
 
     // Calculate direction value
     if (std::abs(lateralG) < 0.05)
+    {
         directionVal = 0; // Straight
+    }
     else
+    {
         directionVal = static_cast<int>(sign(totalLateralForce));
+    }
 
     // CALC 2
     //===== SLIP ANGLE ======

@@ -26,7 +26,9 @@ FFBOutput::FFBOutput(const FFBConfig& config) :
     damperForceScale()
 {
     if (Init(config))
+    {
         return;
+    }
     mInitialized = true;
 }
 
@@ -50,9 +52,9 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
     invert              = ToLower(config.targetInvertFFB) == L"true";
 
     // Create FFB effects as needed
-    if (enableConstantForce) device.CreateConstantForceEffect();
-    if (enableDamperEffect) device.CreateDamperEffect();
-    if (enableSpringEffect) device.CreateSpringEffect();
+    if (enableConstantForce) { device.CreateConstantForceEffect(); }
+    if (enableDamperEffect) { device.CreateDamperEffect(); }
+    if (enableSpringEffect) { device.CreateSpringEffect(); }
 
     // This is to control the max % for any of the FFB effects as specified in the ffb.ini
     // Prevents broken wrists (hopefully)
@@ -86,8 +88,8 @@ void FFBOutput::Start()
     // Start damper/spring effects once telemetry is valid
     // Probably need to also figure out how to stop these when the game pauses
     // Also need to maybe fade in and out the effects when waking/sleeping
-    if (enableDamperEffect) device.StartDamper();
-    if (enableSpringEffect) device.StartSpring();
+    if (enableDamperEffect) { device.StartDamper(); }
+    if (enableSpringEffect) { device.StartSpring(); }
 }
 
 void FFBOutput::Update()

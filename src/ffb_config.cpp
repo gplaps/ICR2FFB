@@ -25,7 +25,9 @@ FFBConfig::FFBConfig() :
     version()
 {
     if (!LoadSettingsFromConfig())
-        return;
+    {
+        return; // yes, useless statement as nothing follows
+    }
 }
 
 bool FFBConfig::Valid() const { return version != VERSION_UNINITIALIZED; }
@@ -40,38 +42,66 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
     targetWeightScale = L"100.0";
 
     std::wifstream file(filename.c_str());
-    if (!file) return false;
+    if (!file) { return false; }
     std::wstring line;
     while (std::getline(file, line))
     {
         if (line.rfind(L"Device: ", 0) == 0)
+        {
             targetDeviceName = line.substr(8);
+        }
         else if (line.rfind(L"Game: ", 0) == 0)
+        {
             targetGameWindowName = line.substr(6);
+        }
         else if (line.rfind(L"Version: ", 0) == 0)
+        {
             targetGameVersion = line.substr(9);
+        }
         else if (line.rfind(L"Force: ", 0) == 0)
+        {
             targetForceSetting = line.substr(7);
+        }
         else if (line.rfind(L"Deadzone: ", 0) == 0)
+        {
             targetDeadzoneSetting = line.substr(10);
+        }
         else if (line.rfind(L"Invert: ", 0) == 0)
+        {
             targetInvertFFB = line.substr(8);
+        }
         else if (line.rfind(L"Limit: ", 0) == 0)
+        {
             targetLimitEnabled = line.substr(7);
+        }
         else if (line.rfind(L"Constant: ", 0) == 0)
+        {
             targetConstantEnabled = line.substr(10);
+        }
         else if (line.rfind(L"Constant Scale: ", 0) == 0)
+        {
             targetConstantScale = line.substr(16);
+        }
         else if (line.rfind(L"Weight: ", 0) == 0)
+        {
             targetWeightEnabled = line.substr(8);
+        }
         else if (line.rfind(L"Weight Scale: ", 0) == 0)
+        {
             targetWeightScale = line.substr(14);
+        }
         else if (line.rfind(L"Damper: ", 0) == 0)
+        {
             targetDamperEnabled = line.substr(8);
+        }
         else if (line.rfind(L"Damper Scale: ", 0) == 0)
+        {
             targetDamperScale = line.substr(14);
+        }
         else if (line.rfind(L"Spring: ", 0) == 0)
+        {
             targetSpringEnabled = line.substr(8);
+        }
     }
     return !targetDeviceName.empty();
 }

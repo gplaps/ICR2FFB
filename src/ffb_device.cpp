@@ -21,7 +21,7 @@ FFBDevice::FFBDevice(const FFBConfig& configIn) :
 // === Force Effect Creators ===
 void FFBDevice::CreateConstantForceEffect()
 {
-    if (!diDevice) return;
+    if (!diDevice) { return; }
 
     DICONSTANTFORCE cf        = {0};
 
@@ -50,14 +50,18 @@ void FFBDevice::CreateConstantForceEffect()
 
     const HRESULT hr = diDevice->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
     if (FAILED(hr))
+    {
         LogMessage(L"[ERROR] Failed to create constant force effect. HRESULT: 0x" + std::to_wstring(hr));
+    }
     else
+    {
         LogMessage(L"[INFO] Initial constant force created");
+    }
 }
 
 void FFBDevice::CreateDamperEffect()
 {
-    if (!diDevice) return;
+    if (!diDevice) { return; }
 
     DICONDITION condition          = {};
     condition.lOffset              = 0;
@@ -83,14 +87,18 @@ void FFBDevice::CreateDamperEffect()
 
     const HRESULT hr               = diDevice->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
     if (FAILED(hr) || !damperEffect)
+    {
         LogMessage(L"[ERROR] Failed to create damper effect. HRESULT: 0x" + std::to_wstring(hr));
+    }
     else
+    {
         LogMessage(L"[INFO] Initial damper effect created");
+    }
 }
 
 void FFBDevice::CreateSpringEffect()
 {
-    if (!diDevice) return;
+    if (!diDevice) { return; }
 
     DICONDITION condition          = {};
     condition.lOffset              = 0;
@@ -116,14 +124,18 @@ void FFBDevice::CreateSpringEffect()
 
     const HRESULT hr               = diDevice->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
     if (FAILED(hr) || !springEffect)
+    {
         LogMessage(L"[ERROR] Failed to create spring effect. HRESULT: 0x" + std::to_wstring(hr));
+    }
     else
+    {
         LogMessage(L"[INFO] Initial spring effect created");
+    }
 }
 
 void FFBDevice::UpdateDamperEffect(LONG damperStrength)
 {
-    if (!damperEffect) return;
+    if (!damperEffect) { return; }
 
     DICONDITION condition          = {};
     condition.lOffset              = 0;
@@ -146,12 +158,14 @@ void FFBDevice::UpdateDamperEffect(LONG damperStrength)
 
     const HRESULT hr               = damperEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
+    {
         std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << L'\n';
+    }
 }
 
 void FFBDevice::UpdateSpringEffect(LONG springStrength)
 {
-    if (!springEffect) return;
+    if (!springEffect) { return; }
 
     DICONDITION condition          = {};
     condition.lOffset              = 0;
@@ -180,12 +194,14 @@ void FFBDevice::UpdateSpringEffect(LONG springStrength)
 
     const HRESULT hr               = springEffect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
+    {
         std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << L'\n';
+    }
 }
 
 void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection)
 {
-    if (!constantForceEffect) return;
+    if (!constantForceEffect) { return; }
 
     DICONSTANTFORCE cf        = {magnitude};
     DIEFFECT        eff       = {};
@@ -206,7 +222,9 @@ void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection)
     const DWORD   parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
     const HRESULT hr         = constantForceEffect->SetParameters(&eff, parameters);
     if (FAILED(hr))
+    {
         std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << L'\n';
+    }
 }
 
 void FFBDevice::StartConstant()
@@ -300,9 +318,13 @@ int FFBDevice::DirectInputSetup() const
 
     hr = diDevice->Acquire();
     if (FAILED(hr))
+    {
         LogMessage(L"[WARNING] Initial acquire failed: 0x" + std::to_wstring(hr) + L" (this is often normal)");
+    }
     else
+    {
         LogMessage(L"[INFO] Device acquired successfully");
+    }
 
     return 0;
 }

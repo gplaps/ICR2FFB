@@ -20,12 +20,16 @@ void LogMessage(const std::wstring& msg)
     // Add to in-memory deque for optional UI display (if needed)
     logLines.push_back(msg);
     while (logLines.size() > maxLogLines)
+    {
         logLines.pop_front();
+    }
 
     // Append to log.txt
     std::wofstream logFile("log.txt", std::ios::app);
     if (logFile.is_open())
+    {
         logFile << msg << L'\n';
+    }
 
     UNLOCK_MUTEX(logMutex);
 }

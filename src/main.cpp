@@ -89,13 +89,17 @@ int main()
 
     const FFBConfig config;
     if (!config.Valid())
+    {
         return -1;
+    }
 
     // Start telemetry processing!
 #if defined(HAS_STL_THREAD_MUTEX)
     FFBProcessor ffbProcessor(config);
     if (!ffbProcessor.Valid())
+    {
         return -1;
+    }
 
     std::thread processThread([&]() {
         // Loop which kicks stuff off and coordinates everything!
@@ -109,7 +113,9 @@ int main()
 #else
     ffbProcessor = new FFBProcessor(config);
     if (!ffbProcessor || !ffbProcessor->Valid())
+    {
         return -1;
+    }
 
     DWORD  threadID = 0;
     HANDLE hThread  = CreateThread(NULL, 0, ProcessLoop, NULL, 0, &threadID);

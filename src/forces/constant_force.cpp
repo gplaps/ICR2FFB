@@ -206,7 +206,9 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
 
         // Apply deadzone: remove bottom X% and rescale remaining range
         if (std::abs(physicsForce) <= deadzoneThreshold)
+        {
             force = 0.0; // Force is in deadzone - zero output
+        }
         else
         {
             // Rescale remaining force range to maintain full output range
@@ -221,18 +223,24 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
 
     // Cap maximum force magnitude while preserving sign
     if (std::abs(force) > static_cast<double>(DEFAULT_DINPUT_GAIN))
+    {
         force = (force >= 0) ? static_cast<double>(DEFAULT_DINPUT_GAIN) : -static_cast<double>(DEFAULT_DINPUT_GAIN);
+    }
 
     // Handle invert option (no more complex direction logic needed!)
     if (invert)
+    {
         force = -force;
+    }
 
     // Convert to signed magnitude
     const double smoothed  = force;
     const int    magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
     signedMagnitude        = magnitude;
     if (smoothed < 0.0)
+    {
         signedMagnitude = -signedMagnitude;
+    }
 
 
 
@@ -348,8 +356,10 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     // Take final magnitude and prevent any massive jumps over a small frame range
 
     magnitudeHistory.push_back(signedMagnitude);
-    if (magnitudeHistory.size() > 2)
+    while (magnitudeHistory.size() > 2)
+    {
         magnitudeHistory.pop_front();
+    }
     signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
 
 
@@ -520,7 +530,9 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
         }
         // 4. Timeout
         else if (framesSinceLastUpdate >= 12)
+        {
             shouldUpdate = true;
+        }
         // 5. Zero force
         else if (magnitude == 0 && lastSentMagnitude != 0)
         {

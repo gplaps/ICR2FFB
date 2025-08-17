@@ -17,9 +17,13 @@ static std::wstring padLine(const std::wstring& text)
 {
     std::wstring padded = text;
     if (padded.length() < CONSOLE_WIDTH)
+    {
         padded.append(CONSOLE_WIDTH - padded.length(), L' ');
+    }
     else if (padded.length() > CONSOLE_WIDTH)
+    {
         padded.resize(CONSOLE_WIDTH); // Truncate if too long
+    }
     return padded;
 }
 
