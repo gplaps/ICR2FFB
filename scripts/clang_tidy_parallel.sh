@@ -11,13 +11,13 @@ systemInclude2=${toolchainRoot}../x86_64-w64-mingw32/include
 files=($(find ../src -name \*.cpp))
 
 currDir=$(dirname -- $(readlink -fn -- "$0"))
-cd "${currDir}/../build"
+cd "${currDir}/../build-clang"
 
 # task
 task() { # $1 = idWorker, $2 = asset
   echo "Worker $1: $2"
   echo "$2:" >> ../scripts/tidy_err$1.log
-  cmd_invokation="${toolchainRoot}${clangTidyBin} --config-file=${currDir}/../.clang-tidy --extra-arg=--target=x86_64-w64-windows-gnu --extra-arg-before=--driver-mode=g++ --extra-arg-before=-isystem${systemInclude1} --extra-arg-before=-isystem${systemInclude2} --extra-arg=-resource-dir=${toolchainRoot}../lib/clang/19 $2"
+  cmd_invokation="${toolchainRoot}${clangTidyBin} --config-file=${currDir}/../.clang-tidy --extra-arg=--target=x86_64-w64-windows-gnu --extra-arg-before=--driver-mode=g++ --extra-arg-before=-isystem${systemInclude1} --extra-arg-before=-isystem${systemInclude2} --extra-arg=-resource-dir=${toolchainRoot}../lib/clang/20 $2"
   ${cmd_invokation} >> ../scripts/tidy_log$1.log 2>> ../scripts/tidy_err$1.log
 }
 

@@ -16,8 +16,7 @@ FFBDevice::FFBDevice(const FFBConfig& configIn) :
     springEffect(NULL),
     constantStarted(false),
     damperStarted(false),
-    springStarted(false)
-    {}
+    springStarted(false) {}
 
 // === Force Effect Creators ===
 void FFBDevice::CreateConstantForceEffect()

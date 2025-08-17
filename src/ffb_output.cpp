@@ -7,7 +7,23 @@
 #include <algorithm>
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
-    device(config)
+    device(config),
+    enableRateLimit(),
+    enableConstantForce(),
+    enableWeightForce(),
+    enableDamperEffect(),
+    enableSpringEffect(),
+    invert(),
+    masterForceValue(),
+    constantForceValue(),
+    deadzoneForceValue(),
+    weightForceValue(),
+    damperForceValue(),
+    masterForceScale(),
+    deadzoneForceScale(),
+    constantForceScale(),
+    weightForceScale(),
+    damperForceScale()
 {
     if (Init(config))
         return;

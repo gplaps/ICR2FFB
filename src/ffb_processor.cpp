@@ -14,6 +14,9 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     effectPaused(false),
     previousPos(),
     hasFirstPos(false),
+    slip(),
+    vehicleDynamics(),
+    load(),
     telemetryReader(TelemetryReader(config)),
     ffbOutput(config),
     displayData()

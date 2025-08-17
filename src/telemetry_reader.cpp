@@ -180,6 +180,7 @@ static uintptr_t ScanSignature(HANDLE processHandle)
 }
 
 TelemetryReader::TelemetryReader(const FFBConfig& config) :
+    carData(),
     offs(),
     out(),
     rawData()
