@@ -263,7 +263,7 @@ void TelemetryReader::ConvertCarData()
     // Little bit of math to make the data sensible. Save big calculations for specific "Calculation" sets
     out.dlong        = static_cast<double>(carData.data[4]);
     out.dlat         = static_cast<double>(carData.data[5]);
-    out.rotation_deg = static_cast<double>(carData.data[7]) / 2147483648.0 /* static_cast<double>(INT_MAX) */ * 180.0;
+    out.rotation_deg = static_cast<double>(carData.data[7]) / static_cast<double>(INT_MAX-1) * 180.0;
     out.speed_mph    = static_cast<double>(carData.data[8]) / 75.0;
     out.steering_deg = static_cast<double>(carData.data[10]) / 11600000.0;
     out.steering_raw = static_cast<double>(carData.data[10]);
