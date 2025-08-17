@@ -26,7 +26,8 @@ template <typename T> T clamp(T v, const T& lo, const T& hi)
 } // namespace std
 #endif
 
-#if defined(__cplusplus) && __cplusplus < 201103L
+// for certain configurations, provide (simplified) implementations of C++11 used in this project
+#if defined(__cplusplus) && __cplusplus < 201103L && defined(__MINGW32__)
 #    include <stdint.h>
 
 #    include <cwchar>

@@ -196,8 +196,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
 
     // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
     std::vector<std::wstring> keywords;
-    keywords.emplace_back(L"dosbox");
-    keywords.emplace_back(config.targetGameWindowName);
+    keywords.push_back(L"dosbox"); // don't change to emplace_back ... C++98 did not have it
+    keywords.push_back(config.targetGameWindowName);
     const DWORD pid = FindProcessIdByWindow(keywords);
     if (!pid)
     {
