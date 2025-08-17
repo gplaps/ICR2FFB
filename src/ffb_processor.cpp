@@ -28,6 +28,7 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     }
     if (!ffbOutput.Valid())
     {
+        LogMessage(L"[ERROR] FFBOut failed to initialize.");
         return;
     }
 
@@ -56,7 +57,8 @@ void FFBProcessor::Update()
 
     ffbOutput.Poll();
 
-    // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) with final effect scales, the FFBDevice implements the directInput API / effect specific processing without any "vehicle dynamics" / "application" logic. structuring of FFBOutput and FFBProcessor is not good yet
+    // The goal should be to simply call ffbOutput.update(constant,damper,spring) with final effect scale and keep application logic / force calculation in this class, FFBOutput just scales and toggles the channels and the FFBDevice implements the directInput API translation.
+    // Effect calculations are "orchestrated" in FFBProcessor ... with how many submodules seem right
 
     // Update Effects
     ffbOutput.UpdateDamper(current.speed_mph);
@@ -73,8 +75,6 @@ void FFBProcessor::Update()
     {
         if (ProcessTelemetryInput())
         {
-            // seperation of concern not applied fully yet ... what is processing, what is "send effect" ... accessing members of members of data is a clear indication that some better structuring needs to take place! don't "reaching through" modules
-
             if (ffbOutput.enableConstantForce)
             {
                 //This is what will add the "Constant Force" effect if all the calculations work.

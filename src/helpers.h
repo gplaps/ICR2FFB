@@ -26,7 +26,7 @@ template <typename T> T clamp(T v, const T& lo, const T& hi)
 } // namespace std
 #endif
 
-// for certain configurations, provide (simplified) implementations of C++11 used in this project
+// for certain configurations, provide (simplified) implementations of C++11 or newer functionality
 #if defined(__cplusplus) && __cplusplus < 201103L && defined(__MINGW32__)
 #    include <stdint.h>
 
@@ -34,7 +34,7 @@ template <typename T> T clamp(T v, const T& lo, const T& hi)
 
 #    if defined(__clang__)
 #        pragma clang diagnostic push
-#        pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call" // C++98 has no alternative and the "swprintf" is unsafe suggestion is to replace with snprintf, but that doesn't seem right
+#        pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-libc-call" // C++98 has no alternative and the "swprintf is unsafe" suggestion to replace with snprintf (char instead of wchar) doesn't seem right
 #    endif
 namespace std
 {

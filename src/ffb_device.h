@@ -8,11 +8,11 @@
 struct FFBDevice
 {
     explicit FFBDevice(const FFBConfig& configIn);
-    FFBDevice()
 #if defined(IS_CPP11_COMPLIANT)
-        = delete
+    FFBDevice() = delete;
+#else
+    FFBDevice(); // intentionally declared but undefined -> compile error if used
 #endif
-        ;
     IDirectInputDevice8* diDevice;
 
     // === Force Effect Creators ===
