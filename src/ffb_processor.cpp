@@ -6,7 +6,14 @@
 #include "vehicle_dynamics.h"
 
 FFBProcessor::FFBProcessor(const FFBConfig& config) :
+    current(),
+    previous(),
+    hasFirstReading(false),
+    noMovementFrames(0),
     movementThreshold(3),
+    effectPaused(false),
+    previousPos(),
+    hasFirstPos(false),
     telemetryReader(TelemetryReader(config)),
     ffbOutput(config),
     displayData()

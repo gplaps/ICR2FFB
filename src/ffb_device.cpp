@@ -8,8 +8,16 @@
 #include <iostream>
 
 FFBDevice::FFBDevice(const FFBConfig& configIn) :
+    diDevice(NULL),
     config(configIn),
-    js() {}
+    js(),
+    constantForceEffect(NULL),
+    damperEffect(NULL),
+    springEffect(NULL),
+    constantStarted(false),
+    damperStarted(false),
+    springStarted(false)
+    {}
 
 // === Force Effect Creators ===
 void FFBDevice::CreateConstantForceEffect()

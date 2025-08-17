@@ -11,7 +11,7 @@ includes= # -I arguments are ignored when a compile_commands.json is imported an
 for dir in ${directories} ; do
     includes+=" -I""$(pwd -P)/"$dir
 done
-cppcheck --project=../build/compile_commands.json --output-file=cppcheck_result_colorcoded.txt --checkers-report=cppcheck_report.txt --include=cppcheck_include.hpp --platform=win64 --std=c++11 --std=c11 --inline-suppr --enable=all --check-level=exhaustive --inconclusive --max-ctu-depth=4 --suppressions-list=cppcheck_suppressions.txt --file-filter=${filter}
+cppcheck --project=../build-clang/compile_commands.json --output-file=cppcheck_result_colorcoded.txt --checkers-report=cppcheck_report.txt --include=cppcheck_include.hpp --platform=win64 --std=c++11 --std=c11 --inline-suppr --enable=all --check-level=exhaustive --inconclusive --max-ctu-depth=4 --suppressions-list=cppcheck_suppressions.txt --file-filter=${filter}
 # ${includes}
 cat cppcheck_result_colorcoded.txt | ansi2txt > cppcheck_result.txt
 rm cppcheck_result_colorcoded.txt

@@ -181,7 +181,8 @@ static uintptr_t ScanSignature(HANDLE processHandle)
 
 TelemetryReader::TelemetryReader(const FFBConfig& config) :
     offs(),
-    out()
+    out(),
+    rawData()
 {
     if (config.targetGameWindowName.empty())
     {
@@ -232,7 +233,7 @@ bool TelemetryReader::Initialized() const
 
 bool TelemetryReader::Valid() const
 {
-    return mInitialized && hProcess;
+    return Initialized() && hProcess;
 }
 
 const RawTelemetry& TelemetryReader::Data() const

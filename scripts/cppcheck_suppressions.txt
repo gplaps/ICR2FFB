@@ -1,5 +1,3 @@
 missingInclude
 missingIncludeSystem
-unusedFunction
 functionStatic
-useStlAlgorithm
