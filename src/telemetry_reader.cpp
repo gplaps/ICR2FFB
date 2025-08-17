@@ -138,7 +138,7 @@ static uintptr_t ScanSignature(HANDLE processHandle)
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
-    const size_t             targetLen = 13; // strlen(signatureStr); // triggers strlen() is unsafe
+    const size_t             targetLen = 16; // strlen(signatureStr); // triggers strlen() is unsafe
 
     while (addr < maxAddr)
     {
