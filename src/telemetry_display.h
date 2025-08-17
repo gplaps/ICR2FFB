@@ -20,7 +20,7 @@ struct TelemetryDisplay {
     
     // New display
     void DisplayTelemetry(const FFBConfig& config);
-    void Update(const FFBConfig& config, const TelemetryDisplayData& tdd);
+    void Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn);
 };
 
 extern std::mutex displayMutex;

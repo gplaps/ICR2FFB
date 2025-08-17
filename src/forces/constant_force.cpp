@@ -46,7 +46,7 @@
     // It works right now though, although it feels a bit delayed
 
     static double lastDlong = 0.0;
-    static bool hasEverMoved = false; (void)hasEverMoved; // unused currently
+    static const bool hasEverMoved = false; (void)hasEverMoved; // unused currently
     static int noMovementFrames = 0;
     static bool isPaused = true;
     static bool pauseForceSet = false;
@@ -216,7 +216,7 @@
 
     // Convert to signed magnitude
     const double smoothed = force;
-    int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
+    const int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
     signedMagnitude = magnitude;
     if (smoothed < 0.0)
         signedMagnitude = -signedMagnitude;

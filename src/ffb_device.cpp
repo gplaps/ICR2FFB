@@ -4,7 +4,7 @@
 #include "log.h"
 #include <iostream>
 
-FFBDevice::FFBDevice(const FFBConfig& configIn) : config(configIn) {}
+FFBDevice::FFBDevice(const FFBConfig& configIn) : config(configIn), js() {}
 
 // === Force Effect Creators ===
 void FFBDevice::CreateConstantForceEffect() {
@@ -245,7 +245,7 @@ int FFBDevice::InitDevice() {
     return DirectInputSetup();
 }
 
-int FFBDevice::DirectInputSetup() {
+int FFBDevice::DirectInputSetup() const {
     // ONLY configure device if it was found successfully
     HRESULT hr;
     hr = diDevice->SetDataFormat(&c_dfDIJoystick2);

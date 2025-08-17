@@ -29,10 +29,10 @@ static DecodedSlip decodeSlip(uint16_t raw) {
 
 bool CalculatedSlip::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/) {
     // Decode tire slip values
-    DecodedSlip lf = decodeSlip(static_cast<uint16_t>(current.tireload_lf));
-    DecodedSlip rf = decodeSlip(static_cast<uint16_t>(current.tireload_rf));
-    DecodedSlip lr = decodeSlip(static_cast<uint16_t>(current.tireload_lr));
-    DecodedSlip rr = decodeSlip(static_cast<uint16_t>(current.tireload_rr));
+    const DecodedSlip lf = decodeSlip(static_cast<uint16_t>(current.tireload_lf));
+    const DecodedSlip rf = decodeSlip(static_cast<uint16_t>(current.tireload_rf));
+    const DecodedSlip lr = decodeSlip(static_cast<uint16_t>(current.tireload_lr));
+    const DecodedSlip rr = decodeSlip(static_cast<uint16_t>(current.tireload_rr));
 
     slipNorm_lf = lf.signedNorm;
     slipNorm_rf = rf.signedNorm;

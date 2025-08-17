@@ -8,8 +8,8 @@
 struct ConstantForceEffectResult {
     ConstantForceEffectResult()=default;
     ConstantForceEffectResult(int magnitude, bool isPaused) : magnitude10000(magnitude), paused(isPaused) {}
-    int magnitude10000; // ideally redo the calculation in [0..1] scale (floating point) and let the directInput part do the scaling
-    bool paused;
+    int magnitude10000 = 0; // ideally redo the calculation in [0..1] scale (floating point) and let the directInput part do the scaling
+    bool paused = false;
 };
 
 struct ConstantForceEffect {
@@ -21,7 +21,7 @@ struct ConstantForceEffect {
         bool enableWeightForce,
         bool enableRateLimit,
         double masterForceScale,
-        double deadzoneForceScale,
+        double deadzoneForcePercentage,
         double constantForceScale,
         double weightForceScale,
         bool invert

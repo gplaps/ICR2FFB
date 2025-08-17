@@ -4,7 +4,7 @@
 #include <dinput.h>
 
 struct FFBDevice {
-    FFBDevice(const FFBConfig& config);
+    FFBDevice(const FFBConfig& configIn);
     FFBDevice()=delete;
     IDirectInputDevice8* diDevice = NULL;
 
@@ -24,7 +24,7 @@ struct FFBDevice {
     void UpdateConstantForceEffect(LONG magnitude, bool withDirection);
 
     int InitDevice();
-    int DirectInputSetup();
+    int DirectInputSetup() const;
 
     void Start();
     void Update();

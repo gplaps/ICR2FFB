@@ -103,12 +103,12 @@ static void SetConsoleWindowSize() {
         return;
     }
 
-    COORD bufferSize = { 120, 200 };           // scrollable size
+    const COORD bufferSize = { 120, 200 };           // scrollable size
     if (!SetConsoleScreenBufferSize(hOut, bufferSize)) {
         LogMessage(L"[WARNING] Failed to set console buffer size");
     }
 
-    SMALL_RECT windowSize = { 0, 0, 119, 39 };  // window size (note: 119, not 120)
+    const SMALL_RECT windowSize = { 0, 0, 119, 39 };  // window size (note: 119, not 120)
     if (!SetConsoleWindowInfo(hOut, TRUE, &windowSize)) {
         LogMessage(L"[WARNING] Failed to set console window size");
     }
@@ -143,13 +143,13 @@ static void DisableConsoleQuickEdit() {
 
 void MoveCursorToTop() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD topLeft = { 0, 0 };
+    const COORD topLeft = { 0, 0 };
     SetConsoleCursorPosition(hConsole, topLeft);
 }
 
 void MoveCursorToLine(short lineNumber) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD pos = { 0, lineNumber };
+    const COORD pos = { 0, lineNumber };
     SetConsoleCursorPosition(hConsole, pos);
 }
 

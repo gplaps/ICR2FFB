@@ -25,7 +25,7 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
 
     std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
         
-    EnumDeviceHelper* edh = (EnumDeviceHelper*)content;
+    EnumDeviceHelper* edh = static_cast<EnumDeviceHelper*>(content);
     if (deviceName == edh->targetDeviceName) {
         LogMessage(L"[INFO] Found matching device: " + deviceName);
         HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);

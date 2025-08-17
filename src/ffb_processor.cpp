@@ -16,7 +16,7 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) : telemetryReader(TelemetryR
     mInitialized = true;
 }
 
-bool FFBProcessor::Valid() { return mInitialized; }
+bool FFBProcessor::Valid() const { return mInitialized; }
 
 void FFBProcessor::Update() {
     // Check to see if Telemetry is coming in, but if not then wait for it!

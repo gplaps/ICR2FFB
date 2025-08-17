@@ -19,7 +19,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-FFBConfig::FFBConfig() {
+FFBConfig::FFBConfig() : version() {
     if(!LoadSettingsFromConfig())
         return;
 }

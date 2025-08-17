@@ -40,7 +40,7 @@ static const GameOffsets Offsets_DOS = {
 };
 
 void GameOffsets::ApplySignature(uintptr_t sigAddr) {
-    uintptr_t exeBase = sigAddr - signatureOffset;
+    const uintptr_t exeBase = sigAddr - signatureOffset;
     signatureOffset = exeBase;
     cars_data_offset += exeBase;
     tire_data_offsetfl += exeBase;
@@ -117,7 +117,7 @@ static uintptr_t ScanSignature(HANDLE processHandle) {
     LogMessage(L"[DEBUG] Process max addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMaximumApplicationAddress));
 
     uintptr_t addr = (uintptr_t)sysInfo.lpMinimumApplicationAddress;
-    uintptr_t maxAddr = 0x7FFFFFFF;
+    const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
     const size_t targetLen = signatureStr.size();
@@ -156,7 +156,7 @@ static uintptr_t ScanSignature(HANDLE processHandle) {
     return 0;
 }
 
-TelemetryReader::TelemetryReader(const FFBConfig& config) {
+TelemetryReader::TelemetryReader(const FFBConfig& config) : offs(), out() {
     if (config.targetGameWindowName.empty()) {
         LogMessage(L"[ERROR] targetGameWindowName is not set.");
         return;
@@ -170,7 +170,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) {
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) return;
 
-    uintptr_t sigAddr = ScanSignature(hProcess);
+    const uintptr_t sigAddr = ScanSignature(hProcess);
     if (!sigAddr) {
         CloseHandle(hProcess);
         hProcess = NULL;

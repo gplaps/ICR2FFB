@@ -52,7 +52,7 @@ int main() {
     //clear last log
     std::wofstream clearLog("log.txt", std::ios::trunc);
 
-    FFBConfig config;
+    const FFBConfig config;
     if(!config.Valid())
         return -1;
 

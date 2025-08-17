@@ -89,7 +89,6 @@ void FFBOutput::UpdateDamper(double speed_mph) {
         const double damperStrength = damperEffect.Calculate(speed_mph, masterForceScale, damperForceScale);
         device.UpdateDamperEffect(static_cast<LONG>(damperStrength));
     }
-        
 }
 
 void FFBOutput::UpdateSpring() {
