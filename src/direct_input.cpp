@@ -20,7 +20,7 @@ struct EnumDeviceHelper
 static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*)
 {
     const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
-    std::wcout << L"  - " << deviceName << std::endl;
+    std::wcout << L"  - " << deviceName << L'\n';
     return DIENUM_CONTINUE;
 }
 
@@ -76,7 +76,7 @@ void DirectInput::ShowAvailableDevicesOnConsole()
     if (directInput)
         directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
     else
-        std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << std::endl;
+        std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << L'\n';
 }
 
 // Kick-off DirectInput

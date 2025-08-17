@@ -25,7 +25,7 @@ void LogMessage(const std::wstring& msg)
     // Append to log.txt
     std::wofstream logFile("log.txt", std::ios::app);
     if (logFile.is_open())
-        logFile << msg << std::endl;
+        logFile << msg << L'\n';
 
     UNLOCK_MUTEX(logMutex);
 }

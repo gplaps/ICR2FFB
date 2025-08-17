@@ -156,7 +156,7 @@ static uintptr_t ScanSignature(HANDLE processHandle)
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
-                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0)
+                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                         {
 #if defined(__clang__)
 #    pragma clang diagnostic pop

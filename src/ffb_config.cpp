@@ -85,9 +85,9 @@ int FFBConfig::LoadSettingsFromConfig()
         LogMessage(L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format");
 
         // SHOW ERROR ON CONSOLE immediately
-        std::wcout << L"[ERROR] Failed to load FFB settings from ffb.ini" << std::endl;
-        std::wcout << L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format" << std::endl;
-        std::wcout << L"Press any key to exit..." << std::endl;
+        std::wcout << L"[ERROR] Failed to load FFB settings from ffb.ini" << L'\n';
+        std::wcout << L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format" << L'\n';
+        std::wcout << L"Press any key to exit..." << L'\n';
         std::cin.get();
         return 1;
     }

@@ -146,7 +146,7 @@ void FFBDevice::UpdateDamperEffect(LONG damperStrength)
 
     const HRESULT hr               = damperEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
-        std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << std::endl;
+        std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << L'\n';
 }
 
 void FFBDevice::UpdateSpringEffect(LONG springStrength)
@@ -180,7 +180,7 @@ void FFBDevice::UpdateSpringEffect(LONG springStrength)
 
     const HRESULT hr               = springEffect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
-        std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << std::endl;
+        std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << L'\n';
 }
 
 void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection)
@@ -206,7 +206,7 @@ void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection)
     const DWORD   parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
     const HRESULT hr         = constantForceEffect->SetParameters(&eff, parameters);
     if (FAILED(hr))
-        std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;
+        std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << L'\n';
 }
 
 void FFBDevice::StartConstant()
@@ -254,14 +254,14 @@ int FFBDevice::InitDevice()
         LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
 
         // SHOW ERROR ON CONSOLE immediately
-        std::wcout << L"[ERROR] Could not find controller: " << config.targetDeviceName << std::endl;
-        std::wcout << L"[ERROR] Available devices:" << std::endl;
+        std::wcout << L"[ERROR] Could not find controller: " << config.targetDeviceName << L'\n';
+        std::wcout << L"[ERROR] Available devices:" << L'\n';
 
         // Show available devices on console too
         DirectInput::ShowAvailableDevicesOnConsole();
 
-        std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << std::endl;
-        std::wcout << L"Press any key to exit..." << std::endl;
+        std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
+        std::wcout << L"Press any key to exit..." << L'\n';
         std::cin.get();
         return 1;
     }
@@ -274,14 +274,13 @@ int FFBDevice::InitDevice()
 int FFBDevice::DirectInputSetup() const
 {
     // ONLY configure device if it was found successfully
-    HRESULT hr;
-    hr = diDevice->SetDataFormat(&c_dfDIJoystick2);
+    HRESULT hr = diDevice->SetDataFormat(&c_dfDIJoystick2);
     if (FAILED(hr))
     {
         LogMessage(L"[ERROR] Failed to set data format: 0x" + std::to_wstring(hr));
 
-        std::wcout << L"[ERROR] Failed to set data format: 0x" << std::hex << hr << std::endl;
-        std::wcout << L"Press any key to exit..." << std::endl;
+        std::wcout << L"[ERROR] Failed to set data format: 0x" << std::hex << hr << L'\n';
+        std::wcout << L"Press any key to exit..." << L'\n';
         std::cin.get();
         return 1;
     }
@@ -292,9 +291,9 @@ int FFBDevice::DirectInputSetup() const
         LogMessage(L"[ERROR] Failed to set cooperative level: 0x" + std::to_wstring(hr));
         LogMessage(L"[ERROR] Another application may be using the device exclusively");
 
-        std::wcout << L"[ERROR] Failed to set cooperative level: 0x" << std::hex << hr << std::endl;
-        std::wcout << L"[ERROR] Another application may be using the device exclusively" << std::endl;
-        std::wcout << L"Press any key to exit..." << std::endl;
+        std::wcout << L"[ERROR] Failed to set cooperative level: 0x" << std::hex << hr << L'\n';
+        std::wcout << L"[ERROR] Another application may be using the device exclusively" << L'\n';
+        std::wcout << L"Press any key to exit..." << L'\n';
         std::cin.get();
         return 1;
     }

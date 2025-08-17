@@ -73,7 +73,7 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
 
 int FFBOutput::Init(const FFBConfig& config)
 {
-    int res;
+    int res = 0;
     STATUS_CHECK(device.InitDevice());
     STATUS_CHECK(ApplyFFBSettings(config));
     return res;

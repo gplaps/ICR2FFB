@@ -78,7 +78,7 @@ int main()
     }
 #endif
 
-    int res;
+    int res = 0;
     STATUS_CHECK(CheckAndRestartAsAdmin());
     STATUS_CHECK(InitConsole());
 

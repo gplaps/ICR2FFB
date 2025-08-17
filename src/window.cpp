@@ -48,14 +48,14 @@ static void RestartAsAdmin()
     if (reinterpret_cast<intptr_t>(result) > 32)
     {
         // Success - the new admin instance is starting, exit this one
-        std::wcout << L"[INFO] Restarting with administrator privileges..." << std::endl;
+        std::wcout << L"[INFO] Restarting with administrator privileges..." << L'\n';
         exit(0);
     }
     else
     {
         // Failed - user probably clicked "No" on UAC prompt
-        std::wcout << L"[ERROR] Failed to restart as administrator." << std::endl;
-        std::wcout << L"[ERROR] Please right-click the program and select 'Run as administrator'" << std::endl;
+        std::wcout << L"[ERROR] Failed to restart as administrator." << L'\n';
+        std::wcout << L"[ERROR] Please right-click the program and select 'Run as administrator'" << L'\n';
     }
 }
 
@@ -63,34 +63,34 @@ int CheckAndRestartAsAdmin()
 {
     if (!IsRunningAsAdmin())
     {
-        std::wcout << L"===============================================" << std::endl;
-        std::wcout << L"    ICR2 FFB Program - Admin Rights Required" << std::endl;
-        std::wcout << L"===============================================" << std::endl;
-        std::wcout << L"" << std::endl;
-        std::wcout << L"This program requires administrator privileges to:" << std::endl;
-        std::wcout << L"  - Access DirectInput force feedback devices" << std::endl;
-        std::wcout << L"  - Control console display properly" << std::endl;
-        std::wcout << L"  - Ensure reliable wheel communication" << std::endl;
-        std::wcout << L"" << std::endl;
+        std::wcout << L"===============================================" << L'\n';
+        std::wcout << L"    ICR2 FFB Program - Admin Rights Required" << L'\n';
+        std::wcout << L"===============================================" << L'\n';
+        std::wcout << L"" << L'\n';
+        std::wcout << L"This program requires administrator privileges to:" << L'\n';
+        std::wcout << L"  - Access DirectInput force feedback devices" << L'\n';
+        std::wcout << L"  - Control console display properly" << L'\n';
+        std::wcout << L"  - Ensure reliable wheel communication" << L'\n';
+        std::wcout << L"" << L'\n';
         std::wcout << L"Would you like to restart as administrator? (y/n): ";
 
-        wchar_t response;
+        wchar_t response = 0;
         std::wcin >> response;
 
         if (response == L'y' || response == L'Y')
         {
             RestartAsAdmin();
             // If we get here, the restart failed
-            std::wcout << L"Press any key to exit..." << std::endl;
+            std::wcout << L"Press any key to exit..." << L'\n';
             std::cin.get();
             return 1;
         }
         else
         {
-            std::wcout << L"" << std::endl;
-            std::wcout << L"Cannot continue without administrator privileges." << std::endl;
-            std::wcout << L"Please restart the program as administrator." << std::endl;
-            std::wcout << L"Press any key to exit..." << std::endl;
+            std::wcout << L"" << L'\n';
+            std::wcout << L"Cannot continue without administrator privileges." << L'\n';
+            std::wcout << L"Please restart the program as administrator." << L'\n';
+            std::wcout << L"Press any key to exit..." << L'\n';
             std::wcin.ignore();
             std::wcin.get();
             return 1;
@@ -147,7 +147,7 @@ static void DisableConsoleQuickEdit()
         return;
     }
 
-    DWORD mode;
+    DWORD mode = 0;
     if (!GetConsoleMode(hInput, &mode))
     {
         LogMessage(L"[ERROR] Failed to get console mode");
