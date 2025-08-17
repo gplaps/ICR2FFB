@@ -1,9 +1,10 @@
 ﻿#pragma once
 #include "telemetry_reader.h"
 
-struct CalculatedVehicleDynamics {
+struct CalculatedVehicleDynamics
+{
     double lateralG;
-    int directionVal;
+    int    directionVal;
     double yaw;
     double slip;
     double forceMagnitude;

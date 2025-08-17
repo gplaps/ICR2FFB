@@ -1,5 +1,6 @@
 #pragma once
 
-struct SpringEffect {
+struct SpringEffect
+{
     double Calculate(double masterForceScale);
 };

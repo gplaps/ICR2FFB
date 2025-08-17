@@ -8,4 +8,4 @@ int CheckAndRestartAsAdmin();
 // moves cursor to top without refreshing the screen
 void MoveCursorToTop();
 void MoveCursorToLine(short lineNumber);
-int InitConsole();
+int  InitConsole();

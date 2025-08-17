@@ -1,11 +1,14 @@
 #pragma once
-#include "ffb_config.h"
 #include "project_dependencies.h"
+
+#include "ffb_config.h"
 #include "memoryapi.h"
+
 #include <cstdint>
 #include <string>
 
-struct RawTelemetry {
+struct RawTelemetry
+{
     double dlat;
     double dlong;
     double rotation_deg;
@@ -21,11 +24,12 @@ struct RawTelemetry {
     double tiremaglat_lr;
     double tiremaglat_rr;
     double long_force;
-    bool valid;
+    bool   valid;
 };
 
 // Things to look for in the Memory to make it tick
-struct GameOffsets {
+struct GameOffsets
+{
     uintptr_t signatureOffset;
     uintptr_t cars_data_offset;
     uintptr_t tire_data_offsetfl;
@@ -41,19 +45,21 @@ struct GameOffsets {
     void ApplySignature(uintptr_t sigAddr);
 };
 
-struct TelemetryReader {
+struct TelemetryReader
+{
 public:
     TelemetryReader(const FFBConfig& config);
     ~TelemetryReader();
 
-    bool Update();
-    bool Initialized() const;
-    bool Valid() const;
-    const RawTelemetry& Data() const; 
+    bool                Update();
+    bool                Initialized() const;
+    bool                Valid() const;
+    const RawTelemetry& Data() const;
 
 private:
-    struct CarData {
-        int32_t data[12] = { 0 };
+    struct CarData
+    {
+        int32_t data[12] = {0};
     } carData;
 
     void ConvertCarData();
@@ -61,28 +67,30 @@ private:
     bool ReadLongitudinalForce();
     bool ReadCarData();
     bool ReadTireData();
-    template<typename T>
-    bool ReadValue(T& dest, uintptr_t offset) {
+    template <typename T>
+    bool ReadValue(T& dest, uintptr_t offset)
+    {
         SIZE_T bytesRead = 0;
         return ReadProcessMemory(hProcess, (LPCVOID)offset, &dest, sizeof(dest), &bytesRead) && bytesRead == sizeof(dest);
     }
     bool ReadRaw(void* dest, uintptr_t offset, SIZE_T size);
 
-    struct RawData {
-        int16_t loadLF = 0;
-        int16_t loadRF = 0;
-        int16_t loadLR = 0;
-        int16_t loadRR = 0;
+    struct RawData
+    {
+        int16_t loadLF   = 0;
+        int16_t loadRF   = 0;
+        int16_t loadLR   = 0;
+        int16_t loadRR   = 0;
         int16_t magLatLF = 0;
         int16_t magLatRF = 0;
         int16_t magLatLR = 0;
         int16_t magLatRR = 0;
-        int16_t longiF = 0;
+        int16_t longiF   = 0;
     };
 
-    HANDLE hProcess;
-    bool mInitialized;
-    GameOffsets offs;
+    HANDLE       hProcess;
+    bool         mInitialized;
+    GameOffsets  offs;
     RawTelemetry out;
-    RawData rawData;
+    RawData      rawData;
 };

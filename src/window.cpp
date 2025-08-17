@@ -1,18 +1,24 @@
 #include "window.h"
+
 #include "project_dependencies.h"
+
 #include "log.h"
 #include "main.h"
+
 #include <shellapi.h>
+
 #include <iostream>
 
 // Check Admin rights
-static bool IsRunningAsAdmin() {
-    BOOL isAdmin = FALSE;
-    PSID administratorsGroup = NULL;
+static bool IsRunningAsAdmin()
+{
+    BOOL isAdmin                         = FALSE;
+    PSID administratorsGroup             = NULL;
 
     SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
     if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
-        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &administratorsGroup)) {
+                                 DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &administratorsGroup))
+    {
 
         CheckTokenMembership(NULL, administratorsGroup, &isAdmin);
         FreeSid(administratorsGroup);
@@ -21,36 +27,41 @@ static bool IsRunningAsAdmin() {
     return isAdmin == TRUE;
 }
 
-static void RestartAsAdmin() {
+static void RestartAsAdmin()
+{
     // Get the current executable path
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
 
     // Use ShellExecuteW to restart with "runas" (admin prompt)
     HINSTANCE result = ShellExecuteW(
-        NULL,                    // Parent window
-        L"runas",               // Operation (request admin)
-        exePath,                // Program to run
-        NULL,                   // Command line arguments
-        NULL,                   // Working directory
-        SW_SHOWNORMAL           // Show window normally
+        NULL,         // Parent window
+        L"runas",     // Operation (request admin)
+        exePath,      // Program to run
+        NULL,         // Command line arguments
+        NULL,         // Working directory
+        SW_SHOWNORMAL // Show window normally
     );
 
     // Check if the restart was successful
-    if ((intptr_t)result > 32) {
+    if ((intptr_t)result > 32)
+    {
         // Success - the new admin instance is starting, exit this one
         std::wcout << L"[INFO] Restarting with administrator privileges..." << std::endl;
         exit(0);
     }
-    else {
+    else
+    {
         // Failed - user probably clicked "No" on UAC prompt
         std::wcout << L"[ERROR] Failed to restart as administrator." << std::endl;
         std::wcout << L"[ERROR] Please right-click the program and select 'Run as administrator'" << std::endl;
     }
 }
 
-int CheckAndRestartAsAdmin() {
-    if (!IsRunningAsAdmin()) {
+int CheckAndRestartAsAdmin()
+{
+    if (!IsRunningAsAdmin())
+    {
         std::wcout << L"===============================================" << std::endl;
         std::wcout << L"    ICR2 FFB Program - Admin Rights Required" << std::endl;
         std::wcout << L"===============================================" << std::endl;
@@ -65,14 +76,16 @@ int CheckAndRestartAsAdmin() {
         wchar_t response;
         std::wcin >> response;
 
-        if (response == L'y' || response == L'Y') {
+        if (response == L'y' || response == L'Y')
+        {
             RestartAsAdmin();
             // If we get here, the restart failed
             std::wcout << L"Press any key to exit..." << std::endl;
             std::cin.get();
             return 1;
         }
-        else {
+        else
+        {
             std::wcout << L"" << std::endl;
             std::wcout << L"Cannot continue without administrator privileges." << std::endl;
             std::wcout << L"Please restart the program as administrator." << std::endl;
@@ -90,48 +103,57 @@ int CheckAndRestartAsAdmin() {
 // little function to help with display refreshing
 // moves cursor to top without refreshing the screen
 
-static void SetConsoleWindowSize() {
+static void SetConsoleWindowSize()
+{
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE) {
+    if (hOut == INVALID_HANDLE_VALUE)
+    {
         LogMessage(L"[ERROR] Failed to get console handle");
         return;
     }
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(hOut, &csbi)) {
+    if (!GetConsoleScreenBufferInfo(hOut, &csbi))
+    {
         LogMessage(L"[ERROR] Failed to get console buffer info");
         return;
     }
 
-    const COORD bufferSize = { 120, 200 };           // scrollable size
-    if (!SetConsoleScreenBufferSize(hOut, bufferSize)) {
+    const COORD bufferSize = {120, 200}; // scrollable size
+    if (!SetConsoleScreenBufferSize(hOut, bufferSize))
+    {
         LogMessage(L"[WARNING] Failed to set console buffer size");
     }
 
-    const SMALL_RECT windowSize = { 0, 0, 119, 39 };  // window size (note: 119, not 120)
-    if (!SetConsoleWindowInfo(hOut, TRUE, &windowSize)) {
+    const SMALL_RECT windowSize = {0, 0, 119, 39}; // window size (note: 119, not 120)
+    if (!SetConsoleWindowInfo(hOut, TRUE, &windowSize))
+    {
         LogMessage(L"[WARNING] Failed to set console window size");
     }
-    else {
+    else
+    {
         LogMessage(L"[INFO] Console window size set successfully");
     }
 }
 
 // Prevent lockup if window is clicked
-static void DisableConsoleQuickEdit() {
+static void DisableConsoleQuickEdit()
+{
     HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
-    if (hInput == INVALID_HANDLE_VALUE) {
+    if (hInput == INVALID_HANDLE_VALUE)
+    {
         LogMessage(L"[ERROR] Failed to get input handle");
         return;
     }
 
     DWORD mode;
-    if (!GetConsoleMode(hInput, &mode)) { 
+    if (!GetConsoleMode(hInput, &mode))
+    {
         LogMessage(L"[ERROR] Failed to get console mode");
         return;
     }
 
- 
+
     mode &= static_cast<DWORD>(~(ENABLE_QUICK_EDIT_MODE | ENABLE_INSERT_MODE));
     mode |= ENABLE_EXTENDED_FLAGS;
 
@@ -141,27 +163,32 @@ static void DisableConsoleQuickEdit() {
         LogMessage(L"[INFO] Console Quick Edit Mode disabled");
 }
 
-void MoveCursorToTop() {
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    const COORD topLeft = { 0, 0 };
+void MoveCursorToTop()
+{
+    HANDLE      hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    const COORD topLeft  = {0, 0};
     SetConsoleCursorPosition(hConsole, topLeft);
 }
 
-void MoveCursorToLine(short lineNumber) {
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    const COORD pos = { 0, lineNumber };
+void MoveCursorToLine(short lineNumber)
+{
+    HANDLE      hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    const COORD pos      = {0, lineNumber};
     SetConsoleCursorPosition(hConsole, pos);
 }
 
-static void HideConsoleCursor() {
+static void HideConsoleCursor()
+{
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE) {
+    if (hOut == INVALID_HANDLE_VALUE)
+    {
         LogMessage(L"[ERROR] Failed to get console handle for cursor");
         return;
     }
 
     CONSOLE_CURSOR_INFO cursorInfo;
-    if (!GetConsoleCursorInfo(hOut, &cursorInfo)) {
+    if (!GetConsoleCursorInfo(hOut, &cursorInfo))
+    {
         LogMessage(L"[ERROR] Failed to get cursor info");
         return;
     }
@@ -175,25 +202,26 @@ static void HideConsoleCursor() {
 
 static BOOL WINAPI ConsoleHandler(DWORD CEvent) noexcept
 {
-    switch(CEvent)
+    switch (CEvent)
     {
-    case CTRL_C_EVENT:
-    case CTRL_CLOSE_EVENT:
-    case CTRL_LOGOFF_EVENT:
-    case CTRL_SHUTDOWN_EVENT:
-        shouldExit = true;
-        break;
-    default: break;
+        case CTRL_C_EVENT:
+        case CTRL_CLOSE_EVENT:
+        case CTRL_LOGOFF_EVENT:
+        case CTRL_SHUTDOWN_EVENT:
+            shouldExit = true;
+            break;
+        default: break;
     }
     return TRUE;
 }
 
-int InitConsole() {
+int InitConsole()
+{
     SetConsoleWindowSize();
     HideConsoleCursor();
     DisableConsoleQuickEdit();
     if (SetConsoleCtrlHandler(
-        static_cast<PHANDLER_ROUTINE>(ConsoleHandler),TRUE)==FALSE)
+            static_cast<PHANDLER_ROUTINE>(ConsoleHandler), TRUE) == FALSE)
     {
         LogMessage(L"[ERROR] Unable to install keyboard ctrl handler");
         return -1;

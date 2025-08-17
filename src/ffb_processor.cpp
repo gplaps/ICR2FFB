@@ -1,16 +1,20 @@
 #include "ffb_processor.h"
+
 #include "lateral_load.h"
 #include "log.h"
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
-FFBProcessor::FFBProcessor(const FFBConfig& config) : telemetryReader(TelemetryReader(config)), ffbOutput(config) {
-    if(!telemetryReader.Valid())
+FFBProcessor::FFBProcessor(const FFBConfig& config) :
+    telemetryReader(TelemetryReader(config)),
+    ffbOutput(config)
+{
+    if (!telemetryReader.Valid())
     {
         LogMessage(L"[ERROR] TelemetryReader failed to initialize.");
         return;
     }
-    if(!ffbOutput.Valid())
+    if (!ffbOutput.Valid())
         return;
 
     mInitialized = true;
@@ -18,40 +22,49 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) : telemetryReader(TelemetryR
 
 bool FFBProcessor::Valid() const { return mInitialized; }
 
-void FFBProcessor::Update() {
+void FFBProcessor::Update()
+{
     // Check to see if Telemetry is coming in, but if not then wait for it!
     if (!telemetryReader.Update())
         return;
 
     current = telemetryReader.Data();
 
-    if (firstPos) { previousPos = current; firstPos = false; }
+    if (firstPos)
+    {
+        previousPos = current;
+        firstPos    = false;
+    }
 
     ffbOutput.Start();
 
     ffbOutput.Poll();
 
     // TODO: restructure to be able to simply call ffbOutput.update(constant,damper,spring) with final effect scales, the FFBDevice implements the directInput API / effect specific processing without any "vehicle dynamics" / "application" logic. structuring of FFBOutput and FFBProcessor is not good yet
-     
+
     // Update Effects
     ffbOutput.UpdateDamper(current.speed_mph);
     ffbOutput.UpdateSpring();
-    
+
     ffbOutput.Update();
 
-    if (firstReading) {
-        previous = current;
+    if (firstReading)
+    {
+        previous     = current;
         firstReading = false;
     }
-    else {
-        if(ProcessTelemetryInput()) {
+    else
+    {
+        if (ProcessTelemetryInput())
+        {
             // seperation of concern not applied fully yet ... what is processing, what is "send effect" ... accessing members of members of data is a clear indication that some better structuring needs to take place! don't "reaching through" modules
 
-            if(ffbOutput.enableConstantForce) {
-                //This is what will add the "Constant Force" effect if all the calculations work. 
+            if (ffbOutput.enableConstantForce)
+            {
+                //This is what will add the "Constant Force" effect if all the calculations work.
                 // Probably could smooth all this out
                 constantForceCalculation = constantForceEffect.Calculate(
-                    current, load, slip, vehicleDynamics, // inputs
+                    current, load, slip, vehicleDynamics,                   // inputs
                     ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, // settings - thats where it might need restructuring of the implementation, probably all the scales should be kept in FFBOutput and not be added in this function. likely make the Result struct contain seperate channels and do the multiply with scales in FFBOutput depending on the enable flags
                     ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
                     ffbOutput.constantForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
@@ -101,7 +114,8 @@ void FFBProcessor::Update() {
     }
 }
 
-bool FFBProcessor::ProcessTelemetryInput() {
+bool FFBProcessor::ProcessTelemetryInput()
+{
     // Do Force calculations based on raw data
     // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
     slip = {};
@@ -114,18 +128,20 @@ bool FFBProcessor::ProcessTelemetryInput() {
     return load.Calculate(current, previous, slip);
 }
 
-void FFBProcessor::UpdateDisplayData() {
+void FFBProcessor::UpdateDisplayData()
+{
     // Update telemetry for display
     std::lock_guard<std::mutex> lock(displayMutex);
-    displayData.raw = current;
+    displayData.raw  = current;
     displayData.slip = slip;
     // NEW: Vehicle dynamics data (only update if calculation was successful)
-    displayData.vehicleDynamics = vehicleDynamics;
+    displayData.vehicleDynamics  = vehicleDynamics;
 
     displayData.masterForceValue = ffbOutput.masterForceValue;
-    displayData.constantForce = constantForceCalculation;
+    displayData.constantForce    = constantForceCalculation;
 }
 
-const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const {
+const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const
+{
     return displayData;
 }

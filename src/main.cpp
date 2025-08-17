@@ -18,33 +18,35 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
- 
+
 #include "main.h"
 
 // === Project Includes ===
 #include "project_dependencies.h"
+
 #include "constants.h"
-#include "helpers.h"
 #include "direct_input.h"
-#include "telemetry_reader.h"
-#include "telemetry_display.h"
 #include "ffb_processor.h"
+#include "helpers.h"
 #include "log.h"
+#include "telemetry_display.h"
+#include "telemetry_reader.h"
 #include "window.h"
 
 // === Standard Library Includes ===
+#include <atomic>
 #include <fstream>
 #include <iostream>
-#include <thread>
-#include <atomic>
 #include <string>
+#include <thread>
 
 
 // === Shared Globals ===
 std::atomic<bool> shouldExit = {};
 
 // Where it all happens
-int main() {
+int main()
+{
     int res;
     STATUS_CHECK(CheckAndRestartAsAdmin());
     STATUS_CHECK(InitConsole());
@@ -53,17 +55,18 @@ int main() {
     std::wofstream clearLog("log.txt", std::ios::trunc);
 
     const FFBConfig config;
-    if(!config.Valid())
+    if (!config.Valid())
         return -1;
 
     FFBProcessor ffbProcessor(config);
-    if(!ffbProcessor.Valid())
+    if (!ffbProcessor.Valid())
         return -1;
 
     // Start telemetry processing!
     std::thread processThread([&]() {
         // Loop which kicks stuff off and coordinates everything!
-        while (!shouldExit) {
+        while (!shouldExit)
+        {
             ffbProcessor.Update();
             std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
@@ -74,7 +77,8 @@ int main() {
     // Now that we're doing everything we can display stuff!
     // Main Display Loop - Set to 200ms? Probably fine
     // Flickers a lot right now but perhaps moving to a GUI will solve that eventually
-    while (!shouldExit) {
+    while (!shouldExit)
+    {
         display.Update(config, ffbProcessor.DisplayData());
         PrintToLogFile();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

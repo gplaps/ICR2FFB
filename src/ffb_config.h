@@ -1,15 +1,17 @@
 #pragma once
 
 #include "game_version.h"
+
 #include <string>
 
 /* project specific ini parser */
-struct FFBConfig {
+struct FFBConfig
+{
     FFBConfig();
-    bool Valid() const;
+    bool        Valid() const;
     GameVersion version;
 
-// private:
+    // private:
     // Search the ini file for settings and find what the user has set them to
     int LoadSettingsFromConfig();
 
@@ -30,7 +32,7 @@ struct FFBConfig {
     std::wstring targetSpringEnabled;
 
 private:
-    bool LoadFFBSettings(const std::wstring& filename);
-    GameVersion ReadGameVersion(const std::wstring& versionText);
+    bool         LoadFFBSettings(const std::wstring& filename);
+    GameVersion  ReadGameVersion(const std::wstring& versionText);
     std::wstring PrintGameVersion() const;
 };

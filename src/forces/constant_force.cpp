@@ -1,9 +1,12 @@
 #include "constant_force.h"
+
 #include "constants.h"
 #include "helpers.h"
 #include "log.h"
-#include <algorithm>
+
 #include <cmath>
+
+#include <algorithm>
 #include <deque>
 #include <numeric>
 
@@ -23,61 +26,69 @@
 
 
 
- ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& current,
-    const CalculatedLateralLoad& /*load*/, const CalculatedSlip& /*slip*/,
-    const CalculatedVehicleDynamics& vehicleDynamics,
-    bool /*enableWeightForce*/,
-    bool enableRateLimit,
-    double masterForceScale,
-    double deadzoneForcePercentage,
-    double constantForceScale,
-    double /*weightForceScale*/,
-    bool invert
-    ) {
+ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& current,
+                                                         const CalculatedLateralLoad& /*load*/,
+                                                         const CalculatedSlip& /*slip*/,
+                                                         const CalculatedVehicleDynamics& vehicleDynamics,
+                                                         bool /*enableWeightForce*/,
+                                                         bool   enableRateLimit,
+                                                         double masterForceScale,
+                                                         double deadzoneForcePercentage,
+                                                         double constantForceScale,
+                                                         double /*weightForceScale*/,
+                                                         bool invert)
+{
 
-    int signedMagnitude = 0;
+    int signedMagnitude    = 0;
 
     const double speed_mph = current.speed_mph;
-    // const double steering_deg = current.steering_deg; 
+    // const double steering_deg = current.steering_deg;
 
     // Beta 0.5
     // This is a bunch of logic to pause/unpause or prevent forces when the game isn't running
     // I think this could probably be a lot simpler so maybe up for a redo
     // It works right now though, although it feels a bit delayed
 
-    static double lastDlong = 0.0;
-    static const bool hasEverMoved = false; (void)hasEverMoved; // unused currently
-    static int noMovementFrames = 0;
-    static bool isPaused = true;
-    static bool pauseForceSet = false;
-    static bool isFirstReading = true;
-    const int movementThreshold = 10;  // Frames to consider "paused"
-    const double movementThreshold_value = 0.001;  // Very small movement threshold
+    static double     lastDlong    = 0.0;
+    static const bool hasEverMoved = false;
+    (void)hasEverMoved; // unused currently
+    static int   noMovementFrames        = 0;
+    static bool  isPaused                = true;
+    static bool  pauseForceSet           = false;
+    static bool  isFirstReading          = true;
+    const int    movementThreshold       = 10;    // Frames to consider "paused"
+    const double movementThreshold_value = 0.001; // Very small movement threshold
 
-    if (isFirstReading) {
-        lastDlong = current.dlong;  // Set baseline from first real data
+    if (isFirstReading)
+    {
+        lastDlong      = current.dlong; // Set baseline from first real data
         isFirstReading = false;
         if (!pauseForceSet)
             pauseForceSet = true;
-        return { signedMagnitude,true };
+        return {signedMagnitude, true};
     }
 
     const bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
 
-    if (isStationary) {
+    if (isStationary)
+    {
         noMovementFrames++;
-        if (noMovementFrames >= movementThreshold && !isPaused) {
-            isPaused = true;
-            pauseForceSet = false;  // ← Reset when entering pause
+        if (noMovementFrames >= movementThreshold && !isPaused)
+        {
+            isPaused      = true;
+            pauseForceSet = false; // ← Reset when entering pause
             LogMessage(L"[INFO] Game paused detected - sending zero force");
         }
     }
-    else {
-        if (isPaused || noMovementFrames > 0) {
+    else
+    {
+        if (isPaused || noMovementFrames > 0)
+        {
             noMovementFrames = 0;
-            if (isPaused) {
-                isPaused = false;
-                pauseForceSet = false;  // ← Reset when exiting pause
+            if (isPaused)
+            {
+                isPaused      = false;
+                pauseForceSet = false; // ← Reset when exiting pause
                 LogMessage(L"[INFO] Game resumed - restoring normal forces");
             }
         }
@@ -85,19 +96,21 @@
     }
 
     // If paused, send zero force and return
-    if (isPaused) {
+    if (isPaused)
+    {
         pauseForceSet = true;
-        return { signedMagnitude,true };
+        return {signedMagnitude, true};
     }
 
     // Low speed filtering
-    if (speed_mph < 5.0) {
+    if (speed_mph < 5.0)
+    {
         // static bool wasLowSpeed = false;
         // if (!wasLowSpeed) {
         //     // Send zero force when entering low speed
         //     wasLowSpeed = true;
         // }
-        return { signedMagnitude,true };
+        return {signedMagnitude, true};
     }
 
     // static bool wasLowSpeed = false;
@@ -105,11 +118,11 @@
     //     wasLowSpeed = false;  // Reset when speed picks up
 
 
-// === CALC 1 - Lateral G ===
+    // === CALC 1 - Lateral G ===
 
-// This will add a 'base' force based on speed. This helps INCREDIBLY with straight line control
-// It gets rid of that 'ping pong' effect that I've been chasing while not making the forces feel delayed
-/*
+    // This will add a 'base' force based on speed. This helps INCREDIBLY with straight line control
+    // It gets rid of that 'ping pong' effect that I've been chasing while not making the forces feel delayed
+    /*
     double baseLoad = 0.0;
     if (speed_mph > 60.0) {
         double speedFactor = (speed_mph - 60.0) / 180.0;  // 0.0 at 120mph, 1.0 at 220mph
@@ -156,11 +169,11 @@
     }
 */
 
-// Niels Equation
-// Calculate based on front tire load directly instead of linear G = Much better
-// No issues with oscillations anymore
+    // Niels Equation
+    // Calculate based on front tire load directly instead of linear G = Much better
+    // No issues with oscillations anymore
 
-// Get the sum with signs preserved
+    // Get the sum with signs preserved
     const double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
 
     // Use the magnitude for physics calculation
@@ -172,8 +185,8 @@
     // Physics constants from your engineer friend
     const double CURVE_STEEPNESS = 1.0e-4;
     const double MAX_THEORETICAL = 8500;
-    const double SCALE_FACTOR = 1.20;
-     // that part that should be moved to the end of the processing chain in FFBOutput when sending to FFBDevice 
+    const double SCALE_FACTOR    = 1.20;
+    // that part that should be moved to the end of the processing chain in FFBOutput when sending to FFBDevice
     const double DIRECT_INPUT_GAIN_SCALE = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
 
     // Calculate magnitude using physics formula
@@ -184,21 +197,23 @@
 
     // Apply proportional deadzone
     double force = physicsForce;
-    if (deadzoneForcePercentage > 0.0) {
+    if (deadzoneForcePercentage > 0.0)
+    {
         // Convert deadzoneForcePercentage (0-100) to scale (0.0-1.0)
         const double deadzoneScale = deadzoneForcePercentage / 100.0;
 
         // Calculate deadzone threshold using magnitude
-        const double maxPossibleForce = DIRECT_INPUT_GAIN_SCALE; // ~10200
+        const double maxPossibleForce  = DIRECT_INPUT_GAIN_SCALE; // ~10200
         const double deadzoneThreshold = maxPossibleForce * deadzoneScale;
 
         // Apply deadzone: remove bottom X% and rescale remaining range
         if (std::abs(physicsForce) <= deadzoneThreshold)
-            force = 0.0;  // Force is in deadzone - zero output
-        else {
+            force = 0.0; // Force is in deadzone - zero output
+        else
+        {
             // Rescale remaining force range to maintain full output range
-            const double remainingRange = maxPossibleForce - deadzoneThreshold;
-            const double adjustedInput = std::abs(physicsForce) - deadzoneThreshold;
+            const double remainingRange  = maxPossibleForce - deadzoneThreshold;
+            const double adjustedInput   = std::abs(physicsForce) - deadzoneThreshold;
             const double scaledMagnitude = (adjustedInput / remainingRange) * maxPossibleForce;
 
             // Restore original sign
@@ -215,16 +230,16 @@
         force = -force;
 
     // Convert to signed magnitude
-    const double smoothed = force;
-    const int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
-    signedMagnitude = magnitude;
+    const double smoothed  = force;
+    const int    magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
+    signedMagnitude        = magnitude;
     if (smoothed < 0.0)
         signedMagnitude = -signedMagnitude;
 
 
 
-// === Self-Aligning Torque ===
-/*
+    // === Self-Aligning Torque ===
+    /*
     const double STEERING_RATIO = 15.0;
     double wheel_angle_deg = current.steering_deg / STEERING_RATIO;
     double wheel_angle_rad = wheel_angle_deg * 3.14159 / 180.0;
@@ -266,11 +281,11 @@
         }
     }
 */
-// === CALC 2 - Slip ===
+    // === CALC 2 - Slip ===
 
     // This should modify the forces based on the amount of slip angle the car has
     // The linear force feels good on its own, but this can add some more detail
-/*
+    /*
     if (std::abs(vehicleDynamics.slip) > 0.05) {  // Only apply if meaningful slip
 
         // Calculate slip modifier: 5% change per 2 degrees
@@ -311,8 +326,8 @@
     }
 */
 
-// === Speed-based Centering ===
-/*
+    // === Speed-based Centering ===
+    /*
 // Damping that opposes any steering input
     if (speed_mph > 10.0 && std::abs(vehicleDynamics.lateralG) < 0.15) {
         // Add baseline steering resistance at speed (not centering force)
@@ -330,26 +345,26 @@
         }
     }
 */
-// === Output Smoothing ===
+    // === Output Smoothing ===
 
-// Take final magnitude and prevent any massive jumps over a small frame range
+    // Take final magnitude and prevent any massive jumps over a small frame range
 
     static std::deque<int> magnitudeHistory;
     magnitudeHistory.push_back(signedMagnitude);
     if (magnitudeHistory.size() > 2)
         magnitudeHistory.pop_front();
     signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
- 
+
 
     // === CALC 3 Weight Force ===
-        // Weight shifting code
-        // This will try to create some feeling based on the front tire loads changing to hopefully 'feel' the road more
-        // It watches for changes in the left to right split of force
-        // 
-        // If the front left tire is doing 45% of the work and right front is doing 55%
-        // And then they change and the left is doing 40% and the right is 60%
-        // You will feel a bump
-        // This adds detail to camber and surface changes
+    // Weight shifting code
+    // This will try to create some feeling based on the front tire loads changing to hopefully 'feel' the road more
+    // It watches for changes in the left to right split of force
+    //
+    // If the front left tire is doing 45% of the work and right front is doing 55%
+    // And then they change and the left is doing 40% and the right is 60%
+    // You will feel a bump
+    // This adds detail to camber and surface changes
     /*
     if (enableWeightForce && speed_mph > 1.0) {
         static double lastFrontImbalance = 0.0;
@@ -389,7 +404,7 @@
     }
     */
 
-/*
+    /*
 // === Reduce update Rate ===
 // 
     // This will reduce the rate at which we send updates to the wheel
@@ -455,29 +470,32 @@
     */
 
     // === Rate Limiting ===
-// === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
-    if (enableRateLimit) {
+    // === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
+    if (enableRateLimit)
+    {
         // Direction calculation and smoothing for rate limiting
-        LONG targetDir = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
+        LONG        targetDir     = -sign(smoothed) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
         static LONG lastDirection = 0;
 
         // Direction smoothing - this prevents rapid direction changes
         const double directionSmoothingFactor = 0.3;
-        lastDirection = static_cast<LONG>((1.0 - directionSmoothingFactor) * lastDirection + directionSmoothingFactor * targetDir);
+        lastDirection                         = static_cast<LONG>((1.0 - directionSmoothingFactor) * lastDirection + directionSmoothingFactor * targetDir);
 
         // Rate limiting with direction smoothing
-        static int lastSentMagnitude = -1;
-        static int lastSentSignedMagnitude = 0; (void) lastSentSignedMagnitude; // unused currently
-        static LONG lastSentDirection = 0;  // Track smoothed direction
-        static int lastProcessedMagnitude = -1;
-        static int framesSinceLastUpdate = 0;
+        static int lastSentMagnitude       = -1;
+        static int lastSentSignedMagnitude = 0;
+        (void)lastSentSignedMagnitude;                // unused currently
+        static LONG   lastSentDirection          = 0; // Track smoothed direction
+        static int    lastProcessedMagnitude     = -1;
+        static int    framesSinceLastUpdate      = 0;
         static double accumulatedMagnitudeChange = 0.0;
-        static double accumulatedDirectionChange = 0.0;  // Track direction changes
+        static double accumulatedDirectionChange = 0.0; // Track direction changes
 
         // Track accumulated changes since last update
-        if (lastSentMagnitude != -1) {
+        if (lastSentMagnitude != -1)
+        {
             accumulatedMagnitudeChange += std::abs(magnitude - lastProcessedMagnitude);
-            accumulatedDirectionChange += std::abs(lastDirection - lastSentDirection);  // Use smoothed direction
+            accumulatedDirectionChange += std::abs(lastDirection - lastSentDirection); // Use smoothed direction
         }
 
         framesSinceLastUpdate++;
@@ -485,56 +503,62 @@
 
         // 1. Large immediate change
         if (std::abs(magnitude - lastSentMagnitude) >= 400 ||
-            std::abs(lastDirection - lastSentDirection) >= 2000) {  // Use smoothed direction
+            std::abs(lastDirection - lastSentDirection) >= 2000)
+        { // Use smoothed direction
             shouldUpdate = true;
         }
         // 2. Accumulated changes
         else if (accumulatedMagnitudeChange >= 300 ||
-            accumulatedDirectionChange >= 1500) {  // Use direction accumulation
+                 accumulatedDirectionChange >= 1500)
+        { // Use direction accumulation
             shouldUpdate = true;
         }
         // 3. Direction sign change (use smoothed direction)
         else if ((lastSentDirection > 0 && lastDirection < 0) ||
-            (lastSentDirection < 0 && lastDirection > 0) ||
-            (lastSentDirection == 0 && lastDirection != 0) ||
-            (lastSentDirection != 0 && lastDirection == 0)) {
+                 (lastSentDirection < 0 && lastDirection > 0) ||
+                 (lastSentDirection == 0 && lastDirection != 0) ||
+                 (lastSentDirection != 0 && lastDirection == 0))
+        {
             shouldUpdate = true;
         }
         // 4. Timeout
         else if (framesSinceLastUpdate >= 12)
             shouldUpdate = true;
         // 5. Zero force
-        else if (magnitude == 0 && lastSentMagnitude != 0) {
+        else if (magnitude == 0 && lastSentMagnitude != 0)
+        {
             shouldUpdate = true;
         }
 
-        if (!shouldUpdate) {
+        if (!shouldUpdate)
+        {
             lastProcessedMagnitude = magnitude;
-            return { 0, false };  // Skip this frame
+            return {0, false}; // Skip this frame
         }
 
         // Reset tracking when we send an update
-        lastSentMagnitude = magnitude;
-        lastSentSignedMagnitude = signedMagnitude;
-        lastSentDirection = lastDirection;  // Track the smoothed direction
-        framesSinceLastUpdate = 0;
+        lastSentMagnitude          = magnitude;
+        lastSentSignedMagnitude    = signedMagnitude;
+        lastSentDirection          = lastDirection; // Track the smoothed direction
+        framesSinceLastUpdate      = 0;
         accumulatedMagnitudeChange = 0.0;
         accumulatedDirectionChange = 0.0;
-        lastProcessedMagnitude = magnitude;
+        lastProcessedMagnitude     = magnitude;
     }
 
     //Logging
     static int debugCounter = 0;
-    if (debugCounter % 30 == 0) {  // Every 30 frames
+    if (debugCounter % 30 == 0)
+    { // Every 30 frames
         LogMessage(L"[DEBUG] FL: " + std::to_wstring(vehicleDynamics.frontLeftForce_N) +
-            L", FR: " + std::to_wstring(vehicleDynamics.frontRightForce_N) +
-            L", Total: " + std::to_wstring(frontTireLoad) +
-            L", atan_input: " + std::to_wstring(frontTireLoad * 1.0e-4) +
-            L", atan_result: " + std::to_wstring(atan(frontTireLoad * 1.0e-4)));
+                   L", FR: " + std::to_wstring(vehicleDynamics.frontRightForce_N) +
+                   L", Total: " + std::to_wstring(frontTireLoad) +
+                   L", atan_input: " + std::to_wstring(frontTireLoad * 1.0e-4) +
+                   L", atan_result: " + std::to_wstring(atan(frontTireLoad * 1.0e-4)));
     }
     debugCounter++;
 
     // Use signed magnitude
     // Only set magnitude params, skip direction
-    return { signedMagnitude, false };
+    return {signedMagnitude, false};
 }

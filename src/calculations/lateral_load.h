@@ -1,17 +1,17 @@
 #pragma once
-#include "telemetry_reader.h"
 #include "slip_angle.h"
+#include "telemetry_reader.h"
 
-struct CalculatedLateralLoad {
+struct CalculatedLateralLoad
+{
     double steeringDeg;
     double speedMph;
     double forceMagnitude;
-    int directionVal;
+    int    directionVal;
     double lateralG;
     double steeringRaw;
     double dlong;
-    double dlat; 
+    double dlat;
 
-    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/,
-        const CalculatedSlip& slip);
+    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, const CalculatedSlip& slip);
 };

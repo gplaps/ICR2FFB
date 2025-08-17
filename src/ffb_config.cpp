@@ -1,7 +1,9 @@
 #include "ffb_config.h"
+
 #include "constant_force.h"
 #include "helpers.h"
 #include "log.h"
+
 #include <fstream>
 #include <iostream>
 
@@ -19,25 +21,29 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-FFBConfig::FFBConfig() : version() {
-    if(!LoadSettingsFromConfig())
+FFBConfig::FFBConfig() :
+    version()
+{
+    if (!LoadSettingsFromConfig())
         return;
 }
 
 bool FFBConfig::Valid() const { return version != GameVersion::UNINITIALIZED; }
 
 // Search the ini file for settings and find what the user has set them to
-bool FFBConfig::LoadFFBSettings(const std::wstring& filename) {
+bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
+{
     // safety ONLY through master force scale!
     // scale and percent ... lets be cautious ... misleading naming
     // targetConstantScale = L"100.0";
     // targetDamperScale = L"100.0";
     targetWeightScale = L"100.0";
-    
+
     std::wifstream file(filename.c_str());
     if (!file) return false;
     std::wstring line;
-    while (std::getline(file, line)) {
+    while (std::getline(file, line))
+    {
         if (line.rfind(L"Device: ", 0) == 0)
             targetDeviceName = line.substr(8);
         else if (line.rfind(L"Game: ", 0) == 0)
@@ -70,9 +76,11 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename) {
     return !targetDeviceName.empty();
 }
 
-int FFBConfig::LoadSettingsFromConfig() {
+int FFBConfig::LoadSettingsFromConfig()
+{
     // Load FFB configuration file "ffb.ini"
-    if (!LoadFFBSettings(L"ffb.ini")) {
+    if (!LoadFFBSettings(L"ffb.ini"))
+    {
         LogMessage(L"[ERROR] Failed to load FFB settings from ffb.ini");
         LogMessage(L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format");
 
@@ -92,15 +100,18 @@ int FFBConfig::LoadSettingsFromConfig() {
     return 0;
 }
 
-GameVersion FFBConfig::ReadGameVersion(const std::wstring& versionText) {
+GameVersion FFBConfig::ReadGameVersion(const std::wstring& versionText)
+{
     // Select between Dos and Rendition version. Rendition is default
     return ToLower(versionText) == L"dos4g" ? GameVersion::ICR2_DOS4G_1_02 : GameVersion::ICR2_RENDITION;
 }
 
-std::wstring FFBConfig::PrintGameVersion() const {
-    switch(version) {
+std::wstring FFBConfig::PrintGameVersion() const
+{
+    switch (version)
+    {
         case GameVersion::ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
-        case GameVersion::ICR2_RENDITION: return L"ICR2 - Rendition";
+        case GameVersion::ICR2_RENDITION:  return L"ICR2 - Rendition";
         case GameVersion::UNINITIALIZED:
         default:
             break;

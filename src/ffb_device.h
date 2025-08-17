@@ -1,11 +1,14 @@
 #pragma once
 #include "project_dependencies.h"
+
 #include "ffb_config.h"
+
 #include <dinput.h>
 
-struct FFBDevice {
+struct FFBDevice
+{
     FFBDevice(const FFBConfig& configIn);
-    FFBDevice()=delete;
+    FFBDevice()                   = delete;
     IDirectInputDevice8* diDevice = NULL;
 
     // === Force Effect Creators ===
@@ -17,7 +20,7 @@ struct FFBDevice {
     void StartConstant();
     void StartDamper();
     void StartSpring();
-    
+
     // === Force Effect Update ===
     void UpdateDamperEffect(LONG damperStrength);
     void UpdateSpringEffect(LONG springStrength);
@@ -37,10 +40,10 @@ private:
 
     // I think this is how we tell it these things are DirectInput stuff?
     IDirectInputEffect* constantForceEffect = NULL;
-    IDirectInputEffect* damperEffect = NULL;
-    IDirectInputEffect* springEffect = NULL;
+    IDirectInputEffect* damperEffect        = NULL;
+    IDirectInputEffect* springEffect        = NULL;
 
-    bool constantStarted = false;
-    bool damperStarted = false;
-    bool springStarted = false;
+    bool constantStarted                    = false;
+    bool damperStarted                      = false;
+    bool springStarted                      = false;
 };
