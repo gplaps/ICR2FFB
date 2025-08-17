@@ -7,7 +7,6 @@
 #include <cmath>
 
 #include <algorithm>
-#include <deque>
 #include <numeric>
 
 /*
@@ -348,7 +347,6 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
 
     // Take final magnitude and prevent any massive jumps over a small frame range
 
-    static std::deque<int> magnitudeHistory;
     magnitudeHistory.push_back(signedMagnitude);
     if (magnitudeHistory.size() > 2)
         magnitudeHistory.pop_front();

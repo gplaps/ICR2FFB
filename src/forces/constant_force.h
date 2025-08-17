@@ -6,6 +6,8 @@
 #include "calculations/vehicle_dynamics.h"
 #include "telemetry_reader.h"
 
+#include <deque>
+
 struct ConstantForceEffectResult
 {
     ConstantForceEffectResult() = default;
@@ -30,4 +32,6 @@ struct ConstantForceEffect
         double                           constantForceScale,
         double                           weightForceScale,
         bool                             invert);
+
+    std::deque<int> magnitudeHistory;
 };

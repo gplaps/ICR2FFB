@@ -200,7 +200,12 @@ static void HideConsoleCursor()
         LogMessage(L"[INFO] Cursor hidden successfully");
 }
 
-static BOOL WINAPI ConsoleHandler(DWORD CEvent) noexcept
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#define NO_EXCEPT noexcept
+#else
+#define NO_EXCEPT
+#endif
+static BOOL WINAPI ConsoleHandler(DWORD CEvent) NO_EXCEPT
 {
     switch (CEvent)
     {

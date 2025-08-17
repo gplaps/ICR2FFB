@@ -35,6 +35,7 @@ private:
     bool         firstPos = true;
 
     ConstantForceEffectResult constantForceCalculation;
+
     CalculatedSlip            slip{};
     CalculatedVehicleDynamics vehicleDynamics{};
     CalculatedLateralLoad     load{};

@@ -16,7 +16,9 @@ target_include_directories(${PROJECT_BINARY_NAME} PRIVATE src src/calculations s
 # thereby getting best help ... but also some distracting and unimportant warnings that might hinder progress on the actual topics you care about
 if(MSVC)
     target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x500) # _WIN32_WINNT_WIN2K
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105)
+    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall)
+    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105) # tested on MSVC 2019
+    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
     target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
 else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

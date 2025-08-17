@@ -59,7 +59,11 @@ public:
 private:
     struct CarData
     {
-        int32_t data[12] = {0};
+        int32_t data[12]
+#if !(defined(_MSC_VER) && _MSC_VER <= 1800) // MSVC 2013
+        = {0}
+#endif
+        ;
     } carData;
 
     void ConvertCarData();
