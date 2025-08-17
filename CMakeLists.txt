@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(ICR2FFB LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 98)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -12,8 +12,6 @@ file(GLOB_RECURSE SOURCES src/*.cpp)
 set(PROJECT_BINARY_NAME ${PROJECT_NAME})
 add_executable(${PROJECT_BINARY_NAME} ${SOURCES})
 target_include_directories(${PROJECT_BINARY_NAME} PRIVATE src src/calculations src/forces)
-# enable all possible warnings from compilers and disable those that you don't want or can't fix
-# thereby getting best help ... but also some distracting and unimportant warnings that might hinder progress on the actual topics you care about
 if(MSVC)
     target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x500) # _WIN32_WINNT_WIN2K
     target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall)
@@ -26,12 +24,9 @@ else()
         -Wno-padded
         -Wno-global-constructors
         -Wno-exit-time-destructors
-         # you can't please them all ... personal preference, contradicting patterns, different C++ standards, WinAPI which has roots even before ANSI C++ ... NULL/nullptr ... its a fine mess all in all
-         # thats how "professional" coding moves from elegant clean and easy to read code to the #ifndef, pragma warning disable, compiler-agnostic, build script mess that it can become
         -Wno-covered-switch-default # preferred over -Wno-switch-enum
         -Wno-zero-as-null-pointer-constant
-        -Wno-old-style-cast
-        -Wno-c++98-compat
+        -Wno-c++98-compat # "solved" but still emitted
         )
     else()
         target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Wall -Wextra -Wpedantic)
@@ -44,10 +39,9 @@ install(FILES ffb.ini DESTINATION .) # comment this line so it does not overwrit
 install(FILES LICENSE README.md DESTINATION .)
 
 
-# "determine" compiler - set e.g. by CXX and CC environment variable before initial cmake invocation or via toolchain file
+# "determine" compiler
 get_filename_component(TOOLCHAIN_ROOT ${CMAKE_CXX_COMPILER} DIRECTORY)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # MinGW GCC
-    # assuming some kind of mingw-w32 or mingw-w64 package with default named target triplet
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # MinGW GCC - tested with GCC 10
     string(FIND ${CMAKE_CXX_COMPILER} "i686" STR_POS)
     if(${STR_POS} EQUAL -1)
         set(TARGET_PLATFORM "64bit")
@@ -67,20 +61,20 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # MinGW GCC
         endif()
     else()
         set(MINGW_STDTHREADS_GENERATE_STDHEADERS OFF CACHE BOOL "MinGW GCC std::thread implementation" FORCE)
-        set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../bin") # e.g. MinGW GCC 8.1 and TDM-GCC-64 10.3
+        set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../bin")
     endif()
     if(TARGET_PLATFORM STREQUAL "64bit")
         install(FILES "${MINGW_LIBRARIES}/libgcc_s_seh-1.dll"
                 DESTINATION .
-                COMPONENT application) # GCC 8.1 and 10
+                COMPONENT application)
     else()
         install(FILES "${MINGW_LIBRARIES}/libgcc_s_dw2-1.dll"
                 DESTINATION .
-                COMPONENT application) # GCC 10
+                COMPONENT application)
     endif()
     install(FILES "${MINGW_LIBRARIES}/libstdc++-6.dll"
             DESTINATION .
-            COMPONENT application) # MinGW GCC 8.1 and 10
+            COMPONENT application)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # MinGW Clang
     string(FIND ${CMAKE_CXX_COMPILER} "i686" STR_POS)
     if(${STR_POS} EQUAL -1)
