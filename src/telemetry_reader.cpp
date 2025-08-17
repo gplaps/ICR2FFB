@@ -74,7 +74,7 @@ static GameOffsets GetGameOffsets(GameVersion version)
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-static std::string signatureStr = "license with Bob";
+static const char* signatureStr = "license with Bob";
 
 struct FindWindowData
 {
@@ -137,7 +137,7 @@ static uintptr_t ScanSignature(HANDLE processHandle)
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
-    const size_t             targetLen = signatureStr.size();
+    const size_t             targetLen = 13; // strlen(signatureStr); // triggers strlen() is unsafe
 
     while (addr < maxAddr)
     {
@@ -156,7 +156,7 @@ static uintptr_t ScanSignature(HANDLE processHandle)
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
 #endif
-                        if (memcmp(buffer.data() + i, signatureStr.c_str(), targetLen) == 0)
+                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0)
                         {
 #if defined(__clang__)
 #    pragma clang diagnostic pop
