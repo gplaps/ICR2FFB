@@ -1,10 +1,6 @@
 #include "ffb_output.h"
 
-#include "constants.h"
 #include "helpers.h"
-#include "log.h"
-
-#include <algorithm>
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     device(config),

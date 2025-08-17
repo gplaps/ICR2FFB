@@ -7,7 +7,9 @@
 
 #include <algorithm>
 // #include <deque>
-#include <stdint.h>
+#if !defined(IS_CPP11_COMPLIANT)
+#    include <stdint.h>
+#endif
 
 // Some variables for smoothing
 // const int VELOCITY_HISTORY_SIZE = 5;

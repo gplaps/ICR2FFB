@@ -22,19 +22,15 @@
 #include "main.h"
 
 // === Project Includes ===
-#include "constants.h"
-#include "direct_input.h"
 #include "ffb_processor.h"
 #include "helpers.h"
 #include "log.h"
 #include "telemetry_display.h"
-#include "telemetry_reader.h"
 #include "window.h"
 
 // === Standard Library Includes ===
 #include <fstream>
 #include <iostream>
-#include <string>
 
 // === Shared Globals ===
 #if defined(HAS_STL_THREAD_MUTEX)

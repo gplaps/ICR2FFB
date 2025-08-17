@@ -12,6 +12,11 @@ struct TelemetryDisplay
     // === Shared Telemetry Display Data ===
     struct TelemetryDisplayData
     {
+        TelemetryDisplayData() :
+            raw(),
+            slip(),
+            vehicleDynamics(),
+            masterForceValue(0.0) {}
         RawTelemetry              raw;
         CalculatedSlip            slip; // Legacy calculated data
         CalculatedVehicleDynamics vehicleDynamics;

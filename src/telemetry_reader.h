@@ -9,7 +9,6 @@
 #else
 #    include <stdint.h>
 #endif
-#include <string>
 
 struct RawTelemetry
 {

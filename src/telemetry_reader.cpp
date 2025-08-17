@@ -7,7 +7,9 @@
 #include "log.h"
 
 #include <psapi.h>
-#include <stdint.h>
+#if !defined(IS_CPP11_COMPLIANT)
+#    include <stdint.h>
+#endif
 #include <tlhelp32.h>
 
 #include <cwctype>
@@ -191,8 +193,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
 
     // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
     std::vector<std::wstring> keywords;
-    keywords.push_back(L"dosbox");
-    keywords.push_back(config.targetGameWindowName);
+    keywords.emplace_back(L"dosbox");
+    keywords.emplace_back(config.targetGameWindowName);
     const DWORD pid = FindProcessIdByWindow(keywords);
     if (!pid) { return; }
 

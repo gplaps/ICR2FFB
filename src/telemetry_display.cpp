@@ -1,7 +1,5 @@
 #include "telemetry_display.h"
 
-#include "log.h"
-#include "main.h"
 #include "window.h"
 
 #include <iomanip>

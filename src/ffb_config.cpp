@@ -1,6 +1,5 @@
 #include "ffb_config.h"
 
-#include "constant_force.h"
 #include "helpers.h"
 #include "log.h"
 

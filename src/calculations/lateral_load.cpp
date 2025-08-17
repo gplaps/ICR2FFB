@@ -5,8 +5,6 @@
 
 #include <cmath>
 
-#include <algorithm>
-
 // Pretend "Lateral G" calculation
 // Idea is the force should be a direct opposite to the lateral G so the driver "Feels" the pull of the forces
 // You should have to push your wheel against the force

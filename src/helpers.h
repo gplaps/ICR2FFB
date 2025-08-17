@@ -65,14 +65,20 @@ T saturate(T v) { return std::clamp(v, static_cast<T>(0), static_cast<T>(1)); }
 inline std::wstring ToLower(const std::wstring& str)
 {
     std::wstring result = str;
-    for (size_t i = 0; i < result.size(); ++i) result[i] = towlower(result[i]);
+    for (size_t i = 0; i < result.size(); ++i)
+    {
+        result[i] = towlower(result[i]);
+    }
     return result;
 }
 
 inline std::string ToLower(const std::string& str)
 {
     std::string result = str;
-    for (size_t i = 0; i < result.size(); ++i) result[i] = static_cast<char>(tolower(result[i]));
+    for (size_t i = 0; i < result.size(); ++i)
+    {
+        result[i] = static_cast<char>(tolower(result[i]));
+    }
     return result;
 }
 
@@ -80,23 +86,23 @@ inline std::string ToLower(const std::string& str)
 inline std::wstring ToWideString(const TCHAR* s) { return std::wstring(s); }
 #else
 
-#if defined(__cplusplus) && __cplusplus < 201103L
-#    include <cstdlib>
-#endif
+#    if defined(__cplusplus) && __cplusplus < 201103L
+#        include <cstdlib>
+#    endif
 
 inline std::wstring AnsiToWide(const char* str)
 {
-#if defined(__cplusplus) && __cplusplus < 201103L
+#    if defined(__cplusplus) && __cplusplus < 201103L
     size_t       len = mbstowcs(NULL, str, 0);
     std::wstring asWide(len, L'\0');
     mbstowcs(const_cast<wchar_t*>(asWide.data()), str, len + 1);
     return asWide;
-#else
+#    else
     size_t       len = std::mbstowcs(NULL, str, 0);
     std::wstring asWide(len, L'\0');
     std::mbstowcs(const_cast<wchar_t*>(asWide.data()), str, len + 1);
     return asWide;
-#endif
+#    endif
 }
 
 inline std::wstring ToWideString(const TCHAR* s) { return AnsiToWide(s); }

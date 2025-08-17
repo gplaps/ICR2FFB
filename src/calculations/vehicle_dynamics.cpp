@@ -4,7 +4,9 @@
 #include "helpers.h"
 
 #include <cmath>
-#include <stdint.h>
+#if !defined(IS_CPP11_COMPLIANT)
+#    include <stdint.h>
+#endif
 
 #include <algorithm>
 

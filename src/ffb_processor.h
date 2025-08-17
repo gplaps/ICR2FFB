@@ -1,7 +1,6 @@
 #pragma once
 
 #include "constant_force.h"
-#include "direct_input.h"
 #include "ffb_config.h"
 #include "ffb_output.h"
 #include "lateral_load.h"
