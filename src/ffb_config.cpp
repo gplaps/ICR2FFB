@@ -126,6 +126,14 @@ int FFBConfig::LoadSettingsFromConfig()
 
     version = ReadGameVersion(targetGameVersion);
     LogMessage(L"[INFO] Game version: " + PrintGameVersion());
+#if !defined(NDEBUG)
+// just in case there is a difference in the threading API
+#if defined(HAS_STL_THREAD_MUTEX)
+    LogMessage(L"[Debug] Thread with STL");
+#else
+    LogMessage(L"[Debug] Thread with Windows API");
+#endif
+#endif
     return 0;
 }
 
