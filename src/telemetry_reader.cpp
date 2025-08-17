@@ -123,10 +123,10 @@ static uintptr_t ScanSignature(HANDLE processHandle)
     GetSystemInfo(&sysInfo);
 
     LogMessage(L"[DEBUG] Scanning for game...");
-    LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMinimumApplicationAddress));
-    LogMessage(L"[DEBUG] Process max addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMaximumApplicationAddress));
+    LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress)));
+    LogMessage(L"[DEBUG] Process max addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress)));
 
-    uintptr_t       addr    = (uintptr_t)sysInfo.lpMinimumApplicationAddress;
+    uintptr_t       addr    = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
@@ -134,14 +134,14 @@ static uintptr_t ScanSignature(HANDLE processHandle)
 
     while (addr < maxAddr)
     {
-        if (VirtualQueryEx(processHandle, (LPCVOID)addr, &mbi, sizeof(mbi)) == sizeof(mbi))
+        if (VirtualQueryEx(processHandle, reinterpret_cast<LPCVOID>(addr), &mbi, sizeof(mbi)) == sizeof(mbi))
         {
             if ((mbi.State == MEM_COMMIT) && !(mbi.Protect & PAGE_NOACCESS))
             {
                 std::vector<BYTE> buffer(mbi.RegionSize);
                 SIZE_T            bytesRead = 0;
 
-                if (ReadProcessMemory(processHandle, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead))
+                if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
                     for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i)
                     {
@@ -234,7 +234,7 @@ const RawTelemetry& TelemetryReader::Data() const
 bool TelemetryReader::ReadRaw(void* dest, uintptr_t offset, SIZE_T size)
 {
     SIZE_T bytesRead = 0;
-    return ReadProcessMemory(hProcess, (LPCVOID)offset, dest, size, &bytesRead) && bytesRead == size;
+    return ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(offset), dest, size, &bytesRead) && bytesRead == size;
 }
 
 // === Main ===

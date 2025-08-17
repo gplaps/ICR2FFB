@@ -44,7 +44,7 @@ static void RestartAsAdmin()
     );
 
     // Check if the restart was successful
-    if ((intptr_t)result > 32)
+    if (reinterpret_cast<intptr_t>(result) > 32)
     {
         // Success - the new admin instance is starting, exit this one
         std::wcout << L"[INFO] Restarting with administrator privileges..." << std::endl;
