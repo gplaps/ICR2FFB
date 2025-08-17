@@ -94,11 +94,7 @@ static BOOL
     FindWindowData* wdata = reinterpret_cast<FindWindowData*>(lParam);
     TCHAR           title[256];
     GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
-#if !defined(UNICODE)
-    std::wstring titleStr = ToLower(AnsiToWide(title));
-#else
-    const std::wstring titleStr = ToLower(title);
-#endif
+    std::wstring titleStr = ToWideString(title);
     LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
     for (size_t i = 0; i < wdata->keywords.size(); ++i)
     {

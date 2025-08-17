@@ -76,6 +76,10 @@ inline std::string ToLower(const std::string& str)
     return result;
 }
 
+#if defined(UNICODE)
+inline std::wstring ToWideString(const TCHAR* s) { return std::wstring(s); }
+#else
+
 #if defined(__cplusplus) && __cplusplus < 201103L
 #    include <cstdlib>
 #endif
@@ -95,8 +99,5 @@ inline std::wstring AnsiToWide(const char* str)
 #endif
 }
 
-#if defined(UNICODE)
-inline std::wstring ToWideString(const TCHAR* s) { return std::wstring(s); }
-#else
 inline std::wstring ToWideString(const TCHAR* s) { return AnsiToWide(s); }
 #endif
