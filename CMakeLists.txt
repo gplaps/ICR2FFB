@@ -22,8 +22,6 @@ else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Weverything
         -Wno-padded
-        -Wno-global-constructors
-        -Wno-exit-time-destructors
         -Wno-covered-switch-default # preferred over -Wno-switch-enum
         -Wno-zero-as-null-pointer-constant
         -Wno-c++98-compat # "solved" but still emitted
