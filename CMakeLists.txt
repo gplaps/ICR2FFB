@@ -40,7 +40,7 @@ endif()
 target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800)
 target_link_libraries(${PROJECT_BINARY_NAME} PRIVATE dinput8)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.exe DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
-install(FILES ffb.ini) # comment this line so it does not overwrite your modified ini during development cycles
+install(FILES ffb.ini DESTINATION .) # comment this line so it does not overwrite your modified ini during development cycles
 install(FILES LICENSE README.md DESTINATION .)
 
 
