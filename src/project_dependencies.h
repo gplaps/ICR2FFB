@@ -1,6 +1,6 @@
 #pragma once
 
-// === Windows & DirectInput ===
+// === Windows ===
 #if !defined(NOMINMAX)
 #define NOMINMAX
 #endif

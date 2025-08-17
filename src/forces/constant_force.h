@@ -1,9 +1,9 @@
 #pragma once
+#include "project_dependencies.h"
 #include "calculations/slip_angle.h"
 #include "calculations/lateral_load.h"
 #include "calculations/vehicle_dynamics.h"
-#include "project_dependencies.h"
-#include <string>
+#include "telemetry_reader.h"
 
 struct ConstantForceEffectResult {
     ConstantForceEffectResult()=default;

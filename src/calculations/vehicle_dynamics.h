@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "telemetry_reader.h"
-#include <string>
 
 struct CalculatedVehicleDynamics {
     double lateralG;

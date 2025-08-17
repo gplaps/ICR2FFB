@@ -1,11 +1,8 @@
 #include "lateral_load.h"
 #include "constants.h"
 #include "helpers.h"
-#include <iostream>
 #include <cmath>
 #include <algorithm>
-#include <deque>
-#include <numeric>
 
 // Pretend "Lateral G" calculation
 // Idea is the force should be a direct opposite to the lateral G so the driver "Feels" the pull of the forces

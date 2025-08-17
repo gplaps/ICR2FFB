@@ -2,6 +2,7 @@
 #include "log.h"
 #include "helpers.h"
 #include <iostream>
+#include <string>
 
 LPDIRECTINPUT8 DirectInput::directInput = NULL;
 

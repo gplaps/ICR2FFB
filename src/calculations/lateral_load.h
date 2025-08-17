@@ -1,7 +1,6 @@
 #pragma once
 #include "telemetry_reader.h"
 #include "slip_angle.h"
-#include <string>
 
 struct CalculatedLateralLoad {
     double steeringDeg;

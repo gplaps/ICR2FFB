@@ -1,13 +1,13 @@
 #include "slip_angle.h"
 #include "constants.h"
 #include "helpers.h"
-#include <cmath>
 #include <algorithm>
-#include <deque>
+#include <cmath>
+// #include <deque>
 
 // Some variables for smoothing
 // const int VELOCITY_HISTORY_SIZE = 5;
-static std::deque<double> velocityAngleHistory;
+// static std::deque<double> velocityAngleHistory;
 
 struct DecodedSlip {
     double signedNorm;  // -1.0 to +1.0

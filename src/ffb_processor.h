@@ -5,8 +5,10 @@
 #include "ffb_config.h"
 #include "ffb_output.h"
 #include "lateral_load.h"
+#include "slip_angle.h"
 #include "telemetry_reader.h"
 #include "telemetry_display.h"
+#include "vehicle_dynamics.h"
 
 struct FFBProcessor {
     FFBProcessor(const FFBConfig& config);

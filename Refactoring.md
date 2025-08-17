@@ -7,11 +7,10 @@ Inputs: TelemetryReader
 Processing: FFBProcessor
 Output: FFBOutput
 
-FFBOutput consists of a DI_Device, that needs the DirectInput API to be setup, so each device tries to initialize DirectInput if not done already
-Then pass around references to the FFBConfig object so the "modules" can read data from it ... as its unlikely that they change any, keep it const ref
+FFBOutput consists of a FFBDevice, that handles the DirectInput API - so each device (if there where multiple) tries to initialize DirectInput if not done already,
+The FFBConfig gets passed around by references so the "modules" can read data from it, assuming no changes can be done to it at runtime
 
-The seperation between FFBProcessor, FFBOutput and FFBDevice and effects is still not good! DirectInput API move is done, but where effects reside either in FFBProcessor or FFBOutput ... not sure yet. Or remove FFBOtput and move its functionality into FFBProcessor also
+The seperation between FFBProcessor, FFBOutput and FFBDevice and effect processing is still not good! DirectInput API move is done, but where effects reside either in FFBProcessor or FFBOutput needs to be structured better. Or remove FFBOtput and move all its functionality into FFBProcessor
 
 Code style:
-There are likely some unnecessary includes. be cautious when including windows api headers to prefer project_dependencies.h to get a consistent set with NOMINMAX and WIN32_LEAN_AND_MEAN
-Reducing braces around if/else with only one line of content is a matter of taste, I like this better, but opionions are different. Same with preferring the tenarity operator, but this depends on the situation and may reduce readability
+There are likely some unnecessary includes and IWYU is not applied yet. windows.h should only be included via - currently named "project_dependencies.h" to get a consistent set of funtionality with NOMINMAX and WIN32_LEAN_AND_MEAN macros set

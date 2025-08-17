@@ -2,9 +2,6 @@
 #include "constants.h"
 #include "helpers.h"
 #include "log.h"
-#include "constant_force.h"
-#include "damper_effect.h"
-#include "spring_effect.h"
 #include <algorithm>
 
 FFBOutput::FFBOutput(const FFBConfig& config) : device(config) { 

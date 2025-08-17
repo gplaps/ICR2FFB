@@ -2,12 +2,10 @@
 #include "constants.h"
 #include "helpers.h"
 #include "log.h"
-#include "main.h"
-#include <iostream>
 #include <algorithm>
+#include <cmath>
 #include <deque>
 #include <numeric>
-#include <cmath>
 
 /*
  * Copyright 2025 gplaps
