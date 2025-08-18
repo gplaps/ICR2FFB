@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.8.8 Don't forget to update this down below
+// Beta 0.8.9 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -293,7 +293,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.8.8 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.8.9 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -333,10 +333,10 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.vd_frontLeftForce_N << L"           " << std::setw(10) << displayData.vd_frontRightForce_N;
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+    //ss.str(L""); ss.clear();
+    //ss << std::setw(10) << displayData.vd_frontLeftForce_N << L"           " << std::setw(10) << displayData.vd_frontRightForce_N;
+    //std::wcout << padLine(ss.str()) << L"\n";
+    //std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
     ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
@@ -366,9 +366,9 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/s²";
     //std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
-    std::wcout << padLine(ss.str()) << L"\n";
+    //ss.str(L""); ss.clear();
+    //ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
+    //std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
     ss << L"Direction Value: " << displayData.vd_directionVal;
@@ -946,7 +946,7 @@ int main() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     return 0;
 }

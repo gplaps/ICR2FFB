@@ -41,16 +41,19 @@ IDirectInputDevice8* matchedDevice = nullptr;
 LPDIRECTINPUT8 directInput = nullptr;
 
 // Device lists for better error messages
-BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
+    int* index = static_cast<int*>(pContext);
     std::wstring deviceName = pdidInstance->tszProductName;
-    LogMessage(L"[INFO] Available device: " + deviceName);
-    return DIENUM_CONTINUE;  // Continue enumerating all devices
+    LogMessage(L"[INFO] Available device " + std::to_wstring(*index) + L": " + deviceName);
+    (*index)++;
+    return DIENUM_CONTINUE;
 }
 
 void ListAvailableDevices() {
     if (directInput) {
+        int index = 1;
         LogMessage(L"[INFO] Enumerating available game controllers:");
-        HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
+        HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, &index, DIEDFL_ATTACHEDONLY);
         if (FAILED(hr)) {
             LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
         }
@@ -63,15 +66,20 @@ void ListAvailableDevices() {
     }
 }
 
-BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
+    int* index = static_cast<int*>(pContext);
     std::wstring deviceName = pdidInstance->tszProductName;
-    std::wcout << L"  - " << deviceName << std::endl;
+    std::wcout << L"  " << *index << L": " << deviceName << std::endl;
+    (*index)++;
     return DIENUM_CONTINUE;
 }
 
 void ShowAvailableDevicesOnConsole() {
     if (directInput) {
-        directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, NULL, DIEDFL_ATTACHEDONLY);
+        int index = 1;
+        std::wcout << L"Available devices:" << std::endl;
+        directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, &index, DIEDFL_ATTACHEDONLY);
+        std::wcout << L"You can use either the device name or index number in your INI file." << std::endl;
     }
     else {
         std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << std::endl;
@@ -79,20 +87,46 @@ void ShowAvailableDevicesOnConsole() {
 }
 
 
-BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID*) {
+BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
+    static int currentIndex = 1;
     std::wstring deviceName = pdidInstance->tszProductName;
 
+    // First try exact name match
     if (deviceName == targetDeviceName) {
-        LogMessage(L"[INFO] Found matching device: " + deviceName);
+        LogMessage(L"[INFO] Found matching device by name: " + deviceName);
         HRESULT hr = directInput->CreateDevice(pdidInstance->guidInstance, &matchedDevice, nullptr);
         if (FAILED(hr)) {
             LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
+            currentIndex++;
             return DIENUM_CONTINUE;
         }
         LogMessage(L"[INFO] Successfully created device interface");
-        return DIENUM_STOP;  // Found and created successfully
+        currentIndex = 1;  // Reset for next time
+        return DIENUM_STOP;
     }
 
+    // If name didn't match, check if targetDeviceName is a number (index)
+    try {
+        int targetIndex = std::stoi(targetDeviceName);
+        if (currentIndex == targetIndex) {
+            LogMessage(L"[INFO] Found matching device by index " + std::to_wstring(currentIndex) + L": " + deviceName);
+            HRESULT hr = directInput->CreateDevice(pdidInstance->guidInstance, &matchedDevice, nullptr);
+            if (FAILED(hr)) {
+                LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
+                currentIndex++;
+                return DIENUM_CONTINUE;
+            }
+            LogMessage(L"[INFO] Successfully created device interface");
+            currentIndex = 1;  // Reset for next time
+            return DIENUM_STOP;
+        }
+    }
+    catch (const std::exception&) {
+        // targetDeviceName is not a valid number, that's fine
+        // We already tried name matching above
+    }
+
+    currentIndex++;
     return DIENUM_CONTINUE;
 }
 

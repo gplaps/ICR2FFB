@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.8.8 
+# FFB for ICR2 – BETA 0.8.9 
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -48,6 +48,11 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**0.8.9 (2025-08-18)** 
+- Updated ffb.ini to support using a joystick index or the name. This will be easier for some with strange characters in the joystick name
+- Removed some debug junk from the display
+- Removed the sleep timer from the main compute thread
+
 **0.8.8 (2025-08-14)** 
 - Actually fixed the asymetrical error. All versions up until this had it! WOW!
 
