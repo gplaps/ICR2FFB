@@ -58,26 +58,27 @@ static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
 
 // Where it all happens
 int main()
-{
+{    
+    int res = 0;
+    STATUS_CHECK(CheckAndRestartAsAdmin());
+
 #if !defined(HAS_STL_THREAD_MUTEX)
     Logger::mutex = CreateMutex(NULL, FALSE, NULL);
     if (Logger::mutex == NULL)
     {
-        LogMessage(L"[ERROR] Failed to create log mutex");
+        std::wcout << L"[ERROR] Failed to create log mutex";
         return -1;
     }
     TelemetryDisplay::mutex = CreateMutex(NULL, FALSE, NULL);
     if (TelemetryDisplay::mutex == NULL)
     {
-        LogMessage(L"[ERROR] Failed to create display mutex");
+        std::wcout << L"[ERROR] Failed to create display mutex";
         return -1;
     }
 #endif
 
     if (!logger) { logger = new Logger("log.txt"); }
 
-    int res = 0;
-    STATUS_CHECK(CheckAndRestartAsAdmin());
     STATUS_CHECK(InitConsole());
 
     const FFBConfig config;

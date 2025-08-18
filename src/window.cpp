@@ -27,7 +27,7 @@ static bool IsRunningAsAdmin()
     return isAdmin == TRUE;
 }
 
-static void RestartAsAdmin()
+static int RestartAsAdmin()
 {
     // Get the current executable path
     wchar_t exePath[MAX_PATH];
@@ -48,13 +48,14 @@ static void RestartAsAdmin()
     {
         // Success - the new admin instance is starting, exit this one
         std::wcout << L"[INFO] Restarting with administrator privileges..." << L'\n';
-        exit(0);
+        return 0;
     }
     else
     {
         // Failed - user probably clicked "No" on UAC prompt
         std::wcout << L"[ERROR] Failed to restart as administrator." << L'\n';
         std::wcout << L"[ERROR] Please right-click the program and select 'Run as administrator'" << L'\n';
+        return 1;
     }
 }
 
@@ -78,10 +79,13 @@ int CheckAndRestartAsAdmin()
 
         if (response == L'y' || response == L'Y')
         {
-            RestartAsAdmin();
-            // If we get here, the restart failed
-            std::wcout << L"Press any key to exit..." << L'\n';
-            std::cin.get();
+            if(RestartAsAdmin())
+            {
+                // If we get here, the restart failed
+                std::wcout << L"Press any key to exit..." << L'\n';
+                std::cin.get();
+                return 1;
+            }
             return 1;
         }
         else
