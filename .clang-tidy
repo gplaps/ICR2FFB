@@ -23,6 +23,7 @@ Checks:          '
   -hicpp-no-array-decay,
   -hicpp-signed-bitwise,
   -hicpp-use-auto,
+  -hicpp-use-emplace,
   -hicpp-use-equals-default,
   -hicpp-use-nullptr,
   -misc-include-cleaner,
