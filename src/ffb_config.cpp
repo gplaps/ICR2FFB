@@ -21,7 +21,21 @@
  */
 
 FFBConfig::FFBConfig() :
-    version()
+    version(),
+    targetDeviceName(),
+    targetGameVersion(),
+    targetGameWindowName(),
+    targetForceSetting(),
+    targetDeadzoneSetting(),
+    targetInvertFFB(),
+    targetLimitEnabled(),
+    targetConstantEnabled(),
+    targetConstantScale(),
+    targetWeightEnabled(),
+    targetWeightScale(),
+    targetDamperEnabled(),
+    targetDamperScale(),
+    targetSpringEnabled()
 {
     if (!LoadSettingsFromConfig())
     {

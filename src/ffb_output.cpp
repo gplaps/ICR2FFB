@@ -10,6 +10,8 @@ FFBOutput::FFBOutput(const FFBConfig& config) :
     enableDamperEffect(),
     enableSpringEffect(),
     invert(),
+    damperEffect(),
+    springEffect(),
     masterForceValue(),
     constantForceValue(),
     deadzoneForceValue(),
@@ -19,7 +21,8 @@ FFBOutput::FFBOutput(const FFBConfig& config) :
     deadzoneForceScale(),
     constantForceScale(),
     weightForceScale(),
-    damperForceScale()
+    damperForceScale(),
+    mInitialized(false)
 {
     if (Init(config))
     {

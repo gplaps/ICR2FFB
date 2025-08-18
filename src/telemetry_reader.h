@@ -59,15 +59,6 @@ public:
     const RawTelemetry& Data() const;
 
 private:
-    struct CarData
-    {
-#if defined(IS_CPP11_COMPLIANT)
-        int32_t data[12] = {0};
-#else
-        int32_t data[12];
-#endif
-    } carData;
-
     void ConvertCarData();
     void ConvertTireData();
     bool ReadLongitudinalForce();
@@ -94,9 +85,19 @@ private:
         int16_t longiF;
     };
 
+    struct CarData
+    {
+#if defined(IS_CPP11_COMPLIANT)
+        int32_t data[12] = {0};
+#else
+        int32_t data[12];
+#endif
+    };
+
     HANDLE       hProcess;
     bool         mInitialized;
     GameOffsets  offs;
     RawTelemetry out;
     RawData      rawData;
+    CarData      carData;
 };

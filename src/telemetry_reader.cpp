@@ -191,10 +191,12 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 }
 
 TelemetryReader::TelemetryReader(const FFBConfig& config) :
-    carData(),
+    hProcess(NULL),
+    mInitialized(false),
     offs(),
     out(),
-    rawData()
+    rawData(),
+    carData()
 {
     if (config.targetGameWindowName.empty())
     {

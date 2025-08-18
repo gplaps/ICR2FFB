@@ -34,12 +34,11 @@ private:
     bool         hasFirstPos;
 
     ConstantForceEffectResult constantForceCalculation;
+    ConstantForceEffect       constantForceEffect;
 
     CalculatedSlip            slip;
     CalculatedVehicleDynamics vehicleDynamics;
     CalculatedLateralLoad     load;
-
-    ConstantForceEffect constantForceEffect;
 
     TelemetryReader                        telemetryReader;
     FFBOutput                              ffbOutput;

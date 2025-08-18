@@ -14,12 +14,15 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     effectPaused(false),
     previousPos(),
     hasFirstPos(false),
+    constantForceCalculation(),
+    constantForceEffect(),
     slip(),
     vehicleDynamics(),
     load(),
     telemetryReader(TelemetryReader(config)),
     ffbOutput(config),
-    displayData()
+    displayData(),
+    mInitialized(false)
 {
     if (!telemetryReader.Valid())
     {

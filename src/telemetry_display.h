@@ -22,6 +22,8 @@ struct TelemetryDisplay
         ConstantForceEffectResult constantForce;
     };
 
+    TelemetryDisplay() : displayData() {}
+
     TelemetryDisplayData displayData;
 
     // New display

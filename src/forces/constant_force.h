@@ -22,6 +22,9 @@ struct ConstantForceEffectResult
 
 struct ConstantForceEffect
 {
+public:
+    ConstantForceEffect() : magnitudeHistory() {}
+
     ConstantForceEffectResult Calculate(
         const RawTelemetry&              current,
         const CalculatedLateralLoad&     load,
