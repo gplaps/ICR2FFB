@@ -1,50 +1,49 @@
 #include "log.h"
 
-#include <deque>
-#include <fstream>
 #include <iostream>
 #include <set>
 #include <vector>
 
 // Global log buffer
-DEFINE_MUTEX(logMutex);
-static std::deque<std::wstring> logLines;
-const size_t                    maxLogLines = 1000; // Show last 1000 log lines
+Logger* logger = NULL;
 
 // Logging stuff - Keeps messages for future debugging!
 // Write to log.txt
 void LogMessage(const std::wstring& msg)
 {
-    LOCK_MUTEX(logMutex);
+    if (!logger) { return; }
+
+    LOCK_MUTEX(Logger::logMutex);
 
     // Add to in-memory deque for optional UI display (if needed)
-    logLines.push_back(msg);
-    while (logLines.size() > maxLogLines)
+    logger->lines.push_back(msg);
+    while (logger->lines.size() > Logger::maxLogLines)
     {
-        logLines.pop_front();
+        logger->lines.pop_front();
     }
 
     // Append to log.txt
-    std::wofstream logFile("log.txt", std::ios::app);
-    if (logFile.is_open())
+    if (logger->file.is_open())
     {
-        logFile << msg << L'\n';
+        logger->file << msg << L'\n';
     }
 
-    UNLOCK_MUTEX(logMutex);
+    UNLOCK_MUTEX(Logger::logMutex);
 }
 
 void PrintToLogFile()
 {
+    if (!logger) { return; }
+
     //Print log data
-    LOCK_MUTEX(logMutex);
+    LOCK_MUTEX(Logger::logMutex);
 
     const unsigned int        maxDisplayLines = 1; //how many lines to display
     std::vector<std::wstring> recentUniqueLines;
     std::set<std::wstring>    seen;
 
     // Go backward to find most recent unique messages
-    for (std::deque<std::wstring>::reverse_iterator it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it)
+    for (std::deque<std::wstring>::reverse_iterator it = logger->lines.rbegin(); it != logger->lines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it)
     {
         if (seen.insert(*it).second)
         {
@@ -60,5 +59,5 @@ void PrintToLogFile()
         std::wcout << padded << L"\n";
     }
 
-    UNLOCK_MUTEX(logMutex);
+    UNLOCK_MUTEX(Logger::logMutex);
 }

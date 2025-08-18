@@ -74,14 +74,11 @@ int main()
     }
 #endif
 
+    if (!logger) { logger = new Logger("log.txt"); }
+
     int res = 0;
     STATUS_CHECK(CheckAndRestartAsAdmin());
     STATUS_CHECK(InitConsole());
-
-    //clear last log
-    {
-        const std::wofstream clearLog("log.txt", std::ios::trunc);
-    }
 
     const FFBConfig config;
     if (!config.Valid())
@@ -146,6 +143,8 @@ int main()
     CloseHandle(logMutex);
     CloseHandle(displayMutex);
 #endif
+
+    delete logger; // destructs logger, including filestream -> flushes and closes file
 
     return 0;
 }

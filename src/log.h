@@ -1,9 +1,21 @@
 #pragma once
 #include "project_dependencies.h"
 
+#include <deque>
+#include <fstream>
 #include <string>
 
 void LogMessage(const std::wstring& msg);
 void PrintToLogFile();
 
-DECLARE_MUTEX(logMutex);
+struct Logger
+{
+    explicit Logger(const char* filename) :
+        file(filename, std::ios::trunc) {}
+    std::deque<std::wstring> lines;
+    std::wofstream           file;
+
+    static DEFINE_MUTEX(logMutex);
+    static const size_t maxLogLines = 1000; // Show last 1000 log lines
+};
+extern Logger* logger;
