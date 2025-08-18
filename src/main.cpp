@@ -83,6 +83,7 @@ int main()
     const FFBConfig config;
     if (!config.Valid())
     {
+        SAFE_DELETE(logger);
         return -1;
     }
 
@@ -91,6 +92,7 @@ int main()
     FFBProcessor ffbProcessor(config);
     if (!ffbProcessor.Valid())
     {
+        SAFE_DELETE(logger);
         return -1;
     }
 
@@ -107,6 +109,7 @@ int main()
     ffbProcessor = new FFBProcessor(config);
     if (!ffbProcessor || !ffbProcessor->Valid())
     {
+        SAFE_DELETE(logger);
         return -1;
     }
 
@@ -115,6 +118,7 @@ int main()
     if (hThread == NULL)
     {
         LogMessage(L"[ERROR] Failed to create thread.");
+        SAFE_DELETE(logger);
         return -1;
     }
 #endif
@@ -144,7 +148,6 @@ int main()
     CloseHandle(TelemetryDisplay::mutex);
 #endif
 
-    delete logger; // destructs logger, flushes and closes file
-
+    SAFE_DELETE(logger); // destructs logger, flushes and closes file
     return 0;
 }
