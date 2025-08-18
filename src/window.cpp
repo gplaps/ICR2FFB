@@ -20,7 +20,6 @@ static bool IsRunningAsAdmin()
     if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
                                  DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &administratorsGroup))
     {
-
         CheckTokenMembership(NULL, administratorsGroup, &isAdmin);
         FreeSid(administratorsGroup);
     }
@@ -209,11 +208,6 @@ static void HideConsoleCursor()
     }
 }
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
-#    define NO_EXCEPT noexcept
-#else
-#    define NO_EXCEPT
-#endif
 static BOOL WINAPI ConsoleHandler(DWORD CEvent) NO_EXCEPT
 {
     switch (CEvent)

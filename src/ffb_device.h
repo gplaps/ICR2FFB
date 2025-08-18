@@ -11,7 +11,7 @@ struct FFBDevice
 #if defined(IS_CPP11_COMPLIANT)
     FFBDevice() = delete;
 #else
-    FFBDevice(); // intentionally declared but undefined -> compile error if used
+    FFBDevice(); // intentionally declared but undefined -> linker error if used
 #endif
     IDirectInputDevice8* diDevice;
 

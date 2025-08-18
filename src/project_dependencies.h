@@ -15,6 +15,12 @@
 #    define IS_CPP11_COMPLIANT
 #endif
 
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#    define NO_EXCEPT noexcept
+#else
+#    define NO_EXCEPT
+#endif
+
 // C++98 does not contain threads and mutexes, so use Windows API instead
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #    define HAS_STL_THREAD_MUTEX

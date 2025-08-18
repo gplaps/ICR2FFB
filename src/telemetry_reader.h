@@ -4,9 +4,7 @@
 #include "ffb_config.h"
 #include "memoryapi.h"
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
-#    include <cstdint>
-#else
+#if !defined(IS_CPP11_COMPLIANT)
 #    include <stdint.h>
 #endif
 
@@ -62,11 +60,11 @@ public:
 private:
     struct CarData
     {
-        int32_t data[12]
 #if defined(IS_CPP11_COMPLIANT)
-            = {0}
+        int32_t data[12] = {0};
+#else
+        int32_t data[12];
 #endif
-        ;
     } carData;
 
     void ConvertCarData();
