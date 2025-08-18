@@ -146,7 +146,7 @@ bool FFBProcessor::ProcessTelemetryInput()
 
 void FFBProcessor::UpdateDisplayData()
 {
-    LOCK_MUTEX(displayMutex);
+    LOCK_MUTEX(TelemetryDisplay::mutex);
 
     // Update telemetry for display
     displayData.raw              = current;
@@ -156,7 +156,7 @@ void FFBProcessor::UpdateDisplayData()
     displayData.masterForceValue = ffbOutput.masterForceValue;
     displayData.constantForce    = constantForceCalculation;
 
-    UNLOCK_MUTEX(displayMutex);
+    UNLOCK_MUTEX(TelemetryDisplay::mutex);
 }
 
 const TelemetryDisplay::TelemetryDisplayData& FFBProcessor::DisplayData() const

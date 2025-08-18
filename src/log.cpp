@@ -5,6 +5,7 @@
 #include <vector>
 
 // Global log buffer
+DEFINE_MUTEX(Logger::mutex);
 Logger* logger = NULL;
 
 // Logging stuff - Keeps messages for future debugging!
@@ -13,7 +14,7 @@ void LogMessage(const std::wstring& msg)
 {
     if (!logger) { return; }
 
-    LOCK_MUTEX(Logger::logMutex);
+    LOCK_MUTEX(Logger::mutex);
 
     // Add to in-memory deque for optional UI display (if needed)
     logger->lines.push_back(msg);
@@ -28,7 +29,7 @@ void LogMessage(const std::wstring& msg)
         logger->file << msg << L'\n';
     }
 
-    UNLOCK_MUTEX(Logger::logMutex);
+    UNLOCK_MUTEX(Logger::mutex);
 }
 
 void PrintToLogFile()
@@ -36,7 +37,7 @@ void PrintToLogFile()
     if (!logger) { return; }
 
     //Print log data
-    LOCK_MUTEX(Logger::logMutex);
+    LOCK_MUTEX(Logger::mutex);
 
     const unsigned int        maxDisplayLines = 1; //how many lines to display
     std::vector<std::wstring> recentUniqueLines;
@@ -59,5 +60,5 @@ void PrintToLogFile()
         std::wcout << padded << L"\n";
     }
 
-    UNLOCK_MUTEX(Logger::logMutex);
+    UNLOCK_MUTEX(Logger::mutex);
 }

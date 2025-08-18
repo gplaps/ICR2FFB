@@ -60,14 +60,14 @@ static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
 int main()
 {
 #if !defined(HAS_STL_THREAD_MUTEX)
-    logMutex = CreateMutex(NULL, FALSE, NULL);
-    if (logMutex == NULL)
+    Logger::mutex = CreateMutex(NULL, FALSE, NULL);
+    if (Logger::mutex == NULL)
     {
         LogMessage(L"[ERROR] Failed to create log mutex");
         return -1;
     }
-    displayMutex = CreateMutex(NULL, FALSE, NULL);
-    if (displayMutex == NULL)
+    TelemetryDisplay::mutex = CreateMutex(NULL, FALSE, NULL);
+    if (TelemetryDisplay::mutex == NULL)
     {
         LogMessage(L"[ERROR] Failed to create display mutex");
         return -1;
@@ -140,11 +140,11 @@ int main()
     WaitForSingleObject(hThread, INFINITE);
     CloseHandle(hThread);
     delete ffbProcessor;
-    CloseHandle(logMutex);
-    CloseHandle(displayMutex);
+    CloseHandle(Logger::mutex);
+    CloseHandle(TelemetryDisplay::mutex);
 #endif
 
-    delete logger; // destructs logger, including filestream -> flushes and closes file
+    delete logger; // destructs logger, flushes and closes file
 
     return 0;
 }

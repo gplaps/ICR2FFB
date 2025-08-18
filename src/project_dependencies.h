@@ -28,7 +28,7 @@
 #    define DEFINE_MUTEX(mtx) \
         std::mutex mtx
 #    define DECLARE_MUTEX(mtx) \
-        extern std::mutex mtx
+        std::mutex mtx
 #else
 #    include <cassert>
 #    define LOCK_MUTEX(mtx) \
@@ -38,5 +38,5 @@
 #    define DEFINE_MUTEX(mtx) \
         HANDLE mtx
 #    define DECLARE_MUTEX(mtx) \
-        extern HANDLE mtx
+        HANDLE mtx
 #endif

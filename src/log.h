@@ -15,7 +15,7 @@ struct Logger
     std::deque<std::wstring> lines;
     std::wofstream           file;
 
-    static DEFINE_MUTEX(logMutex);
+    static DECLARE_MUTEX(mutex);
     static const size_t maxLogLines = 1000; // Show last 1000 log lines
 };
 extern Logger* logger;

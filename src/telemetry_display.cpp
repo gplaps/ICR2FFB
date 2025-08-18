@@ -6,11 +6,11 @@
 #include <iostream>
 #include <sstream>
 
-DEFINE_MUTEX(displayMutex);
+DEFINE_MUTEX(TelemetryDisplay::mutex);
 // Define console width
 const unsigned int CONSOLE_WIDTH = 80;
 
-// Helper lambda to pad lines
+// Helper function to pad lines
 static std::wstring padLine(const std::wstring& text)
 {
     std::wstring padded = text;
@@ -191,9 +191,9 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 void TelemetryDisplay::Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn)
 {
     {
-        LOCK_MUTEX(displayMutex);
+        LOCK_MUTEX(mutex);
         displayData = displayDataIn;
-        UNLOCK_MUTEX(displayMutex);
+        UNLOCK_MUTEX(mutex);
     }
     //Trigger display
     DisplayTelemetry(config);

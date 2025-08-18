@@ -5,8 +5,6 @@
 #include "telemetry_reader.h"
 #include "vehicle_dynamics.h"
 
-DECLARE_MUTEX(displayMutex);
-
 struct TelemetryDisplay
 {
     // === Shared Telemetry Display Data ===
@@ -29,4 +27,6 @@ struct TelemetryDisplay
     // New display
     void DisplayTelemetry(const FFBConfig& config) const;
     void Update(const FFBConfig& config, const TelemetryDisplayData& displayDataIn);
+
+    static DECLARE_MUTEX(mutex);
 };
