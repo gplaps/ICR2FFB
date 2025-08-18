@@ -86,10 +86,12 @@ static GameOffsets GetGameOffsets(GameVersion version)
 
 struct FindWindowData
 {
-    FindWindowData(const std::vector<std::wstring>& keyWords, DWORD processId) :
+    FindWindowData(const std::vector<std::wstring>& keyWords, const std::vector<std::wstring>& excludedKeyWords, DWORD processId) :
         keywords(keyWords),
+        excludedkeyWords(excludedKeyWords),
         pid(processId) {}
     std::vector<std::wstring> keywords;
+    std::vector<std::wstring> excludedkeyWords;
     DWORD                     pid;
 };
 
@@ -112,6 +114,16 @@ static BOOL
             const std::wstring& key = ToLower(wdata->keywords[i]);
             if (wTitle.find(key) != std::wstring::npos)
             {
+                for (size_t j = 0; j < wdata->excludedkeyWords.size(); ++j)
+                {
+                    const std::wstring& exKey = ToLower(wdata->excludedkeyWords[j]);
+                    // LogMessage(L"[DEBUG] Checking exclude: \"" + exKey + L"\"");
+                    if (wTitle.find(exKey) != std::wstring::npos)
+                    {
+                        LogMessage((L"[DEBUG] Skipping window \"" + titleStr) + (L"\" because it contains \"" + exKey + L'\"'));
+                        return TRUE;
+                    }
+                }
                 LogMessage((L"[DEBUG] Window \"" + wTitle) + (L"\" matches \"" + key + L'\"'));
                 GetWindowThreadProcessId(hwnd, &wdata->pid);
                 return FALSE;
@@ -123,9 +135,9 @@ static BOOL
 }
 
 // Gets the process ID of indycar
-static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords)
+static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords, const std::vector<std::wstring>& excludedKeywords)
 {
-    FindWindowData data(keywords, 0);
+    FindWindowData data(keywords, excludedKeywords, 0);
     EnumWindows(EnumerateWindowsCallback, reinterpret_cast<LPARAM>(&data));
     return data.pid;
 }
@@ -208,7 +220,11 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     std::vector<std::wstring> keywords;
     keywords.push_back(L"dosbox"); // don't change to emplace_back ... C++98 did not have it
     keywords.push_back(config.targetGameWindowName);
-    const DWORD pid = FindProcessIdByWindow(keywords);
+    std::vector<std::wstring> excludedKeywords;
+    excludedKeywords.push_back(L"rready"); // Rendition wrapper window
+    excludedKeywords.push_back(L"speedy3d"); // Rendition wrapper window
+    excludedKeywords.push_back(L"status window"); // DosBox status window
+    const DWORD pid = FindProcessIdByWindow(keywords, excludedKeywords);
     if (!pid)
     {
         LogMessage(L"[ERROR] Game window not found.");
