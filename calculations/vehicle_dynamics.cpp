@@ -82,6 +82,10 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     out.force_rf = static_cast<int16_t>(current.tiremaglat_rf);
     out.force_lr = static_cast<int16_t>(current.tiremaglat_lr);
     out.force_rr = static_cast<int16_t>(current.tiremaglat_rr);
+    out.forceLong_lf = static_cast<int16_t>(current.tiremaglong_lf);
+    out.forceLong_rf = static_cast<int16_t>(current.tiremaglong_rf);
+    out.forceLong_lr = static_cast<int16_t>(current.tiremaglong_lr);
+    out.forceLong_rr = static_cast<int16_t>(current.tiremaglong_rr);
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
@@ -89,9 +93,15 @@ bool CalculateVehicleDynamics(const RawTelemetry& current, RawTelemetry& previou
     double force_rf_N = convertTireForceToNewtons(out.force_rf);
     double force_lr_N = convertTireForceToNewtons(out.force_lr);
     double force_rr_N = convertTireForceToNewtons(out.force_rr);
+    double forceLong_lf_N = convertTireForceToNewtons(out.forceLong_lf);
+    double forceLong_rf_N = convertTireForceToNewtons(out.forceLong_rf);
+    double forceLong_lr_N = convertTireForceToNewtons(out.forceLong_lr);
+    double forceLong_rr_N = convertTireForceToNewtons(out.forceLong_rr);
 
     out.frontLeftForce_N = convertTireForceToNewtons(out.force_lf);
     out.frontRightForce_N = convertTireForceToNewtons(out.force_rf);
+    out.frontLeftLong_N = convertTireForceToNewtons(out.forceLong_lf);
+    out.frontRightLong_N = convertTireForceToNewtons(out.forceLong_rf);
 
     // CALC 1
     //===== LATERAL FORCE CALC ======

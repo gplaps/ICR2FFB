@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 0.8.9 
+# FFB for ICR2 – BETA 0.9.0
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -9,7 +9,7 @@ Its all a lot of guesswork and workarounds bandaided together but it feels ok!
 
 This is my first ever big program, so I am sure it could be done better in almost every aspect, let me know if theres an obvious mistake!
 
-Big thanks to SK and Eric H for all their help in bringing this to life.
+Big thanks to SK, Eric H, Niels Heusinkveld and Hatcher for all their help in bringing this to life.
 
 ---
 
@@ -48,6 +48,12 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**0.9.0 (2025-08-18)** 
+- Added longitudinal tire fores (we think) to the constant force calculation. Now braking or accelerating values can have an effect on the force feedback. Although you cannot lock a tire in ICR2, you can still feel better now if you have a potential weight shift under braking! 
+- Added "Braking Scale:" option to the config. This can be used to tune the logitudinal forces proportional to the existing latitude forces on the wheel
+- Added Raw Longitudinal forces to output telemetry
+- Redid app timing with a timed game loop rather than sleep timer to avoid windows timing issues (thank Hatcher)
+
 **0.8.9 (2025-08-18)** 
 - Updated ffb.ini to support using a joystick index or the name. This will be easier for some with strange characters in the joystick name
 - Removed some debug junk from the display

@@ -43,21 +43,48 @@ struct GameOffsets {
     DWORD tire_maglat_offsetfr;
     DWORD tire_maglat_offsetrl;
     DWORD tire_maglat_offsetrr;
-    DWORD car_longitude_offset;
+    DWORD tire_maglong_offsetfl;
+    DWORD tire_maglong_offsetfr;
+    DWORD tire_maglong_offsetrl;
+    DWORD tire_maglong_offsetrr;
 };
 
 // Offsets for different version of the game
 
 // Rendition EXE
 constexpr GameOffsets Offsets_REND = {
-     0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
-    //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
+     0xB1C0C, //signature
+     0xE0EA4, //cars data
+     0xBB4E8, //lf tire load?
+     0xBB4EA, //rf tire load?
+     0xBB4E4, //lr tire load?
+     0xBB4E6, //rr tire load?
+     0xEAB24, //lf tire lat load
+     0xEAB26, //rf tire lat load
+     0xEAB20, //lr tire lat load
+     0xEAB22, //rr tire lat load
+     0xEAB04, //lr tire long load
+     0xEAB06, //rr tire long load
+     0xEAB00, //lr tire long load
+     0xEAB02, //rr tire long load
 };
 
 // DOS4G Exe, should be 1.02
 constexpr GameOffsets Offsets_DOS = {
-    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14
-    //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
+    0xA0D78, 
+    0xD4718, 
+    0xA85B8, 
+    0xA85BA, 
+    0xA85B4, 
+    0xA85B6, 
+    0xC5C48, 
+    0xC5C4A, 
+    0xC5C44, 
+    0xC5C46, 
+    0xC5C18,
+    0xC5C1A,
+    0xC5C14,
+    0xC5C16
 };
 
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
@@ -153,13 +180,16 @@ bool ReadTelemetryData(RawTelemetry& out) {
     static uintptr_t tireMagLatAddrFR = 0;
     static uintptr_t tireMagLatAddrLR = 0;
     static uintptr_t tireMagLatAddrRR = 0;
-    static uintptr_t carLongitudeAddr = 0;
+    static uintptr_t tireMagLongAddrLF = 0;
+    static uintptr_t tireMagLongAddrFR = 0;
+    static uintptr_t tireMagLongAddrLR = 0;
+    static uintptr_t tireMagLongAddrRR = 0;
 
 
     SIZE_T bytesRead = 0;
     int16_t loadLF = 0, loadFR = 0, loadLR = 0, loadRR = 0;
     int16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
-    int16_t longiF = 0;
+    int16_t magLongLF = 0, magLongFR = 0, magLongLR = 0, magLongRR = 0;
 
     // Select between Dos and Rendition version. Rendition is default
     const GameOffsets& offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
@@ -195,7 +225,10 @@ bool ReadTelemetryData(RawTelemetry& out) {
         tireMagLatAddrFR = exeBase + offsets.tire_maglat_offsetfr;
         tireMagLatAddrLR = exeBase + offsets.tire_maglat_offsetrl;
         tireMagLatAddrRR = exeBase + offsets.tire_maglat_offsetrr;
-        carLongitudeAddr = exeBase + offsets.car_longitude_offset;
+        tireMagLongAddrLF = exeBase + offsets.tire_maglong_offsetfl;
+        tireMagLongAddrFR = exeBase + offsets.tire_maglong_offsetfr;
+        tireMagLongAddrLR = exeBase + offsets.tire_maglong_offsetrl;
+        tireMagLongAddrRR = exeBase + offsets.tire_maglong_offsetrr;
 
         LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
             L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
@@ -218,15 +251,6 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.steering_deg = static_cast<double>(car0_data[10]) / 11600000.0;
     out.steering_raw = static_cast<double>(car0_data[10]);
 
-    ReadProcessMemory(hProcess, (LPCVOID)carLongitudeAddr, &longiF, sizeof(longiF), &bytesRead);
-    if (bytesRead != sizeof(longiF)) {
-        LogMessage(L"[ERROR] Failed to read longitude force. Bytes read: " + std::to_wstring(bytesRead));
-        out.long_force = 0.0;
-    }
-    else {
-        out.long_force = static_cast<double>(longiF);
-    }
-
     bool tireOK =
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLF, &loadLF, sizeof(loadLF), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrFR, &loadFR, sizeof(loadFR), &bytesRead) &&
@@ -235,7 +259,11 @@ bool ReadTelemetryData(RawTelemetry& out) {
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLF, &magLatLF, sizeof(magLatLF), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrFR, &magLatFR, sizeof(magLatFR), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrLR, &magLatLR, sizeof(magLatLR), &bytesRead) &&
-        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrRR, &magLatRR, sizeof(magLatRR), &bytesRead);
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLatAddrRR, &magLatRR, sizeof(magLatRR), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrLF, &magLongLF, sizeof(magLongLF), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrFR, &magLongFR, sizeof(magLongFR), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrLR, &magLongLR, sizeof(magLongLR), &bytesRead) &&
+        ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrRR, &magLongRR, sizeof(magLongRR), &bytesRead);
 
     if (!tireOK) {
         LogMessage(L"[ERROR] Failed to read one or more tire loads.");
@@ -252,6 +280,10 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.tiremaglat_rf = static_cast<double>(magLatFR);
     out.tiremaglat_lr = static_cast<double>(magLatLR);
     out.tiremaglat_rr = static_cast<double>(magLatRR);
+    out.tiremaglong_lf = static_cast<double>(magLongLF);
+    out.tiremaglong_rf = static_cast<double>(magLongFR);
+    out.tiremaglong_lr = static_cast<double>(magLongLR);
+    out.tiremaglong_rr = static_cast<double>(magLongRR);
     out.valid = true;
 
     return true;

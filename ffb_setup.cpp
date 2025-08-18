@@ -29,6 +29,7 @@ std::wstring targetInvertFFB;
 std::wstring targetLimitEnabled;
 std::wstring targetConstantEnabled;
 std::wstring targetConstantScale;
+std::wstring targetBrakingScale;
 std::wstring targetWeightEnabled;
 std::wstring targetWeightScale;
 std::wstring targetDamperEnabled;
@@ -158,6 +159,8 @@ bool LoadFFBSettings(const std::wstring& filename) {
             targetConstantEnabled = line.substr(10);
         else if (line.rfind(L"Constant Scale: ", 0) == 0)
             targetConstantScale = line.substr(16);
+        else if (line.rfind(L"Braking Scale: ", 0) == 0)
+            targetBrakingScale = line.substr(15);
         else if (line.rfind(L"Weight: ", 0) == 0)
             targetWeightEnabled = line.substr(8);
         else if (line.rfind(L"Weight Scale: ", 0) == 0)

@@ -34,6 +34,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
+    double brakingForceScale,
     double weightForceScale
     ) {
 
@@ -209,7 +210,16 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
 // No issues with oscillations anymore
 
 // Get the sum with signs preserved
-    double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+    //double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N; //original lat forces only
+
+    double longScaler = 4.0 * (brakingForceScale/100);
+
+    double frontTireLongSum = (vehicleDynamics.frontRightLong_N - vehicleDynamics.frontLeftLong_N) * longScaler;
+   
+    double frontTireLoadSum = (vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N) + frontTireLongSum;
+
+
+   // double frontTireLoadSum = (vehicleDynamics.frontLeftForce_N + (vehicleDynamics.frontLeftLong_N * longScaler)) + (vehicleDynamics.frontRightForce_N + (vehicleDynamics.frontRightLong_N * longScaler));
 
     // Use the magnitude for physics calculation
     double frontTireLoadMagnitude = std::abs(frontTireLoadSum);

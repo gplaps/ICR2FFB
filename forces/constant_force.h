@@ -23,5 +23,6 @@ void ApplyConstantForceEffect(
     double masterForceScale,
     double deadzoneForceScale,
     double constantForceScale,
+    double brakingForceScale,
     double weightForceScale
     );

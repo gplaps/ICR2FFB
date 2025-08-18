@@ -17,7 +17,10 @@ struct RawTelemetry {
     double tiremaglat_rf;
     double tiremaglat_lr;
     double tiremaglat_rr;
-    double long_force;
+    double tiremaglong_lf;
+    double tiremaglong_rf;
+    double tiremaglong_lr;
+    double tiremaglong_rr;
     bool valid = false;
 };
 

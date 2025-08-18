@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.8.9 Don't forget to update this down below
+// Beta 0.9.0 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -47,6 +47,19 @@
 #include "forces/constant_force.h"
 #include "forces/damper_effect.h"
 #include "forces/spring_effect.h"
+
+// Global timing buffers
+LARGE_INTEGER start, end, frequency;
+double printTime = 0.0, telemetryTime = 0.0, FFBTime = 0.0;
+
+#define PRINT_INTERVAL 66.68     // log timing ~15fps
+#define TELEMETRY_INTERVAL 16.67  // ~60 FPS telemetry
+#define FFB_INTERVAL 16.67        // ~60 FPS FFB
+
+double getPerformanceCounterTime() {
+    QueryPerformanceCounter(&end);
+    return (double)(end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+}
 
 // Global log buffer
 std::mutex logMutex;
@@ -99,6 +112,10 @@ struct TelemetryDisplayData {
     double tiremaglat_rf = 0.0;
     double tiremaglat_lr = 0.0;
     double tiremaglat_rr = 0.0;
+    double tiremaglong_lf = 0.0;
+    double tiremaglong_rf = 0.0;
+    double tiremaglong_lr = 0.0;
+    double tiremaglong_rr = 0.0;
 
     // Legacy calculated data
     int directionVal = 0;
@@ -293,7 +310,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.8.9 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.9.0 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
 
@@ -333,13 +350,13 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
-    //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << displayData.vd_frontLeftForce_N << L"           " << std::setw(10) << displayData.vd_frontRightForce_N;
-    //std::wcout << padLine(ss.str()) << L"\n";
-    //std::wcout << padLine(L"") << L"\n";
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rf);
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
+    ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
@@ -350,7 +367,12 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     //std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
+    ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rr);
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+    
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
@@ -576,192 +598,202 @@ void ProcessLoop() {
     bool firstPos = true;
 
     while (true) {
+        double currentTime = getPerformanceCounterTime();
 
         // Check to see if Telemetry is coming in, but if not then wait for it!
         if (!ReadTelemetryData(current)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
+        if (currentTime >= FFBTime) {
 
-        if (firstPos) { previousPos = current; firstPos = false; }
+            if (firstPos) { previousPos = current; firstPos = false; }
 
 
-        // Start damper/spring effects once telemetry is valid
-        // Probably need to also figure out how to stop these when the game pauses
-        // Also need to maybe fade in and out the effects when waking/sleeping
-        if (!damperStarted && damperEffect && enableDamperEffect) {
-            damperEffect->Start(1, 0);
-            damperStarted = true;
-            LogMessage(L"[INFO] Damper effect started");
-        }
-
-        if (!springStarted && springEffect && enableSpringEffect) {
-            springEffect->Start(1, 0);
-            springStarted = true;
-            LogMessage(L"[INFO] Spring effect started");
-        }
-
-        // Master force scale -> Keeping Hands Safe
-        double masterForceValue = std::stod(targetForceSetting);
-        double masterForceScale = std::clamp(masterForceValue / 100.0, 0.0, 1.0);
-
-        double deadzoneForceValue = std::stod(targetDeadzoneSetting);
-        double deadzoneForceScale = std::clamp(deadzoneForceValue / 100.0, 0.0, 1.0);
-
-        double constantForceValue = std::stod(targetConstantScale);
-        double constantForceScale = std::clamp(constantForceValue / 100.0, 0.0, 1.0);
-
-        double weightForceValue = std::stod(targetWeightScale);
-        double weightForceScale = std::clamp(weightForceValue / 100.0, 0.0, 1.0);
-
-        double damperForceValue = std::stod(targetDamperScale);
-        double damperForceScale = std::clamp(damperForceValue / 100.0, 0.0, 1.0);
-
-        // Update Effects
-        if (damperEffect && enableDamperEffect)
-            UpdateDamperEffect(current.speed_mph, damperEffect, masterForceScale, damperForceScale);
-
-        if (springEffect && enableSpringEffect)
-            UpdateSpringEffect(springEffect, masterForceScale);
-            
-        // Do Force calculations based on raw data
-        // Right now its "Slip" and "Lateral Load"
-        CalculatedSlip slip{};
-        if (CalculateSlipAngle(current, previousSlip, firstReadingSlip, slip)) {
-            displayData.slipAngleDeg = slip.slipAngle;
-        }
-
-        CalculatedVehicleDynamics vehicleDynamics{};
-        bool vehicleDynamicsValid = CalculateVehicleDynamics(current, previousVD, firstReadingVD, vehicleDynamics);
-
-        CalculatedLateralLoad load{};
-        if (CalculateLateralLoad(current, previousLat, firstReadingLat, slip, load)) {
-            // Poll input state
-            if (FAILED(matchedDevice->Poll())) {
-                matchedDevice->Acquire();
-                matchedDevice->Poll();
-            }
-            matchedDevice->GetDeviceState(sizeof(DIJOYSTATE2), &js);
-
-            // Start constant force once telemetry is valid 
-            if (enableConstantForce && constantForceEffect) {
-                if (!constantStarted) {
-                    constantForceEffect->Start(1, 0);
-                    constantStarted = true;
-                    LogMessage(L"[INFO] Constant force started");
-                }
-
-                //This is what will add the "Constant Force" effect if all the calculations work. 
-                // Probably could smooth all this out
-                ApplyConstantForceEffect(current, load, slip, 
-                    vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, enableRateLimit, 
-                    masterForceScale, deadzoneForceScale,
-                    constantForceScale, weightForceScale);
-                previousPos = current;
-
+            // Start damper/spring effects once telemetry is valid
+            // Probably need to also figure out how to stop these when the game pauses
+            // Also need to maybe fade in and out the effects when waking/sleeping
+            if (!damperStarted && damperEffect && enableDamperEffect) {
+                damperEffect->Start(1, 0);
+                damperStarted = true;
+                LogMessage(L"[INFO] Damper effect started");
             }
 
-
-/*
-            // Auto-pause force if not moving
-            // I think this is broken or I could detect pause in a better way
-            // Maybe DLONG not moving?
-            bool isStationary = std::abs(current.dlong - previousDlong) < 0.01;
-            if (isStationary) {
-                noMovementFrames++;
-                if (noMovementFrames >= movementThreshold && !effectPaused) {
-                    //add damper and spring?
-                    constantForceEffect->Stop();
-                    effectPaused = true;
-                    LogMessage(L"[INFO] FFB paused due to no movement");
-                }
-            }
-            else {
-                noMovementFrames = 0;
-              //  if (effectPaused) {
-                    //add damper and spring?
-              //      constantForceEffect->Start(1, 0);
-              //      effectPaused = false;
-              //      std::wcout << L"FFB resumed\n";
-              //  }
-              // Added Alpha v0.6 to prevent issues with Moza?
-                if (effectPaused) {
-                    HRESULT startHr = constantForceEffect->Start(1, 0);
-                    if (FAILED(startHr)) {
-                        LogMessage(L"[ERROR] Failed to restart constant force: 0x" + std::to_wstring(startHr));
-                    }
-                    else {
-                        effectPaused = false;
-                        LogMessage(L"[INFO] FFB resumed");
-                    }
-                }   
+            if (!springStarted && springEffect && enableSpringEffect) {
+                springEffect->Start(1, 0);
+                springStarted = true;
+                LogMessage(L"[INFO] Spring effect started");
             }
 
-*/
+            // Master force scale -> Keeping Hands Safe
+            double masterForceValue = std::stod(targetForceSetting);
+            double masterForceScale = std::clamp(masterForceValue / 100.0, 0.0, 1.0);
 
-            //Setting variables for next update
-            previousDlong = current.dlong;
-            currentSpeed = current.speed_mph;
+            double deadzoneForceValue = std::stod(targetDeadzoneSetting);
+            double deadzoneForceScale = std::clamp(deadzoneForceValue / 100.0, 0.0, 1.0);
 
+            double constantForceValue = std::stod(targetConstantScale);
+            double constantForceScale = std::clamp(constantForceValue / 100.0, 0.0, 1.0);
 
-            // Update telemetry for display
-            {
-                std::lock_guard<std::mutex> lock(displayMutex);
+            double brakingForceValue = std::stod(targetBrakingScale);
+            double brakingForceScale = brakingForceValue;
 
-                // Basic telemetry
-                displayData.dlat = current.dlat;
-                displayData.dlong = current.dlong;
-                displayData.rotation_deg = current.rotation_deg;
-                displayData.speed_mph = current.speed_mph;
-                displayData.steering_deg = current.steering_deg;
-                displayData.steering_raw = current.steering_raw;
-                displayData.long_force = current.long_force;
+            double weightForceValue = std::stod(targetWeightScale);
+            double weightForceScale = std::clamp(weightForceValue / 100.0, 0.0, 1.0);
 
+            double damperForceValue = std::stod(targetDamperScale);
+            double damperForceScale = std::clamp(damperForceValue / 100.0, 0.0, 1.0);
 
-                // Tire loads
-                displayData.tireload_lf = current.tireload_lf;
-                displayData.tireload_rf = current.tireload_rf;
-                displayData.tireload_lr = current.tireload_lr;
-                displayData.tireload_rr = current.tireload_rr;
+            // Update Effects
+            if (damperEffect && enableDamperEffect)
+                UpdateDamperEffect(current.speed_mph, damperEffect, masterForceScale, damperForceScale);
 
-                // Tire magnitudes
-                displayData.tiremaglat_lf = current.tiremaglat_lf;
-                displayData.tiremaglat_rf = current.tiremaglat_rf;
-                displayData.tiremaglat_lr = current.tiremaglat_lr;
-                displayData.tiremaglat_rr = current.tiremaglat_rr;
+            if (springEffect && enableSpringEffect)
+                UpdateSpringEffect(springEffect, masterForceScale);
 
-                // Legacy calculated data
-                displayData.directionVal = slip.directionVal;
+            // Do Force calculations based on raw data
+            // Right now its "Slip" and "Lateral Load"
+            CalculatedSlip slip{};
+            if (CalculateSlipAngle(current, previousSlip, firstReadingSlip, slip)) {
                 displayData.slipAngleDeg = slip.slipAngle;
-                displayData.lateralG = load.lateralG;
-                displayData.forceMagnitude = load.forceMagnitude;
+            }
 
-                // NEW: Vehicle dynamics data (only update if calculation was successful)
-                if (vehicleDynamicsValid) {
-                    displayData.vd_lateralG = vehicleDynamics.lateralG;
-                    displayData.vd_directionVal = vehicleDynamics.directionVal;
-                    displayData.vd_frontLeftForce_N = vehicleDynamics.frontLeftForce_N;
-                    displayData.vd_frontRightForce_N = vehicleDynamics.frontRightForce_N;
-                    //displayData.vd_yaw = vehicleDynamics.yaw;
-                    displayData.vd_slip = vehicleDynamics.slip;
-                    displayData.vd_forceMagnitude = vehicleDynamics.forceMagnitude;
+            CalculatedVehicleDynamics vehicleDynamics{};
+            bool vehicleDynamicsValid = CalculateVehicleDynamics(current, previousVD, firstReadingVD, vehicleDynamics);
 
-                    // Individual tire forces
-                    displayData.vd_force_lf = vehicleDynamics.force_lf;
-                    displayData.vd_force_rf = vehicleDynamics.force_rf;
-                    displayData.vd_force_lr = vehicleDynamics.force_lr;
-                    displayData.vd_force_rr = vehicleDynamics.force_rr;
+            CalculatedLateralLoad load{};
+            if (CalculateLateralLoad(current, previousLat, firstReadingLat, slip, load)) {
+                // Poll input state
+                if (FAILED(matchedDevice->Poll())) {
+                    matchedDevice->Acquire();
+                    matchedDevice->Poll();
+                }
+                matchedDevice->GetDeviceState(sizeof(DIJOYSTATE2), &js);
 
-                    // Aggregate forces
-                    displayData.vd_frontLateralForce = vehicleDynamics.frontLateralForce;
-                    displayData.vd_rearLateralForce = vehicleDynamics.rearLateralForce;
-                    displayData.vd_totalLateralForce = vehicleDynamics.totalLateralForce;
-                    displayData.vd_yawMoment = vehicleDynamics.yawMoment;
+                // Start constant force once telemetry is valid 
+                if (enableConstantForce && constantForceEffect) {
+                    if (!constantStarted) {
+                        constantForceEffect->Start(1, 0);
+                        constantStarted = true;
+                        LogMessage(L"[INFO] Constant force started");
+                    }
+
+                    //This is what will add the "Constant Force" effect if all the calculations work. 
+                    // Probably could smooth all this out
+                    ApplyConstantForceEffect(current, load, slip,
+                        vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, enableRateLimit,
+                        masterForceScale, deadzoneForceScale,
+                        constantForceScale, brakingForceScale, weightForceScale);
+                    previousPos = current;
+
+                }
+
+
+                /*
+                            // Auto-pause force if not moving
+                            // I think this is broken or I could detect pause in a better way
+                            // Maybe DLONG not moving?
+                            bool isStationary = std::abs(current.dlong - previousDlong) < 0.01;
+                            if (isStationary) {
+                                noMovementFrames++;
+                                if (noMovementFrames >= movementThreshold && !effectPaused) {
+                                    //add damper and spring?
+                                    constantForceEffect->Stop();
+                                    effectPaused = true;
+                                    LogMessage(L"[INFO] FFB paused due to no movement");
+                                }
+                            }
+                            else {
+                                noMovementFrames = 0;
+                              //  if (effectPaused) {
+                                    //add damper and spring?
+                              //      constantForceEffect->Start(1, 0);
+                              //      effectPaused = false;
+                              //      std::wcout << L"FFB resumed\n";
+                              //  }
+                              // Added Alpha v0.6 to prevent issues with Moza?
+                                if (effectPaused) {
+                                    HRESULT startHr = constantForceEffect->Start(1, 0);
+                                    if (FAILED(startHr)) {
+                                        LogMessage(L"[ERROR] Failed to restart constant force: 0x" + std::to_wstring(startHr));
+                                    }
+                                    else {
+                                        effectPaused = false;
+                                        LogMessage(L"[INFO] FFB resumed");
+                                    }
+                                }
+                            }
+
+                */
+
+                //Setting variables for next update
+                previousDlong = current.dlong;
+                currentSpeed = current.speed_mph;
+
+
+                // Update telemetry for display
+                {
+                    std::lock_guard<std::mutex> lock(displayMutex);
+
+                    // Basic telemetry
+                    displayData.dlat = current.dlat;
+                    displayData.dlong = current.dlong;
+                    displayData.rotation_deg = current.rotation_deg;
+                    displayData.speed_mph = current.speed_mph;
+                    displayData.steering_deg = current.steering_deg;
+                    displayData.steering_raw = current.steering_raw;
+
+
+                    // Tire loads
+                    displayData.tireload_lf = current.tireload_lf;
+                    displayData.tireload_rf = current.tireload_rf;
+                    displayData.tireload_lr = current.tireload_lr;
+                    displayData.tireload_rr = current.tireload_rr;
+
+                    // Tire magnitudes
+                    displayData.tiremaglat_lf = current.tiremaglat_lf;
+                    displayData.tiremaglat_rf = current.tiremaglat_rf;
+                    displayData.tiremaglat_lr = current.tiremaglat_lr;
+                    displayData.tiremaglat_rr = current.tiremaglat_rr;
+                    displayData.tiremaglong_lf = current.tiremaglong_lf;
+                    displayData.tiremaglong_rf = current.tiremaglong_rf;
+                    displayData.tiremaglong_lr = current.tiremaglong_lr;
+                    displayData.tiremaglong_rr = current.tiremaglong_rr;
+
+                    // Legacy calculated data
+                    displayData.directionVal = slip.directionVal;
+                    displayData.slipAngleDeg = slip.slipAngle;
+                    displayData.lateralG = load.lateralG;
+                    displayData.forceMagnitude = load.forceMagnitude;
+
+                    // NEW: Vehicle dynamics data (only update if calculation was successful)
+                    if (vehicleDynamicsValid) {
+                        displayData.vd_lateralG = vehicleDynamics.lateralG;
+                        displayData.vd_directionVal = vehicleDynamics.directionVal;
+                        displayData.vd_frontLeftForce_N = vehicleDynamics.frontLeftForce_N;
+                        displayData.vd_frontRightForce_N = vehicleDynamics.frontRightForce_N;
+                        //displayData.vd_yaw = vehicleDynamics.yaw;
+                        displayData.vd_slip = vehicleDynamics.slip;
+                        displayData.vd_forceMagnitude = vehicleDynamics.forceMagnitude;
+
+                        // Individual tire forces
+                        displayData.vd_force_lf = vehicleDynamics.force_lf;
+                        displayData.vd_force_rf = vehicleDynamics.force_rf;
+                        displayData.vd_force_lr = vehicleDynamics.force_lr;
+                        displayData.vd_force_rr = vehicleDynamics.force_rr;
+
+                        // Aggregate forces
+                        displayData.vd_frontLateralForce = vehicleDynamics.frontLateralForce;
+                        displayData.vd_rearLateralForce = vehicleDynamics.rearLateralForce;
+                        displayData.vd_totalLateralForce = vehicleDynamics.totalLateralForce;
+                        displayData.vd_yawMoment = vehicleDynamics.yawMoment;
+                    }
                 }
             }
+            FFBTime += FFB_INTERVAL;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -804,6 +836,10 @@ int main() {
     SetConsoleWindowSize();
     HideConsoleCursor();
     DisableConsoleQuickEdit();
+
+    //timing
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&start);
 
     //clear last log
     std::wofstream clearLog("log.txt", std::ios::trunc);
@@ -912,41 +948,44 @@ int main() {
     // Main Display Loop - Set to 200ms? Probably fine
     // Flickers a lot right now but perhaps moving to a GUI will solve that eventually
     while (true) {
+        double currentTime = getPerformanceCounterTime();
 
-        // make sure we stay at most recent display update
-        MoveCursorToLine(0);
+        if (currentTime >= printTime) {
+            // make sure we stay at most recent display update
+            MoveCursorToLine(0);
 
-        //Trigger display
-        {
-            std::lock_guard<std::mutex> lock(displayMutex);
-            DisplayTelemetry(displayData, masterForceValue);
-        }
+            //Trigger display
+            {
+                std::lock_guard<std::mutex> lock(displayMutex);
+                DisplayTelemetry(displayData, masterForceValue);
+            }
 
-        //Print log data
-        {
-            std::lock_guard<std::mutex> lock(logMutex);
-            int maxDisplayLines = 1; //how many lines to display
-            std::vector<std::wstring> recentUniqueLines;
-            std::unordered_set<std::wstring> seen;
+            //Print log data
+            {
+                std::lock_guard<std::mutex> lock(logMutex);
+                int maxDisplayLines = 1; //how many lines to display
+                std::vector<std::wstring> recentUniqueLines;
+                std::unordered_set<std::wstring> seen;
 
-            // Go backward to find most recent unique messages
-            for (auto it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it) {
-                if (seen.insert(*it).second) {
-                    recentUniqueLines.push_back(*it);
+                // Go backward to find most recent unique messages
+                for (auto it = logLines.rbegin(); it != logLines.rend() && recentUniqueLines.size() < maxDisplayLines; ++it) {
+                    if (seen.insert(*it).second) {
+                        recentUniqueLines.push_back(*it);
+                    }
+                }
+
+                // Reverse to show most recent at bottom
+                std::reverse(recentUniqueLines.begin(), recentUniqueLines.end());
+
+                for (const auto& line : recentUniqueLines) {
+                    std::wstring padded = line;
+                    padded.resize(80, L' ');  // pad to 80 characters to clear old line leftovers
+                    std::wcout << padded << L"\n";
                 }
             }
-
-            // Reverse to show most recent at bottom
-            std::reverse(recentUniqueLines.begin(), recentUniqueLines.end());
-            
-            for (const auto& line : recentUniqueLines) {
-                std::wstring padded = line;
-                padded.resize(80, L' ');  // pad to 80 characters to clear old line leftovers
-                std::wcout << padded << L"\n";
-            }
+            printTime = currentTime + PRINT_INTERVAL;
         }
-
-        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     return 0;
 }
