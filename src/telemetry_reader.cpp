@@ -32,16 +32,26 @@
 
 // Offsets for different version of the game
 
+// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
+// Provides standardized 'point' to reference for memory
+// Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
+#define ICRSIG "license with Bob"
+#define UNINIT_SIG "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND"
+
 // Rendition EXE
-static const GameOffsets Offsets_REND = {
-    0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00
+static const GameOffsets ICR2_Offsets_REND = {
+    0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00, ICRSIG
     //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
 };
 
 // DOS4G Exe, should be 1.02
-static const GameOffsets Offsets_DOS = {
-    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14
+static const GameOffsets ICR2_Offsets_DOS = {
+    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14, ICRSIG
     //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
+};
+
+static const GameOffsets Unspecified_Offsets = {
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, UNINIT_SIG
 };
 
 void GameOffsets::ApplySignature(uintptr_t sigAddr)
@@ -65,18 +75,14 @@ static GameOffsets GetGameOffsets(GameVersion version)
     switch (version)
     {
         case ICR2_DOS4G_1_02:
-            return Offsets_DOS;
+            return ICR2_Offsets_DOS;
         case ICR2_RENDITION:
+            return ICR2_Offsets_REND;
         case VERSION_UNINITIALIZED:
         default:
-            return Offsets_REND;
+            return Unspecified_Offsets;
     }
 }
-
-// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
-// Provides standardized 'point' to reference for memory
-// Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-static const char* signatureStr = "license with Bob";
 
 struct FindWindowData
 {
@@ -125,8 +131,13 @@ static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords)
 }
 
 // Really don't understand this, but here is where we scan the memory for the data needed
-static uintptr_t ScanSignature(HANDLE processHandle)
+static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // strlen() and memcmp() unsafe
+#endif
+
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -138,7 +149,7 @@ static uintptr_t ScanSignature(HANDLE processHandle)
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
-    const size_t             targetLen = 16; // strlen(signatureStr); // triggers strlen() is unsafe
+    const size_t             targetLen = strlen(offsets.signatureStr);
 
     while (addr < maxAddr)
     {
@@ -153,15 +164,8 @@ static uintptr_t ScanSignature(HANDLE processHandle)
                 {
                     for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i)
                     {
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
-#endif
-                        if (memcmp(buffer.data() + i, signatureStr, targetLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                        if (memcmp(buffer.data() + i, offsets.signatureStr, targetLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                         {
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#endif
                             std::wstringstream ss;
                             ss << L"[MATCH] Found Game at 0x" << std::hex << (addr + i);
                             LogMessage(ss.str());
@@ -180,6 +184,10 @@ static uintptr_t ScanSignature(HANDLE processHandle)
 
     LogMessage(L"[ERROR] Signature not found in game.");
     return 0;
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#endif
 }
 
 TelemetryReader::TelemetryReader(const FFBConfig& config) :
@@ -208,7 +216,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) { return; }
 
-    const uintptr_t sigAddr = ScanSignature(hProcess);
+    offs = GetGameOffsets(config.version);
+    const uintptr_t sigAddr = ScanSignature(hProcess, offs);
     if (!sigAddr)
     {
         CloseHandle(hProcess);
@@ -216,7 +225,6 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
         return;
     }
 
-    offs = GetGameOffsets(config.version);
     offs.ApplySignature(sigAddr);
 
     LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offs.signatureOffset) +

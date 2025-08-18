@@ -42,6 +42,7 @@ struct GameOffsets
     uintptr_t tire_maglat_offsetrl;
     uintptr_t tire_maglat_offsetrr;
     uintptr_t car_longitude_offset;
+    const char* signatureStr;
 
     void ApplySignature(uintptr_t sigAddr);
 };
