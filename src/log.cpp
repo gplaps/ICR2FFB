@@ -27,6 +27,7 @@ void LogMessage(const std::wstring& msg)
     if (logger->file.is_open())
     {
         logger->file << msg << L'\n';
+        logger->file.flush(); // optional, performance penalty but maybe helpful as otherwise a few log lines could be lost if the app crashes
     }
 
     UNLOCK_MUTEX(Logger::mutex);
