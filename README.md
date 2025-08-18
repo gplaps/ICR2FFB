@@ -49,8 +49,8 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ### Betas
 **0.9.0 (2025-08-18)** 
-- Added longitudinal tire fores (we think) to the constant force calculation. Now braking or accelerating values can have an effect on the force feedback. Although you cannot lock a tire in ICR2, you can still feel better now if you have a potential weight shift under braking! 
-- Added "Braking Scale:" option to the config. This can be used to tune the logitudinal forces proportional to the existing latitude forces on the wheel
+- Added longitudinal tire forces (we think) to the constant force calculation. Now braking or accelerating values can have an effect on the force feedback. Although you cannot lock a tire in ICR2, you can still feel better now if you have a potential weight shift under braking! 
+- Added "Braking Scale:" option to the config. This can be used to tune the longitudinal forces proportional to the existing latitude forces on the wheel
 - Added Raw Longitudinal forces to output telemetry
 - Redid app timing with a timed game loop rather than sleep timer to avoid windows timing issues (thank Hatcher)
 
