@@ -1,5 +1,4 @@
 #pragma once
-#include "project_dependencies.h"
 
 #include "ffb_device.h"
 

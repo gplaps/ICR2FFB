@@ -1,5 +1,5 @@
 #pragma once
-#include "project_dependencies.h"
+#include "project_dependencies.h" // IWYU pragma: keep
 
 #include <algorithm>
 #include <cstdlib>
@@ -17,7 +17,9 @@
 template <typename T>
 T sign(T input)
 {
-    return (input > static_cast<T>(0)) ? static_cast<T>(1) : (input < 0 ? static_cast<T>(-1) : static_cast<T>(0));
+    if (input > static_cast<T>(0)) { return static_cast<T>(1); }
+    else if (input < 0) { return static_cast<T>(-1); }
+    else { return 0; }
 }
 
 #if defined(__cplusplus) && __cplusplus < 201703L

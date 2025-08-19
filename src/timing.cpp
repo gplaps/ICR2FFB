@@ -1,5 +1,7 @@
 #include "timing.h"
 
+#include "project_dependencies.h"
+
 #include <thread>
 
 static LARGE_INTEGER start, end, frequency;

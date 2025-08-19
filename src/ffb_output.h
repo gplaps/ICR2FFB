@@ -1,6 +1,5 @@
 #pragma once
 
-#include "project_dependencies.h"
 
 #include "constant_force.h"
 #include "damper_effect.h"

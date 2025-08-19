@@ -50,7 +50,9 @@ static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
     while (!shouldExit)
     {
         if (timing->ffb.canStart())
+        {
             ffbProcessor->Update();
+        }
         timing->ffb.finished();
     }
     return 0;
@@ -71,6 +73,7 @@ static DWORD WINAPI RenderLoop(LPVOID /*plThreadParameter*/)
         }
         timing->render.finished();
     }
+    return 0;
 }
 
 static void CloseCommon()

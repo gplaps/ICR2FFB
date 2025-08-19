@@ -27,7 +27,7 @@
 #endif
 
 #if defined(HAS_STL_THREAD_MUTEX)
-#    include <mutex>
+#    include <mutex> // IWYU pragma: keep
 #    define LOCK_MUTEX(mtx) \
         const std::lock_guard<std::mutex> lock(mtx)
 #    define UNLOCK_MUTEX(mtx)

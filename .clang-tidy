@@ -15,9 +15,12 @@ Checks:          '
   -cppcoreguidelines-avoid-c-arrays,
   -hicpp-avoid-c-arrays,
   -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-do-while,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -hicpp-no-array-decay,
@@ -35,7 +38,8 @@ Checks:          '
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-implicit-bool-conversion,
-  -readability-magic-numbers'
+  -readability-magic-numbers,
+  -readability-redundant-member-init'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*,-DirectX*,-concurrent_queue.h,-ode*,-*SDL2*,-*thirdparty*'
 FormatStyle:     none

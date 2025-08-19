@@ -1,5 +1,4 @@
 #pragma once
-#include "project_dependencies.h"
 
 #include "calculations/lateral_load.h"
 #include "calculations/slip_angle.h"

@@ -70,7 +70,7 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
             return DIENUM_STOP;
         }
     }
-    catch (const std::exception&)
+    catch (const std::exception&) // NOLINT(bugprone-empty-catch)
     {
         // targetDeviceName is not a valid number, that's fine
         // We already tried name matching above
