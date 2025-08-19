@@ -2,7 +2,9 @@
 
 #include "project_dependencies.h"
 
+#if defined(HAS_STL_THREAD_MUTEX)
 #include <thread>
+#endif
 
 static LARGE_INTEGER start, end, frequency;
 
@@ -47,7 +49,7 @@ void ThreadTimer::finished() const
         std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(waitTime)));
         // std::this_thread::yield();
 #else
-        Sleep(static_cast<int>(waitTime));
+        Sleep(static_cast<DWORD>(waitTime));
         // Sleep(0); // == yield
 #endif
     }

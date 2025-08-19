@@ -33,7 +33,7 @@ template <typename T> T clamp(T v, const T& lo, const T& hi)
 #endif
 
 // for certain configurations, provide (simplified) implementations of C++11 or newer functionality
-#if defined(__cplusplus) && __cplusplus < 201103L && defined(__MINGW32__)
+#if defined(__cplusplus) && __cplusplus < 201103L && defined(__MINGW32__) && !defined(__clang__)
 #    include <stdint.h>
 
 #    include <cwchar>
@@ -55,14 +55,19 @@ inline std::wstring to_wstring(int32_t v)
 #        pragma clang diagnostic pop
 #    endif
 
-#    if !defined(__clang__) // clang provided libc++ does have those defined mistakenly in C++98 mode
+// clang provided libc++ does have those defined mistakenly in C++98 mode
 // simplified implementation only capable of parsing one number
 inline double stod(const std::wstring& str)
 {
     wchar_t* end;
     return std::wcstod(str.c_str(), &end);
 }
-#    endif
+
+inline int stoi(const std::wstring& str)
+{
+    wchar_t* end;
+    return std::wcstol(str.c_str(), &end, 10);
+}
 } // namespace std
 #endif
 

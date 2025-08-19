@@ -16,19 +16,19 @@ struct CalculatedVehicleDynamics
     double force_rf;
     double force_lr;
     double force_rr;
-    double forceLong_lf = 0.0;
-    double forceLong_rf = 0.0;
-    double forceLong_lr = 0.0;
-    double forceLong_rr = 0.0;
+    double forceLong_lf;
+    double forceLong_rf;
+    double forceLong_lr;
+    double forceLong_rr;
 
     // Aggregate forces / Additional calculated values
     double frontLateralForce;
     double rearLateralForce;
     double totalLateralForce;
     double yawMoment;
-    // double frontLongitudinalForce = 0.0;
-    // double rearLongitudinalForce = 0.0;
-    // double totalLongitudinalForce = 0.0;
+    // double frontLongitudinalForce;
+    // double rearLongitudinalForce;
+    // double totalLongitudinalForce;
 
     double frontLeftForce_N;
     double frontRightForce_N;
