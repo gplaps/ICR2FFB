@@ -8,7 +8,7 @@
 
 static LARGE_INTEGER start, end, frequency;
 
-#define FRAMES_PER_SECOND(x) (1.0 / static_cast<double>(x))
+#define FRAMES_PER_SECOND(x) (1000.0 / static_cast<double>(x))
 
 static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time before scheduled time resulting in active wait == likely on time, but wasting resources ... set to zero, to accept slightly late
 
@@ -22,7 +22,7 @@ Timing::Timing() :
     QueryPerformanceCounter(&start);
 }
 
-static double getPerformanceCounterTime()
+static double timeSinceStartInMs()
 {
     QueryPerformanceCounter(&end);
     return static_cast<double>(end.QuadPart - start.QuadPart) * 1000.0 / static_cast<double>(frequency.QuadPart);
@@ -30,7 +30,7 @@ static double getPerformanceCounterTime()
 
 bool ThreadTimer::canStart()
 {
-    const double currentTime = getPerformanceCounterTime();
+    const double currentTime = timeSinceStartInMs();
     if (currentTime >= nextTime)
     {
         nextTime = currentTime + interval;
@@ -41,7 +41,7 @@ bool ThreadTimer::canStart()
 
 void ThreadTimer::finished() const
 {
-    const double currentTime = getPerformanceCounterTime();
+    const double currentTime = timeSinceStartInMs();
     const double waitTime    = nextTime - currentTime - (keepGoodTiming ? SLACK_TIME_MS : 0.0);
     if (waitTime > 0.0)
     {
