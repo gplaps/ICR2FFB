@@ -25,6 +25,7 @@ private:
     void RegisterSettings();
     bool LoadFFBSettings(const std::wstring& filename);
     void WriteIniFile();
+    void LogConfig();
     bool ParseLine(const std::wstring& line);
 
     // this can be achieved elegantly with std::any / boost::variant in C++17 to let it do the runtime conversion, here its implemented not as flexible

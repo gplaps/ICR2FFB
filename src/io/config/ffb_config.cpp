@@ -62,6 +62,7 @@ const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& key) const
         }
     }
 
+    LogMessage(L"[ERROR] Ivalid setting request: " + key);
     // only needed to have something to return on a const ref function - this avoids copies of objects on "frequently" used functions
     static const FFBConfig::Setting settingNotFound = FFBConfig::Setting(L"none", L"none", false, L"not found");
     return settingNotFound;
@@ -103,13 +104,21 @@ double FFBConfig::GetDouble(const std::wstring& key) const
 bool FFBConfig::ParseLine(const std::wstring& line)
 {
     if (line.size() && line[0] == L'#') { return true; } // skip commented line
-    const std::wstring lineLowered = ToLower(line);
+    const size_t splitPos = line.find(L':');
+    if(splitPos == std::wstring::npos)
+    {
+        if(line.size())
+            LogMessage(L"[WARNING] Skipping malformed ini line: \"" + line + L'\"'); 
+        return false;
+    }
+    const std::wstring lineKey = ToLower(TrimWhiteSpaces(line.substr(0,splitPos)));
+    const std::wstring lineVal = TrimWhiteSpaces(line.substr(splitPos+1));
     for (size_t i = 0; i < settings.size(); ++i)
     {
         Setting& setting = settings[i];
-        if (lineLowered.rfind(ToLower(setting.mKey)) == 0 && line.find(L':') != std::wstring::npos)
+        if (lineKey == ToLower(setting.mKey))
         {
-            const std::wstring valueString = line.substr(line.find(L':') + 1);
+            const std::wstring valueString = TrimWhiteSpaces(lineVal);
             const bool         valid       = setting.mValue.FromString(valueString);
             // std::wcout << setting.mKey << " Parsing value: " << valueString << L'\n';
             if (!valid)
@@ -119,7 +128,6 @@ bool FFBConfig::ParseLine(const std::wstring& line)
             return valid;
         }
     }
-    LogMessage(L"[INFO] Ignoring ini line: \"" + line + L'\"');
     return false;
 }
 
@@ -151,6 +159,15 @@ void FFBConfig::WriteIniFile()
     }
 }
 
+void FFBConfig::LogConfig()
+{
+    for (size_t i = 0; i < settings.size(); ++i)
+    {
+        const Setting& setting = settings[i];
+        LogMessage(setting.ToString());
+    }
+}
+
 // Search the ini file for settings and find what the user has set them to
 bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
 {
@@ -166,6 +183,7 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
     {
         ParseLine(line);
     }
+    LogConfig();
     return !GetString(L"device").empty();
 }
 
