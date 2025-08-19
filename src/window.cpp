@@ -79,7 +79,7 @@ int CheckAndRestartAsAdmin()
 
         if (response == L'y' || response == L'Y')
         {
-            if(RestartAsAdmin())
+            if (RestartAsAdmin())
             {
                 // If we get here, the restart failed
                 std::wcout << L"Press any key to exit..." << L'\n';

@@ -12,26 +12,28 @@ struct EnumDeviceHelper
 {
     EnumDeviceHelper(FFBDevice* d, const std::wstring& name) :
         device(d),
-        targetDeviceName(name), currentIndex(1) {}
+        targetDeviceName(name),
+        currentIndex(1) {}
     FFBDevice*   device;
     std::wstring targetDeviceName;
-    int currentIndex;
+    int          currentIndex;
 };
 
 static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
-    int* index = static_cast<int*>(pContext);
+    int*               index      = static_cast<int*>(pContext);
     const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
     std::wcout << L"  " << *index << L": " << deviceName << L'\n';
     (*index)++;
     return DIENUM_CONTINUE;
 }
 
-static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext) {
+static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
+{
     if (!pContext) { return DIENUM_CONTINUE; }
 
     EnumDeviceHelper* edh         = static_cast<EnumDeviceHelper*>(pContext);
-    edh->currentIndex = 1;
+    edh->currentIndex             = 1;
     const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
 
     // First try exact name match
@@ -46,17 +48,20 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
             return DIENUM_CONTINUE;
         }
         LogMessage(L"[INFO] Successfully created device interface");
-        edh->currentIndex = 1;  // Reset for next time
+        edh->currentIndex = 1; // Reset for next time
         return DIENUM_STOP;
     }
 
     // If name didn't match, check if targetDeviceName is a number (index)
-    try {
+    try
+    {
         int targetIndex = std::stoi(edh->targetDeviceName);
-        if (edh->currentIndex == targetIndex) {
+        if (edh->currentIndex == targetIndex)
+        {
             LogMessage(L"[INFO] Found matching device by index " + std::to_wstring(edh->currentIndex) + L": " + deviceName);
             const HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);
-            if (FAILED(hr)) {
+            if (FAILED(hr))
+            {
                 LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
                 edh->currentIndex++;
                 return DIENUM_CONTINUE;
@@ -65,7 +70,8 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
             return DIENUM_STOP;
         }
     }
-    catch (const std::exception&) {
+    catch (const std::exception&)
+    {
         // targetDeviceName is not a valid number, that's fine
         // We already tried name matching above
     }
@@ -77,7 +83,7 @@ static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, V
 // Device lists for better error messages
 static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
-    int* index = static_cast<int*>(pContext);
+    int*               index      = static_cast<int*>(pContext);
     const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
     LogMessage(L"[INFO] Available device " + std::to_wstring(*index) + L": " + deviceName);
     (*index)++;

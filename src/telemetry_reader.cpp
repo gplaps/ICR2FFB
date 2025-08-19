@@ -35,7 +35,7 @@
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-#define ICRSIG "license with Bob"
+#define ICRSIG     "license with Bob"
 #define UNINIT_SIG "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND"
 
 // Rendition EXE
@@ -59,43 +59,37 @@ static const GameOffsets ICR2_Offsets_REND = {
     0xEAB00, //lr tire long load
     0xEAB02, //rr tire long load
 
-    ICRSIG   //offset base
+    ICRSIG //offset base
 };
 
 // DOS4G Exe, should be 1.02
 static const GameOffsets ICR2_Offsets_DOS = {
-    0xA0D78, 
+    0xA0D78,
 
-    0xD4718, 
+    0xD4718,
 
-    0xA85B8, 
-    0xA85BA, 
-    0xA85B4, 
-    0xA85B6, 
+    0xA85B8,
+    0xA85BA,
+    0xA85B4,
+    0xA85B6,
 
-    0xC5C48, 
-    0xC5C4A, 
-    0xC5C44, 
-    0xC5C46, 
+    0xC5C48,
+    0xC5C4A,
+    0xC5C44,
+    0xC5C46,
 
     0xC5C18,
     0xC5C1A,
     0xC5C14,
     0xC5C16,
-    
-    ICRSIG
-};
+
+    ICRSIG};
 
 static const GameOffsets Unspecified_Offsets = {
     0x0,
-    
+
     0x0,
-    
-    0x0,
-    0x0,
-    0x0,
-    0x0,
-    
+
     0x0,
     0x0,
     0x0,
@@ -105,9 +99,13 @@ static const GameOffsets Unspecified_Offsets = {
     0x0,
     0x0,
     0x0,
-    
-    UNINIT_SIG
-};
+
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+
+    UNINIT_SIG};
 
 void GameOffsets::ApplySignature(uintptr_t sigAddr)
 {
@@ -283,8 +281,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     keywords.push_back(L"dosbox"); // don't change to emplace_back ... C++98 did not have it
     keywords.push_back(config.targetGameWindowName);
     std::vector<std::wstring> excludedKeywords;
-    excludedKeywords.push_back(L"rready"); // Rendition wrapper window
-    excludedKeywords.push_back(L"speedy3d"); // Rendition wrapper window
+    excludedKeywords.push_back(L"rready");        // Rendition wrapper window
+    excludedKeywords.push_back(L"speedy3d");      // Rendition wrapper window
     excludedKeywords.push_back(L"status window"); // DosBox status window
     const DWORD pid = FindProcessIdByWindow(keywords, excludedKeywords);
     if (!pid)
@@ -296,7 +294,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) { return; }
 
-    offs = GetGameOffsets(config.version);
+    offs                    = GetGameOffsets(config.version);
     const uintptr_t sigAddr = ScanSignature(hProcess, offs);
     if (!sigAddr)
     {
@@ -361,16 +359,16 @@ void TelemetryReader::ConvertTireData()
 {
     // Tire data! Probably not loads, we dont know what it is
 
-    out.tireload_lf   = static_cast<double>(rawData.loadLF);
-    out.tireload_rf   = static_cast<double>(rawData.loadRF);
-    out.tireload_lr   = static_cast<double>(rawData.loadLR);
-    out.tireload_rr   = static_cast<double>(rawData.loadRR);
+    out.tireload_lf    = static_cast<double>(rawData.loadLF);
+    out.tireload_rf    = static_cast<double>(rawData.loadRF);
+    out.tireload_lr    = static_cast<double>(rawData.loadLR);
+    out.tireload_rr    = static_cast<double>(rawData.loadRR);
 
-    out.tiremaglat_lf = static_cast<double>(rawData.magLatLF);
-    out.tiremaglat_rf = static_cast<double>(rawData.magLatRF);
-    out.tiremaglat_lr = static_cast<double>(rawData.magLatLR);
-    out.tiremaglat_rr = static_cast<double>(rawData.magLatRR);
-    
+    out.tiremaglat_lf  = static_cast<double>(rawData.magLatLF);
+    out.tiremaglat_rf  = static_cast<double>(rawData.magLatRF);
+    out.tiremaglat_lr  = static_cast<double>(rawData.magLatLR);
+    out.tiremaglat_rr  = static_cast<double>(rawData.magLatRR);
+
     out.tiremaglong_lf = static_cast<double>(rawData.magLongLF);
     out.tiremaglong_rf = static_cast<double>(rawData.magLongRF);
     out.tiremaglong_lr = static_cast<double>(rawData.magLongLR);
@@ -404,7 +402,7 @@ bool TelemetryReader::ReadTireData()
         ReadValue(rawData.magLatLR, offs.tire_maglat_offsetrl) &&
         ReadValue(rawData.magLatRR, offs.tire_maglat_offsetrr);
 
-        ReadValue(rawData.magLongLF, offs.tire_maglong_offsetfl) &&
+    ReadValue(rawData.magLongLF, offs.tire_maglong_offsetfl) &&
         ReadValue(rawData.magLongRF, offs.tire_maglong_offsetfr) &&
         ReadValue(rawData.magLongLR, offs.tire_maglong_offsetrl) &&
         ReadValue(rawData.magLongRR, offs.tire_maglong_offsetrr);

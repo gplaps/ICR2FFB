@@ -88,7 +88,8 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
+    ss.str(L"");
+    ss.clear();
     ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.raw.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_rf);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
@@ -104,7 +105,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.raw.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglong_rr);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
-    
+
     ss.str(L"");
     ss.clear();
     ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.raw.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_rr);

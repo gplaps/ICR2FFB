@@ -10,8 +10,9 @@
     res = (func);          \
     if (res) return res
 
-#define SAFE_DELETE(x)\
-    delete (x); (x) = NULL
+#define SAFE_DELETE(x) \
+    delete (x);        \
+    (x) = NULL
 
 template <typename T>
 T sign(T input)

@@ -80,10 +80,10 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     const double wheel_angle_rad = wheel_angle_deg * M_PI / 180.0;
 
     // Force Assignments
-    force_lf = current.tiremaglat_lf;
-    force_rf = current.tiremaglat_rf;
-    force_lr = current.tiremaglat_lr;
-    force_rr = current.tiremaglat_rr;
+    force_lf     = current.tiremaglat_lf;
+    force_rf     = current.tiremaglat_rf;
+    force_lr     = current.tiremaglat_lr;
+    force_rr     = current.tiremaglat_rr;
     forceLong_lf = static_cast<int16_t>(current.tiremaglong_lf);
     forceLong_rf = static_cast<int16_t>(current.tiremaglong_rf);
     forceLong_lr = static_cast<int16_t>(current.tiremaglong_lr);
@@ -91,19 +91,19 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
-    const double force_lf_N = convertTireForceToNewtons(force_lf);
-    const double force_rf_N = convertTireForceToNewtons(force_rf);
-    const double force_lr_N = convertTireForceToNewtons(force_lr);
-    const double force_rr_N = convertTireForceToNewtons(force_rr);
+    const double force_lf_N     = convertTireForceToNewtons(force_lf);
+    const double force_rf_N     = convertTireForceToNewtons(force_rf);
+    const double force_lr_N     = convertTireForceToNewtons(force_lr);
+    const double force_rr_N     = convertTireForceToNewtons(force_rr);
     const double forceLong_lf_N = convertTireForceToNewtons(forceLong_lf);
     const double forceLong_rf_N = convertTireForceToNewtons(forceLong_rf);
     const double forceLong_lr_N = convertTireForceToNewtons(forceLong_lr);
     const double forceLong_rr_N = convertTireForceToNewtons(forceLong_rr);
 
-    frontLeftForce_N        = convertTireForceToNewtons(force_lf);
-    frontRightForce_N       = convertTireForceToNewtons(force_rf);
-    frontLeftLong_N         = convertTireForceToNewtons(forceLong_lf);
-    frontRightLong_N        = convertTireForceToNewtons(forceLong_rf);
+    frontLeftForce_N            = convertTireForceToNewtons(force_lf);
+    frontRightForce_N           = convertTireForceToNewtons(force_rf);
+    frontLeftLong_N             = convertTireForceToNewtons(forceLong_lf);
+    frontRightLong_N            = convertTireForceToNewtons(forceLong_rf);
 
     // CALC 1
     //===== LATERAL FORCE CALC ======

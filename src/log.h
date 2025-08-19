@@ -11,7 +11,8 @@ void PrintToLogFile();
 struct Logger
 {
     explicit Logger(const char* filename) :
-        lines(), file(filename, std::ios::trunc) {}
+        lines(),
+        file(filename, std::ios::trunc) {}
     std::deque<std::wstring> lines;
     std::wofstream           file;
 

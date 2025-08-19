@@ -32,7 +32,7 @@ struct RawTelemetry
     double tiremaglong_lr;
     double tiremaglong_rr;
 
-    bool   valid;
+    bool valid;
 };
 
 // Things to look for in the Memory to make it tick
@@ -97,7 +97,7 @@ private:
         int16_t magLatRF;
         int16_t magLatLR;
         int16_t magLatRR;
-        
+
         int16_t magLongLF;
         int16_t magLongRF;
         int16_t magLongLR;
