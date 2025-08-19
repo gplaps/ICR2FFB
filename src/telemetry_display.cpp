@@ -1,5 +1,6 @@
 #include "telemetry_display.h"
 
+#include "version.h"
 #include "window.h"
 
 #include <iomanip>
@@ -37,7 +38,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << std::fixed << std::setprecision(2); // Also set for wide cout
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.9.0 BETA") << L"\n";
+    std::wcout << padLine(VERSION_STRING) << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + config.GetString(L"device")) << L"\n";
 

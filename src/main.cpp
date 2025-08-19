@@ -1,6 +1,5 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.9.0 Don't forget to update this down below
 
 
 // File: main.cpp

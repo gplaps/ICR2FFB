@@ -126,6 +126,7 @@ void FFBConfig::WriteIniFile()
     }
     else
     {
+        file << VERSION_STRING << L"\n\n";
         for (size_t i = 0; i < settings.size(); ++i)
         {
             const Setting& setting = settings[i];
