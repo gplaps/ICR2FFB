@@ -1,9 +1,9 @@
 #include "constant_force.h"
 
 #include "constants.h"
+#include "log.h"
 #include "math_utilities.h"
 #include "string_utilities.h" // IWYU pragma: keep
-#include "log.h"
 
 #include <cmath>
 

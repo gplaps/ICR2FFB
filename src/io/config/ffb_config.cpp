@@ -105,14 +105,14 @@ bool FFBConfig::ParseLine(const std::wstring& line)
 {
     if (line.size() && line[0] == L'#') { return true; } // skip commented line
     const size_t splitPos = line.find(L':');
-    if(splitPos == std::wstring::npos)
+    if (splitPos == std::wstring::npos)
     {
-        if(line.size())
-            LogMessage(L"[WARNING] Skipping malformed ini line: \"" + line + L'\"'); 
+        if (line.size())
+            LogMessage(L"[WARNING] Skipping malformed ini line: \"" + line + L'\"');
         return false;
     }
-    const std::wstring lineKey = ToLower(TrimWhiteSpaces(line.substr(0,splitPos)));
-    const std::wstring lineVal = TrimWhiteSpaces(line.substr(splitPos+1));
+    const std::wstring lineKey = ToLower(TrimWhiteSpaces(line.substr(0, splitPos)));
+    const std::wstring lineVal = TrimWhiteSpaces(line.substr(splitPos + 1));
     for (size_t i = 0; i < settings.size(); ++i)
     {
         Setting& setting = settings[i];

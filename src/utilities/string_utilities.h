@@ -1,5 +1,6 @@
 #pragma once
 #include "project_dependencies.h" // IWYU pragma: keep
+
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -106,9 +107,9 @@ inline std::vector<std::wstring> StringSplit(const std::wstring& input, const wc
 
 inline std::wstring TrimWhiteSpaces(const std::wstring& input)
 {
-    std::wstring s   = input;
+    std::wstring       s     = input;
     const std::wstring query = L" \t\r\n";
-    size_t pos = s.find_first_not_of(query);
+    size_t             pos   = s.find_first_not_of(query);
     // leading
     if (pos != std::wstring::npos)
     {
@@ -118,7 +119,7 @@ inline std::wstring TrimWhiteSpaces(const std::wstring& input)
     pos = s.find_last_not_of(query);
     if (pos != std::wstring::npos)
     {
-        s = s.substr(0,pos+1);
+        s = s.substr(0, pos + 1);
     }
     // alternative:
     // for(size_t i = 0; i < input.size();++i)
