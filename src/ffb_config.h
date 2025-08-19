@@ -26,7 +26,7 @@ private:
     bool LoadFFBSettings(const std::wstring& filename);
     void WriteIniFile();
     bool ParseLine(const std::wstring& line);
-    
+
     // this can be achieved elegantly with std::any / boost::variant in C++17 to let it do the runtime conversion, here its implemented not as flexible
     // template<typename T>
     // T         GetSetting(const std::wstring& key) const {}
@@ -56,20 +56,39 @@ private:
         std::wstring mDescription;
         struct SettingValue
         {
-            SettingValue(): b(), s(), d(), mType(ST_BOOL) {} // undecided if defaulting to bool is ok
+            SettingValue() :
+                b(),
+                s(),
+                d(),
+                mType(ST_BOOL) {} // undecided if defaulting to bool is ok
             explicit SettingValue(bool fromBool) :
-                b(fromBool), s(), d(), mType(ST_BOOL) {}
-            explicit SettingValue(const wchar_t* fromString) :
-                b(), s(fromString), d(), mType(ST_STRING) {}
+                b(fromBool),
+                s(),
+                d(),
+                mType(ST_BOOL) {}
+            explicit SettingValue(const wchar_t* FromString) :
+                b(),
+                s(FromString),
+                d(),
+                mType(ST_STRING) {}
             explicit SettingValue(double fromDouble) :
-                b(), s(), d(fromDouble), mType(ST_DOUBLE) {}
+                b(),
+                s(),
+                d(fromDouble),
+                mType(ST_DOUBLE) {}
             bool         b;
             std::wstring s;
             double       d;
 
             SettingType mType;
+
+            std::wstring ToString() const;
+            bool         FromString(const std::wstring& valueString);
         };
         SettingValue mValue;
+
+        std::wstring ToString() const;
     };
     std::vector<Setting> settings;
+    const Setting&       GetSetting(const std::wstring& key) const;
 };

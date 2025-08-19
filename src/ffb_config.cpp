@@ -24,6 +24,7 @@
 FFBConfig::FFBConfig() :
     version()
 {
+    RegisterSettings();
     if (!LoadSettingsFromConfig())
     {
         return; // yes, useless statement as nothing follows
@@ -49,68 +50,72 @@ void FFBConfig::RegisterSettings()
     settings.push_back(Setting(L"Effects", L"Spring", false, L"Spring adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
 }
 
-bool FFBConfig::GetBool(const std::wstring& key) const
+const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& key) const
 {
     for (size_t i = 0; i < settings.size(); ++i)
     {
         const Setting& setting = settings[i];
-        if (setting.mValue.mType == ST_BOOL && ToLower(setting.mKey) == key)
+        if (ToLower(setting.mKey) == key)
         {
-            return setting.mValue.b;
+            return setting;
         }
     }
+    
+    // only needed to have something to return on a const ref function - this avoids copies of objects on "frequently" used functions
+    static const FFBConfig::Setting settingNotFound = FFBConfig::Setting(L"none", L"none", false, L"not found");
+    return settingNotFound;
+}
+
+bool FFBConfig::GetBool(const std::wstring& key) const
+{
+    const Setting& setting = GetSetting(key);
+    if (setting.mValue.mType == ST_BOOL)
+    {
+        return setting.mValue.b;
+    }
+    // std::wcout << L"Programmer error wrong type for setting: " << setting.ToString() << L")\n";
     return false;
 }
 
 std::wstring FFBConfig::GetString(const std::wstring& key) const
 {
-    for (size_t i = 0; i < settings.size(); ++i)
+    const Setting& setting = GetSetting(key);
+    if (setting.mValue.mType == ST_STRING)
     {
-        const Setting& setting = settings[i];
-        if (setting.mValue.mType == ST_STRING && ToLower(setting.mKey) == key)
-        {
-            return setting.mValue.s;
-        }
+        return setting.mValue.s;
     }
+    // std::wcout << L"Programmer error wrong type for setting: " << setting.ToString() << L")\n";
     return L"";
 }
 
 double FFBConfig::GetDouble(const std::wstring& key) const
 {
-    for (size_t i = 0; i < settings.size(); ++i)
+    const Setting& setting = GetSetting(key);
+    if (setting.mValue.mType == ST_DOUBLE)
     {
-        const Setting& setting = settings[i];
-        if (setting.mValue.mType == ST_DOUBLE && ToLower(setting.mKey) == key)
-        {
-            return setting.mValue.d;
-        }
+        return setting.mValue.d;
     }
+    // std::wcout << L"Programmer error wrong type for setting: " << setting.ToString() << L")\n";
     return 0.0;
 }
 
 bool FFBConfig::ParseLine(const std::wstring& line)
 {
     if (line.size() && line[0] == L'#') { return true; } // skip commented line
+    const std::wstring lineLowered = ToLower(line);
     for (size_t i = 0; i < settings.size(); ++i)
     {
         Setting& setting = settings[i];
-        if (line.rfind(setting.mKey) == 0 && line.find(L':') != std::wstring::npos)
+        if (lineLowered.rfind(ToLower(setting.mKey)) == 0 && line.find(L':') != std::wstring::npos)
         {
             const std::wstring valueString = line.substr(line.find(L':') + 1);
-            switch (setting.mValue.mType)
+            const bool         valid       = setting.mValue.FromString(valueString);
+            // std::wcout << setting.mKey << " Parsing value: " << valueString << L'\n';
+            if (!valid)
             {
-                case ST_BOOL:
-                    setting.mValue.b = ToLower(valueString) == L"true";
-                    break;
-                case ST_STRING:
-                    setting.mValue.s = valueString;
-                    break;
-                case ST_DOUBLE:
-                    setting.mValue.d = std::stod(valueString);
-                    break;
-                default: break;
+                LogMessage(L"[WARNING] Parsing value \"" + valueString + L" for \"" + setting.mKey + L"\" failed - default value " + setting.mValue.ToString() + L" used");
             }
-            return true;
+            return valid;
         }
     }
     LogMessage(L"[INFO] Ignoring ini line: \"" + line + L'\"');
@@ -126,28 +131,20 @@ void FFBConfig::WriteIniFile()
     }
     else
     {
-        file << VERSION_STRING << L"\n\n";
+        file << L"# " << VERSION_STRING << L"\n\n";
         for (size_t i = 0; i < settings.size(); ++i)
         {
             const Setting& setting = settings[i];
-            file << setting.mKey << L": ";
-            switch (setting.mValue.mType)
-            {
-                case ST_BOOL:
-                    file << (setting.mValue.b ? L"true" : L"false");
-                    break;
-                case ST_STRING:
-                    file << setting.mValue.s;
-                    break;
-                case ST_DOUBLE:
-                    file << std::to_wstring(setting.mValue.d);
-                    break;
-                default: break;
-            }
             if (!setting.mDescription.empty())
             {
-                file << L" #" << setting.mDescription;
+                std::vector<std::wstring> descrLines = StringSplit(setting.mDescription, L'\n');
+                for (size_t j = 0; j < descrLines.size(); ++j)
+                {
+                    file << L"# " << descrLines[j] << L'\n';
+                }
             }
+            file << setting.mKey << L": ";
+            file << setting.mValue.ToString() << L'\n';
             file << L'\n';
         }
     }
@@ -157,7 +154,7 @@ void FFBConfig::WriteIniFile()
 bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
 {
     std::wifstream file(filename.c_str());
-    if (!file)
+    if (!file.is_open())
     {
         LogMessage(L"[INFO] No ini file found, creating default log.txt");
         WriteIniFile();
@@ -239,3 +236,41 @@ FFBConfig::Setting::Setting(const std::wstring& section, const std::wstring& key
     mKey(key),
     mDescription(description),
     mValue(defaultValue) {}
+
+std::wstring FFBConfig::Setting::ToString() const
+{
+    return L"[" + mSection + L"] " + mKey + L" (" + mValue.ToString() + L")";
+}
+
+std::wstring FFBConfig::Setting::SettingValue::ToString() const
+{
+    switch (mType)
+    {
+        case ST_BOOL:
+            return (b ? L"true" : L"false");
+        case ST_STRING:
+            return s;
+        case ST_DOUBLE:
+            return std::to_wstring(d);
+        default: return L"";
+    }
+}
+
+
+bool FFBConfig::Setting::SettingValue::FromString(const std::wstring& valueString)
+{
+    switch (mType)
+    {
+        case ST_BOOL:
+            b = ToLower(valueString) == L"true";
+            return true;
+        case ST_STRING:
+            s = valueString;
+            return true;
+        case ST_DOUBLE:
+            d = std::stod(valueString);
+            return true;
+        default: break;
+    }
+    return false;
+}

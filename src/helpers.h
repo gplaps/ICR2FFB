@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 // a function-like macro to check return code like FAILED/SUCCESS for HRESULT
 #define STATUS_CHECK(func) \
@@ -119,3 +120,18 @@ inline std::wstring AnsiToWide(const char* str)
 
 inline std::wstring ToWideString(const TCHAR* s) { return AnsiToWide(s); }
 #endif
+
+inline std::vector<std::wstring> StringSplit(const std::wstring& input, const wchar_t delimiter)
+{
+    std::vector<std::wstring> result;
+    std::wstring              s   = input;
+    size_t                    pos = s.find(delimiter);
+    while (pos != std::wstring::npos)
+    {
+        result.push_back(s.substr(0, pos));
+        s   = s.substr(pos + 1);
+        pos = s.find(delimiter);
+    }
+    result.push_back(s);
+    return result;
+}
