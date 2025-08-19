@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
+option(STATIC_RUNTIME "Tie runtime libraries to program, so it does not depend on dlls in path or beside it" TRUE) # pro: binary independent of dlls, so e.g. no MSVC runtime libraries prerequisites for users - con: if runtime library contains errors, program has to be recompiled instead of being able to replace the DLL
+if(STATIC_RUNTIME)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+else()
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
+
 project(ICR2FFB LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -11,30 +18,33 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 include(cmake/RecursiveDirList.cmake)
 RECURSIVE_DIR_LIST(INCLUDE_DIRS src)
 file(GLOB_RECURSE SOURCES src/*.cpp)
-set(PROJECT_BINARY_NAME ${PROJECT_NAME})
-add_executable(${PROJECT_BINARY_NAME} ${SOURCES})
-target_include_directories(${PROJECT_BINARY_NAME} PRIVATE src src/calculations src/forces)
+add_executable(${PROJECT_NAME} ${SOURCES})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(${PROJECT_NAME} PUBLIC "-static")
+target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIRS})
 if(MSVC)
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall)
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105) # tested on MSVC 2019
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
-    target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
+    target_compile_options(${PROJECT_NAME} PRIVATE /Wall)
+    target_compile_options(${PROJECT_NAME} PRIVATE /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105) # tested on MSVC 2019
+    target_compile_options(${PROJECT_NAME} PRIVATE /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Weverything
+        target_compile_options(${PROJECT_NAME} PRIVATE -Weverything
         -Wno-padded
         -Wno-covered-switch-default
         -Wno-zero-as-null-pointer-constant # C++98 has no nullptr, therefore NULL style
         -Wno-c++98-compat # "solved" but still emitted
         )
     else()
-        target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 endif()
-target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800 _WIN32_WINNT=0x501) # _WIN32_WINNT_WINXP
-target_link_libraries(${PROJECT_BINARY_NAME} PRIVATE dinput8)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.exe DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
+target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800 _WIN32_WINNT=0x501) # _WIN32_WINNT_WINXP
+target_link_libraries(${PROJECT_NAME} PRIVATE dinput8)
+set(EXE_EXTENSION .exe)
+set(PROJECT_BINARY_NAME ${PROJECT_NAME}${EXE_EXTENSION})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME} DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
 install(FILES ffb.ini DESTINATION .) # comment this line so it does not overwrite your modified ini in the target directory
 install(FILES LICENSE README.md DESTINATION .)
 
@@ -52,7 +62,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # MinGW GCC - tested with GCC 10
     if((NOT CMAKE_HAVE_LIBC_PTHREAD EQUAL 1))
         set(MINGW_STDTHREADS_GENERATE_STDHEADERS ON CACHE BOOL "MinGW GCC std::thread and std::mutex implementation" FORCE)
         add_subdirectory(thirdparty/mingw-std-threads)
-        target_link_libraries(${PROJECT_BINARY_NAME} PRIVATE mingw_stdthreads)
+        target_link_libraries(${PROJECT_NAME} PRIVATE mingw_stdthreads)
         if(TARGET_PLATFORM STREQUAL "64bit")
             set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../lib/gcc/x86_64-w64-mingw32/10-win32")
         else()
@@ -62,18 +72,20 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU") # MinGW GCC - tested with GCC 10
         set(MINGW_STDTHREADS_GENERATE_STDHEADERS OFF CACHE BOOL "MinGW GCC std::thread implementation" FORCE)
         set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../bin")
     endif()
-    if(TARGET_PLATFORM STREQUAL "64bit")
-        install(FILES "${MINGW_LIBRARIES}/libgcc_s_seh-1.dll"
-                DESTINATION .
-                COMPONENT application)
-    else()
-        install(FILES "${MINGW_LIBRARIES}/libgcc_s_dw2-1.dll"
+    if(NOT STATIC_RUNTIME)
+        if(TARGET_PLATFORM STREQUAL "64bit")
+            install(FILES "${MINGW_LIBRARIES}/libgcc_s_seh-1.dll"
+                    DESTINATION .
+                    COMPONENT application)
+        else()
+            install(FILES "${MINGW_LIBRARIES}/libgcc_s_dw2-1.dll"
+                    DESTINATION .
+                    COMPONENT application)
+        endif()
+        install(FILES "${MINGW_LIBRARIES}/libstdc++-6.dll"
                 DESTINATION .
                 COMPONENT application)
     endif()
-    install(FILES "${MINGW_LIBRARIES}/libstdc++-6.dll"
-            DESTINATION .
-            COMPONENT application)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # MinGW Clang
     string(FIND ${CMAKE_CXX_COMPILER} "i686" STR_POS)
     if(${STR_POS} EQUAL -1)
@@ -81,14 +93,16 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # MinGW Clang
     else()
         set(TARGET_PLATFORM "32bit")
     endif()
-    if(TARGET_PLATFORM STREQUAL "64bit")
-        set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../x86_64-w64-mingw32/bin")
-    else()
-        set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../i686-w64-mingw32/bin")
+    if(NOT STATIC_RUNTIME)
+        if(TARGET_PLATFORM STREQUAL "64bit")
+            set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../x86_64-w64-mingw32/bin")
+        else()
+            set(MINGW_LIBRARIES "${TOOLCHAIN_ROOT}/../i686-w64-mingw32/bin")
+        endif()
+        install(FILES "${MINGW_LIBRARIES}/libunwind.dll" "${MINGW_LIBRARIES}/libc++.dll"
+        DESTINATION .
+        COMPONENT application)
     endif()
-    install(FILES "${MINGW_LIBRARIES}/libunwind.dll" "${MINGW_LIBRARIES}/libc++.dll"
-    DESTINATION .
-    COMPONENT application)
 elseif(MSVC)
     string(FIND ${CMAKE_CXX_COMPILER} "x64" STR_POS)
     if(${STR_POS} EQUAL -1)
@@ -100,7 +114,7 @@ endif()
 
 if(TARGET_PLATFORM STREQUAL "64bit")
     message(STATUS "64bit build determined")
-    target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE UNICODE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE)
 else()
     message(STATUS "32bit build determined")
 endif()
@@ -112,15 +126,15 @@ else()
     set(IS_DEBUGABLE_BUILD FALSE)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND IS_DEBUGABLE_BUILD) # MinGW Clang
-    target_compile_options(${PROJECT_BINARY_NAME} PUBLIC -gcodeview)
-    target_link_options(${PROJECT_BINARY_NAME} PUBLIC -Wl,--pdb=)
+    target_compile_options(${PROJECT_NAME} PUBLIC -gcodeview)
+    target_link_options(${PROJECT_NAME} PUBLIC -Wl,--pdb=)
 endif()
 if(MSVC AND IS_DEBUGABLE_BUILD)
-    target_compile_options(${PROJECT_BINARY_NAME} PUBLIC /Zi)
-    set_target_properties(${PROJECT_BINARY_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF")
+    target_compile_options(${PROJECT_NAME} PUBLIC /Zi)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF")
 endif()
 if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR MSVC) AND IS_DEBUGABLE_BUILD)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.pdb
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pdb
             DESTINATION .
             COMPONENT debug)
 endif()
