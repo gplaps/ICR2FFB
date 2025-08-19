@@ -43,14 +43,16 @@ void ThreadTimer::finished() const
 {
     const double currentTime = timeSinceStartInMs();
     const double waitTime    = nextTime - currentTime - (keepGoodTiming ? SLACK_TIME_MS : 0.0);
-    if (waitTime > 0.0)
-    {
-#if defined(HAS_STL_THREAD_MUTEX)
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(waitTime)));
-        // std::this_thread::yield();
-#else
-        Sleep(static_cast<DWORD>(waitTime));
-        // Sleep(0); // == yield
-#endif
-    }
+    // this thread sleep logic leads to loosing detail in the FFB as updates are done more rarely
+    //     if (waitTime > 1.0)
+    //     {
+    // #if defined(HAS_STL_THREAD_MUTEX)
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(waitTime)));
+    //         // std::this_thread::yield();
+    // #else
+    //         Sleep(static_cast<DWORD>(waitTime));
+    //         // Sleep(0); // == yield
+    // #endif
+    //     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
