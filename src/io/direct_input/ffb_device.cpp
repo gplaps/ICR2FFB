@@ -2,8 +2,8 @@
 
 #include "constants.h"
 #include "direct_input.h"
-#include "helpers.h" // IWYU pragma: keep
 #include "log.h"
+#include "string_utilities.h"
 
 #include <iostream>
 

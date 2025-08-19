@@ -1,7 +1,7 @@
 #include "lateral_load.h"
 
 #include "constants.h"
-#include "helpers.h"
+#include "math_utilities.h"
 
 #include <cmath>
 

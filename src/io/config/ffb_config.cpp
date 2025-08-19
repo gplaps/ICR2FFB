@@ -1,7 +1,7 @@
 #include "ffb_config.h"
 
-#include "helpers.h"
 #include "log.h"
+#include "string_utilities.h"
 #include "version.h"
 
 #include <fstream>
@@ -22,7 +22,8 @@
  */
 
 FFBConfig::FFBConfig() :
-    version()
+    version(),
+    settings()
 {
     RegisterSettings();
     if (!LoadSettingsFromConfig())

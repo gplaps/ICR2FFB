@@ -1,7 +1,7 @@
 #include "slip_angle.h"
 
 #include "constants.h"
-#include "helpers.h"
+#include "math_utilities.h"
 
 #include <cmath>
 

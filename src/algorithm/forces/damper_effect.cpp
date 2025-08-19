@@ -1,6 +1,6 @@
 #include "damper_effect.h"
 
-#include "helpers.h"
+#include "math_utilities.h"
 
 // Create damper to make it feel like the steering is not powered, mostly for pitlane, maybe hairpin use
 // Only goes to '40mph'

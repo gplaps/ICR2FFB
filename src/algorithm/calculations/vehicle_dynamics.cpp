@@ -1,7 +1,7 @@
 #include "vehicle_dynamics.h"
 
 #include "constants.h"
-#include "helpers.h"
+#include "math_utilities.h"
 
 #include <cmath>
 #if !defined(IS_CPP11_COMPLIANT)

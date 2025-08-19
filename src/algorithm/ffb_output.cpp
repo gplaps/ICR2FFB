@@ -1,6 +1,7 @@
 #include "ffb_output.h"
 
-#include "helpers.h"
+#include "math_utilities.h"
+#include "utilities.h"
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     device(config),

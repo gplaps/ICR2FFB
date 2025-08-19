@@ -1,7 +1,7 @@
 #include "direct_input.h"
 
-#include "helpers.h"
 #include "log.h"
+#include "string_utilities.h"
 
 #include <iostream>
 #include <string>
