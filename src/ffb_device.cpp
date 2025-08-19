@@ -303,6 +303,7 @@ int FFBDevice::DirectInputSetup() const
         return 1;
     }
 
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN2K
     hr = diDevice->SetCooperativeLevel(GetConsoleWindow(), DISCL_BACKGROUND | DISCL_EXCLUSIVE);
     if (FAILED(hr))
     {
@@ -315,6 +316,7 @@ int FFBDevice::DirectInputSetup() const
         std::cin.get();
         return 1;
     }
+#endif
 
     hr = diDevice->Acquire();
     if (FAILED(hr))

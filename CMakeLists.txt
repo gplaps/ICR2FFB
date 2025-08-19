@@ -13,29 +13,28 @@ set(PROJECT_BINARY_NAME ${PROJECT_NAME})
 add_executable(${PROJECT_BINARY_NAME} ${SOURCES})
 target_include_directories(${PROJECT_BINARY_NAME} PRIVATE src src/calculations src/forces)
 if(MSVC)
-    target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x500) # _WIN32_WINNT_WIN2K
+    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
     target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /Wall)
     target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105) # tested on MSVC 2019
     target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
-    target_compile_options(${PROJECT_BINARY_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
+    target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Weverything
         -Wno-padded
-        -Wno-covered-switch-default # preferred over -Wno-switch-enum
-        -Wno-zero-as-null-pointer-constant
+        -Wno-covered-switch-default
+        -Wno-zero-as-null-pointer-constant # C++98 has no nullptr, therefore NULL style
         -Wno-c++98-compat # "solved" but still emitted
         )
     else()
         target_compile_options(${PROJECT_BINARY_NAME} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 endif()
-target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800)
+target_compile_definitions(${PROJECT_BINARY_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800 _WIN32_WINNT=0x501) # _WIN32_WINNT_WINXP
 target_link_libraries(${PROJECT_BINARY_NAME} PRIVATE dinput8)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.exe DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
 install(FILES ffb.ini DESTINATION .) # comment this line so it does not overwrite your modified ini in the target directory
 install(FILES LICENSE README.md DESTINATION .)
-
 
 # "determine" compiler
 get_filename_component(TOOLCHAIN_ROOT ${CMAKE_CXX_COMPILER} DIRECTORY)
@@ -110,18 +109,14 @@ if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" OR CMAKE_BUILD_TYPE STREQUAL "Debu
 else()
     set(IS_DEBUGABLE_BUILD FALSE)
 endif()
-
-# PDB with MinGW LLVM
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND IS_DEBUGABLE_BUILD)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND IS_DEBUGABLE_BUILD) # MinGW Clang
     target_compile_options(${PROJECT_BINARY_NAME} PUBLIC -gcodeview)
     target_link_options(${PROJECT_BINARY_NAME} PUBLIC -Wl,--pdb=)
 endif()
-# PDB with MSVC
 if(MSVC AND IS_DEBUGABLE_BUILD)
     target_compile_options(${PROJECT_BINARY_NAME} PUBLIC /Zi)
     set_target_properties(${PROJECT_BINARY_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO /DEBUG /OPT:REF /OPT:ICF")
 endif()
-# install PDBs
 if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR MSVC) AND IS_DEBUGABLE_BUILD)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME}.pdb
             DESTINATION .
