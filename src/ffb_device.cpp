@@ -263,7 +263,7 @@ int FFBDevice::InitDevice()
     // I don't really know how this works yet. It enabled "exclusive" mode on the device and calls it a "type 2" joystick.. OK!
     if (!DirectInput::InitializeDevice(*this))
     {
-        LogMessage(L"[ERROR] Failed to initialize DirectInput or find device: " + config.targetDeviceName);
+        LogMessage(L"[ERROR] Failed to initialize DirectInput or find device: " + config.GetString(L"device"));
         LogMessage(L"[ERROR] Available devices:");
 
         // List available devices to help user
@@ -272,7 +272,7 @@ int FFBDevice::InitDevice()
         LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
 
         // SHOW ERROR ON CONSOLE immediately
-        std::wcout << L"[ERROR] Could not find controller: " << config.targetDeviceName << L'\n';
+        std::wcout << L"[ERROR] Could not find controller: " << config.GetString(L"device") << L'\n';
         std::wcout << L"[ERROR] Available devices:" << L'\n';
 
         // Show available devices on console too

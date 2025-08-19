@@ -19,7 +19,7 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     slip(),
     vehicleDynamics(),
     load(),
-    telemetryReader(TelemetryReader(config)),
+    telemetryReader(config),
     ffbOutput(config),
     displayData(),
     mInitialized(false)

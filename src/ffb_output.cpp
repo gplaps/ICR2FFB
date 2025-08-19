@@ -44,13 +44,13 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
 {
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future
-    enableRateLimit     = ToLower(config.targetLimitEnabled) == L"true";
-    enableConstantForce = ToLower(config.targetConstantEnabled) == L"true";
-    enableWeightForce   = ToLower(config.targetWeightEnabled) == L"true";
-    enableDamperEffect  = ToLower(config.targetDamperEnabled) == L"true";
-    enableSpringEffect  = ToLower(config.targetSpringEnabled) == L"true";
+    enableRateLimit     = config.GetBool(L"limit");
+    enableConstantForce = config.GetBool(L"constant");
+    enableWeightForce   = config.GetBool(L"weight");
+    enableDamperEffect  = config.GetBool(L"damper");
+    enableSpringEffect  = config.GetBool(L"spring");
 
-    invert              = ToLower(config.targetInvertFFB) == L"true";
+    invert              = config.GetBool(L"invert");
 
     // Create FFB effects as needed
     if (enableConstantForce) { device.CreateConstantForceEffect(); }
@@ -59,11 +59,12 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
 
     // This is to control the max % for any of the FFB effects as specified in the ffb.ini
     // Prevents broken wrists (hopefully)
-    masterForceValue   = std::stod(config.targetForceSetting);
-    constantForceValue = std::stod(config.targetConstantScale);
-    weightForceValue   = std::stod(config.targetWeightScale);
-    damperForceValue   = std::stod(config.targetDamperScale);
-    brakingForceValue  = std::stod(config.targetBrakingScale);
+    masterForceValue   = config.GetDouble(L"force");
+    constantForceValue = config.GetDouble(L"constant scale");
+    weightForceValue   = config.GetDouble(L"weight scale");
+    deadzoneForceValue = config.GetDouble(L"deadzone");
+    damperForceValue   = config.GetDouble(L"damper scale");
+    brakingForceValue  = config.GetDouble(L"braking scale");
 
     // Master force scale -> Keeping Hands Safe
     masterForceScale   = saturate(masterForceValue / 100.0);
