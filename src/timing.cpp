@@ -3,7 +3,7 @@
 #include "project_dependencies.h"
 
 #if defined(HAS_STL_THREAD_MUTEX)
-#include <thread>
+#    include <thread>
 #endif
 
 static LARGE_INTEGER start, end, frequency;

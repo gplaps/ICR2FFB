@@ -60,7 +60,7 @@ const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& key) const
             return setting;
         }
     }
-    
+
     // only needed to have something to return on a const ref function - this avoids copies of objects on "frequently" used functions
     static const FFBConfig::Setting settingNotFound = FFBConfig::Setting(L"none", L"none", false, L"not found");
     return settingNotFound;

@@ -128,7 +128,7 @@ int main()
     DWORD  threadID   = 0;
     HANDLE threads[2] = {};
 
-    threads[0] = CreateThread(NULL, 0, ProcessLoop, NULL, 0, &threadID);
+    threads[0]        = CreateThread(NULL, 0, ProcessLoop, NULL, 0, &threadID);
     ENSURE(threads[0]);
     threads[1] = CreateThread(NULL, 0, RenderLoop, NULL, 0, &threadID);
     ENSURE(threads[1]);
