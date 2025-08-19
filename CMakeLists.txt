@@ -45,7 +45,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE dinput8)
 set(EXE_EXTENSION .exe)
 set(PROJECT_BINARY_NAME ${PROJECT_NAME}${EXE_EXTENSION})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME} DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
-install(FILES ffb.ini DESTINATION .) # comment this line so it does not overwrite your modified ini in the target directory
+install(CODE 
+     "
+     if(${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini IS_NEWER_THAN ${CMAKE_INSTALL_PREFIX}/ffb.ini)
+         file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini DESTINATION ${CMAKE_INSTALL_PREFIX})
+         message(STATUS \"ffb.ini copied\")
+     else()
+         message(STATUS \"ffb.ini kept\")
+     endif()
+    ")
 install(FILES LICENSE README.md DESTINATION .)
 
 # "determine" compiler
