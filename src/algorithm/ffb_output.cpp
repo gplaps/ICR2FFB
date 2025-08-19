@@ -74,7 +74,7 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
     weightForceScale   = saturate(weightForceValue / 100.0);
     damperForceScale   = saturate(damperForceValue / 100.0);
 
-    brakingForceScale  = brakingForceValue;
+    brakingForceScale  = brakingForceValue / 100.0;
 
     return 0;
 }

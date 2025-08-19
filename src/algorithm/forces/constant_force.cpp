@@ -175,7 +175,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     // Get the sum with signs preserved
     //double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N; //original lat forces only
 
-    const double longScaler       = 4.0 * (brakingForceScale / 100);
+    const double longScaler       = 4.0 * brakingForceScale;
 
     const double frontTireLongSum = (vehicleDynamics.frontRightLong_N - vehicleDynamics.frontLeftLong_N) * longScaler;
 
