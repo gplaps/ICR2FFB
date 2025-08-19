@@ -40,34 +40,96 @@
 
 // Rendition EXE
 static const GameOffsets ICR2_Offsets_REND = {
-    0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB24, 0xEAB26, 0xEAB20, 0xEAB22, 0xEAB00, ICRSIG
-    //0xB1C0C, 0xE0EA4, 0xBB4E8, 0xBB4EA, 0xBB4E4, 0xBB4E6, 0xEAB16, 0xEAB14, 0xEAB12, 0xEAB10 // original maglat
+    0xB1C0C, //signature
+
+    0xE0EA4, //cars data
+
+    0xBB4E8, //lf tire load?
+    0xBB4EA, //rf tire load?
+    0xBB4E4, //lr tire load?
+    0xBB4E6, //rr tire load?
+
+    0xEAB24, //lf tire lat load
+    0xEAB26, //rf tire lat load
+    0xEAB20, //lr tire lat load
+    0xEAB22, //rr tire lat load
+
+    0xEAB04, //lf tire long load
+    0xEAB06, //rf tire long load
+    0xEAB00, //lr tire long load
+    0xEAB02, //rr tire long load
+
+    ICRSIG   //offset base
 };
 
 // DOS4G Exe, should be 1.02
 static const GameOffsets ICR2_Offsets_DOS = {
-    0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C48, 0xC5C4A, 0xC5C44, 0xC5C46, 0xC5C14, ICRSIG
-    //0xA0D78, 0xD4718, 0xA85B8, 0xA85BA, 0xA85B4, 0xA85B6, 0xC5C2A, 0xC5C28, 0xC5C26, 0xC5C24 // original maglat
+    0xA0D78, 
+
+    0xD4718, 
+
+    0xA85B8, 
+    0xA85BA, 
+    0xA85B4, 
+    0xA85B6, 
+
+    0xC5C48, 
+    0xC5C4A, 
+    0xC5C44, 
+    0xC5C46, 
+
+    0xC5C18,
+    0xC5C1A,
+    0xC5C14,
+    0xC5C16,
+    
+    ICRSIG
 };
 
 static const GameOffsets Unspecified_Offsets = {
-    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, UNINIT_SIG
+    0x0,
+    
+    0x0,
+    
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    
+    UNINIT_SIG
 };
 
 void GameOffsets::ApplySignature(uintptr_t sigAddr)
 {
     const uintptr_t exeBase = sigAddr - signatureOffset;
     signatureOffset         = exeBase;
+
     cars_data_offset += exeBase;
+
     tire_data_offsetfl += exeBase;
     tire_data_offsetfr += exeBase;
     tire_data_offsetrl += exeBase;
     tire_data_offsetrr += exeBase;
+
     tire_maglat_offsetfl += exeBase;
     tire_maglat_offsetfr += exeBase;
     tire_maglat_offsetrl += exeBase;
     tire_maglat_offsetrr += exeBase;
-    car_longitude_offset += exeBase;
+
+    tire_maglong_offsetfl += exeBase;
+    tire_maglong_offsetfr += exeBase;
+    tire_maglong_offsetrl += exeBase;
+    tire_maglong_offsetrr += exeBase;
 }
 
 static GameOffsets GetGameOffsets(GameVersion version)
@@ -303,10 +365,16 @@ void TelemetryReader::ConvertTireData()
     out.tireload_rf   = static_cast<double>(rawData.loadRF);
     out.tireload_lr   = static_cast<double>(rawData.loadLR);
     out.tireload_rr   = static_cast<double>(rawData.loadRR);
+
     out.tiremaglat_lf = static_cast<double>(rawData.magLatLF);
     out.tiremaglat_rf = static_cast<double>(rawData.magLatRF);
     out.tiremaglat_lr = static_cast<double>(rawData.magLatLR);
     out.tiremaglat_rr = static_cast<double>(rawData.magLatRR);
+    
+    out.tiremaglong_lf = static_cast<double>(rawData.magLongLF);
+    out.tiremaglong_rf = static_cast<double>(rawData.magLongRF);
+    out.tiremaglong_lr = static_cast<double>(rawData.magLongLR);
+    out.tiremaglong_rr = static_cast<double>(rawData.magLongRR);
 }
 
 bool TelemetryReader::ReadCarData()
@@ -323,21 +391,6 @@ bool TelemetryReader::ReadCarData()
     return true;
 }
 
-bool TelemetryReader::ReadLongitudinalForce()
-{
-    if (!ReadValue(rawData.longiF, offs.car_longitude_offset))
-    {
-        LogMessage(L"[ERROR] Failed to read longitude force");
-        out.long_force = 0.0;
-        return false;
-    }
-    else
-    {
-        out.long_force = static_cast<double>(rawData.longiF);
-        return true;
-    }
-}
-
 bool TelemetryReader::ReadTireData()
 {
     const bool tireOK =
@@ -350,6 +403,11 @@ bool TelemetryReader::ReadTireData()
         ReadValue(rawData.magLatRF, offs.tire_maglat_offsetfr) &&
         ReadValue(rawData.magLatLR, offs.tire_maglat_offsetrl) &&
         ReadValue(rawData.magLatRR, offs.tire_maglat_offsetrr);
+
+        ReadValue(rawData.magLongLF, offs.tire_maglong_offsetfl) &&
+        ReadValue(rawData.magLongRF, offs.tire_maglong_offsetfr) &&
+        ReadValue(rawData.magLongLR, offs.tire_maglong_offsetrl) &&
+        ReadValue(rawData.magLongRR, offs.tire_maglong_offsetrr);
 
     if (!tireOK)
     {
@@ -364,7 +422,6 @@ bool TelemetryReader::Update()
 {
     out.valid =
         ReadCarData() &&
-        ReadLongitudinalForce() &&
         ReadTireData();
     return out.valid;
 }

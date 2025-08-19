@@ -95,6 +95,10 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
         {
             targetConstantScale = line.substr(16);
         }
+        else if (line.rfind(L"Braking Scale: ", 0) == 0)
+        {
+            targetBrakingScale = line.substr(15);
+        }
         else if (line.rfind(L"Weight: ", 0) == 0)
         {
             targetWeightEnabled = line.substr(8);

@@ -86,7 +86,7 @@ void FFBProcessor::Update()
                     current, load, slip, vehicleDynamics,                   // inputs
                     ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, // settings - thats where it might need restructuring of the implementation, probably all the scales should be kept in FFBOutput and not be added in this function. likely make the Result struct contain seperate channels and do the multiply with scales in FFBOutput depending on the enable flags
                     ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
-                    ffbOutput.constantForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
+                    ffbOutput.constantForceScale, ffbOutput.brakingForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
                 previousPos = current;
 
                 ffbOutput.UpdateConstantForce(constantForceCalculation);

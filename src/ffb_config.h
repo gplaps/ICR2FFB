@@ -25,6 +25,7 @@ struct FFBConfig
     std::wstring targetLimitEnabled;
     std::wstring targetConstantEnabled;
     std::wstring targetConstantScale;
+    std::wstring targetBrakingScale;
     std::wstring targetWeightEnabled;
     std::wstring targetWeightScale;
     std::wstring targetDamperEnabled;

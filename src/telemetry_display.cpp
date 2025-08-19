@@ -37,7 +37,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << std::fixed << std::setprecision(2); // Also set for wide cout
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.8.8 BETA") << L"\n";
+    std::wcout << padLine(L"ICR2 FFB Program Version 0.9.0 BETA") << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + config.targetDeviceName) << L"\n";
 
@@ -84,25 +84,30 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 
     ss.str(L"");
     ss.clear();
-    ss << std::setw(10) << displayData.vehicleDynamics.force_lf << L"           " << std::setw(10) << displayData.vehicleDynamics.force_rf;
+    ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.raw.tiremaglong_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglong_rf);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L"");
-    ss.clear();
-    ss << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_rf);
+    ss.str(L""); ss.clear();
+    ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.raw.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_rf);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
     std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
     //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << displayData.raw.tireload_lr << L"           " << std::setw(10) << displayData.raw.tireload_rr;
+    //ss << std::setw(10) << displayData.raw.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
     //std::wcout << padLine(ss.str()) << L"\n";
     //std::wcout << padLine(L"") << L"\n";
 
     ss.str(L"");
     ss.clear();
-    ss << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_rr);
+    ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.raw.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglong_rr);
+    std::wcout << padLine(ss.str()) << L"\n";
+    std::wcout << padLine(L"") << L"\n";
+    
+    ss.str(L"");
+    ss.clear();
+    ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.raw.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.raw.tiremaglat_rr);
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
@@ -119,10 +124,10 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     //ss << L"Yaw Rate: " << std::setw(8) << displayData.vehicleDynamics.yaw << L" deg/s�";
     //std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L"");
-    ss.clear();
-    ss << L"Longi Force: " << std::setw(8) << displayData.raw.long_force << L"";
-    std::wcout << padLine(ss.str()) << L"\n";
+    //ss.str(L"");
+    //ss.clear();
+    //ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
+    //std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L"");
     ss.clear();

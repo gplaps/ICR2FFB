@@ -33,6 +33,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
                                                          double masterForceScale,
                                                          double deadzoneForcePercentage,
                                                          double constantForceScale,
+                                                         double brakingForceScale,
                                                          double /*weightForceScale*/,
                                                          bool invert)
 {
@@ -170,8 +171,17 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     // Calculate based on front tire load directly instead of linear G = Much better
     // No issues with oscillations anymore
 
-    // Get the sum with signs preserved
-    const double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N;
+// Get the sum with signs preserved
+    //double frontTireLoadSum = vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N; //original lat forces only
+
+    const double longScaler = 4.0 * (brakingForceScale/100);
+
+    const double frontTireLongSum = (vehicleDynamics.frontRightLong_N - vehicleDynamics.frontLeftLong_N) * longScaler;
+   
+    const double frontTireLoadSum = (vehicleDynamics.frontLeftForce_N + vehicleDynamics.frontRightForce_N) + frontTireLongSum;
+
+
+   // double frontTireLoadSum = (vehicleDynamics.frontLeftForce_N + (vehicleDynamics.frontLeftLong_N * longScaler)) + (vehicleDynamics.frontRightForce_N + (vehicleDynamics.frontRightLong_N * longScaler));
 
     // Use the magnitude for physics calculation
     const double frontTireLoadMagnitude = std::abs(frontTireLoadSum);

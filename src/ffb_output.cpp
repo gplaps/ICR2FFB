@@ -15,11 +15,13 @@ FFBOutput::FFBOutput(const FFBConfig& config) :
     masterForceValue(),
     constantForceValue(),
     deadzoneForceValue(),
+    brakingForceValue(),
     weightForceValue(),
     damperForceValue(),
     masterForceScale(),
-    deadzoneForceScale(),
     constantForceScale(),
+    deadzoneForceScale(),
+    brakingForceScale(),
     weightForceScale(),
     damperForceScale(),
     mInitialized(false)
@@ -61,6 +63,7 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
     constantForceValue = std::stod(config.targetConstantScale);
     weightForceValue   = std::stod(config.targetWeightScale);
     damperForceValue   = std::stod(config.targetDamperScale);
+    brakingForceValue  = std::stod(config.targetBrakingScale);
 
     // Master force scale -> Keeping Hands Safe
     masterForceScale   = saturate(masterForceValue / 100.0);
@@ -68,6 +71,8 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
     constantForceScale = saturate(constantForceValue / 100.0);
     weightForceScale   = saturate(weightForceValue / 100.0);
     damperForceScale   = saturate(damperForceValue / 100.0);
+    
+    brakingForceScale  = brakingForceValue;
 
     return 0;
 }

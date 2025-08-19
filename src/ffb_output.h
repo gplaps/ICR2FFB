@@ -47,12 +47,14 @@ struct FFBOutput
     double masterForceValue;
     double constantForceValue;
     double deadzoneForceValue;
+    double brakingForceValue;
     double weightForceValue;
     double damperForceValue;
 
     double masterForceScale;
-    double deadzoneForceScale;
     double constantForceScale;
+    double deadzoneForceScale;
+    double brakingForceScale;
     double weightForceScale;
     double damperForceScale;
 

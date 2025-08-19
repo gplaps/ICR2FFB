@@ -35,6 +35,7 @@ public:
         double                           masterForceScale,
         double                           deadzoneForcePercentage,
         double                           constantForceScale,
+        double                           brakingForceScale,
         double                           weightForceScale,
         bool                             invert);
 

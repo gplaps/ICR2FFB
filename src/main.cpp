@@ -1,6 +1,6 @@
 // FFB for ICR2
 // I don't know what I am doing!
-// Beta 0.8.8 Don't forget to update this down below
+// Beta 0.9.0 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -26,11 +26,8 @@
 #include "helpers.h"
 #include "log.h"
 #include "telemetry_display.h"
+#include "timing.h"
 #include "window.h"
-
-// === Standard Library Includes ===
-#include <fstream>
-#include <iostream>
 
 // === Shared Globals ===
 #if defined(HAS_STL_THREAD_MUTEX)
@@ -41,20 +38,53 @@ std::atomic<bool> shouldExit = {};
 bool shouldExit = false;
 #endif
 
-#if !defined(HAS_STL_THREAD_MUTEX)
+// the aim is to not have global structs as they need global constructor where the initialization order is undefined.
+// -> manual resource management is needed - be careful about possible resource leaks! - thats where C++ matured with patterns like RAII and shared_ptrs, but there are too many differeces between C++98 and later to cover everything, which would result in yet another split implementation (e.g. auto_ptr vs shared_ptr) 
 static FFBProcessor* ffbProcessor = NULL;
+static Timing* timing = NULL;
+static const FFBConfig* config = NULL;
 
 static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
 {
     // Loop which kicks stuff off and coordinates everything!
     while (!shouldExit)
     {
-        ffbProcessor->Update();
-        Sleep(16);
+        if(timing->ffb.canStart())
+            ffbProcessor->Update();
+        timing->ffb.finished();
     }
     return 0;
 }
-#endif
+
+static DWORD WINAPI RenderLoop(LPVOID /*plThreadParameter*/)
+{
+    TelemetryDisplay display;
+    // Now that we're doing everything we can display stuff!
+    // Main Display Loop - Set to 200ms? Probably fine
+    // Flickers a lot right now but perhaps moving to a GUI will solve that eventually
+    while (!shouldExit)
+    {
+        if (timing->render.canStart()) {
+            display.Update(*config, ffbProcessor->DisplayData());
+            PrintToLogFile();
+        }
+        timing->render.finished();
+    }
+}
+
+static void CloseCommon() {
+    SAFE_DELETE(ffbProcessor);
+    SAFE_DELETE(timing);
+    SAFE_DELETE(config);
+    SAFE_DELETE(logger);
+}
+
+#define ENSURE(x)\
+if(!(x))\
+{\
+    CloseCommon();\
+    return -1;\
+} do {} while(0)
 
 // Where it all happens
 int main()
@@ -64,91 +94,47 @@ int main()
 
 #if !defined(HAS_STL_THREAD_MUTEX)
     Logger::mutex = CreateMutex(NULL, FALSE, NULL);
-    if (Logger::mutex == NULL)
-    {
-        std::wcout << L"[ERROR] Failed to create log mutex";
-        return -1;
-    }
+    ENSURE(Logger::mutex);
     TelemetryDisplay::mutex = CreateMutex(NULL, FALSE, NULL);
-    if (TelemetryDisplay::mutex == NULL)
-    {
-        std::wcout << L"[ERROR] Failed to create display mutex";
-        return -1;
-    }
+    ENSURE(TelemetryDisplay::mutex);
 #endif
 
-    if (!logger) { logger = new Logger("log.txt"); }
+    logger = new Logger("log.txt");
+    ENSURE(logger);
 
     STATUS_CHECK(InitConsole());
-
-    const FFBConfig config;
-    if (!config.Valid())
-    {
-        SAFE_DELETE(logger);
-        return -1;
-    }
+    
+    config = new FFBConfig;
+    ENSURE(config && config->Valid());
+    timing = new Timing;
+    ENSURE(timing);
+    ffbProcessor = new FFBProcessor(*config);
+    ENSURE(ffbProcessor && ffbProcessor->Valid());
 
     // Start telemetry processing!
 #if defined(HAS_STL_THREAD_MUTEX)
-    FFBProcessor ffbProcessor(config);
-    if (!ffbProcessor.Valid())
-    {
-        SAFE_DELETE(logger);
-        return -1;
-    }
-
-    std::thread processThread([&]() {
-        // Loop which kicks stuff off and coordinates everything!
-        while (!shouldExit)
-        {
-            ffbProcessor.Update();
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
-        }
-    });
-    processThread.detach();
+    std::thread processThread([]() { ProcessLoop(NULL); });
+    std::thread renderThread([]() { RenderLoop(NULL); });
+    processThread.join();
+    renderThread.join();
+    CloseCommon();
 #else
-    ffbProcessor = new FFBProcessor(config);
-    if (!ffbProcessor || !ffbProcessor->Valid())
-    {
-        SAFE_DELETE(logger);
-        return -1;
-    }
-
     DWORD  threadID = 0;
-    HANDLE hThread  = CreateThread(NULL, 0, ProcessLoop, NULL, 0, &threadID);
-    if (hThread == NULL)
-    {
-        LogMessage(L"[ERROR] Failed to create thread.");
-        SAFE_DELETE(logger);
-        return -1;
-    }
-#endif
+    HANDLE threads[2] = {};
+    
+    HANDLE threads[0]  = CreateThread(NULL, 0, ProcessLoop, NULL, 0, &threadID);
+    ENSURE(threads[0]);
+    HANDLE threads[1]  = CreateThread(NULL, 0, RenderLoop, NULL, 0, &threadID);
+    ENSURE(threads[1]);
+    WaitForMultipleObjects(2,threads, TRUE, INFINITE); // std::thread::join()
+    CloseHandle(threads[0]);
+    CloseHandle(threads[1]);
 
-    TelemetryDisplay display;
-    // Now that we're doing everything we can display stuff!
-    // Main Display Loop - Set to 200ms? Probably fine
-    // Flickers a lot right now but perhaps moving to a GUI will solve that eventually
-    while (!shouldExit)
-    {
-#if defined(HAS_STL_THREAD_MUTEX)
-        display.Update(config, ffbProcessor.DisplayData());
-        PrintToLogFile();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-#else
-        display.Update(config, ffbProcessor->DisplayData());
-        PrintToLogFile();
-        Sleep(100);
-#endif
-    }
+    CloseCommon();
 
-#if !defined(HAS_STL_THREAD_MUTEX)
-    WaitForSingleObject(hThread, INFINITE);
-    CloseHandle(hThread);
-    delete ffbProcessor;
     CloseHandle(Logger::mutex);
     CloseHandle(TelemetryDisplay::mutex);
 #endif
 
-    SAFE_DELETE(logger); // destructs logger, flushes and closes file
     return 0;
 }
