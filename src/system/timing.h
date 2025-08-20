@@ -6,17 +6,17 @@
 
 struct ThreadTimer
 {
-    explicit ThreadTimer(double intervalMs, bool precise = true) :
+    explicit ThreadTimer(double intervalMs, bool log = false) :
         nextTime(),
         interval(intervalMs),
-        keepGoodTiming(precise) {}
+        report(log) {}
 
     double nextTime;
     double interval;
-    bool   keepGoodTiming;
+    bool   report;
 
-    bool canStart();
-    void finished() const;
+    bool ready();
+    void schedule() const;
 };
 
 struct Timing

@@ -48,11 +48,11 @@ static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
     // Loop which kicks stuff off and coordinates everything!
     while (!shouldExit)
     {
-        if (timing->ffb.canStart())
+        if (timing->ffb.ready())
         {
             ffbProcessor->Update();
+            timing->ffb.schedule();
         }
-        timing->ffb.finished();
     }
     return 0;
 }
@@ -65,12 +65,12 @@ static DWORD WINAPI RenderLoop(LPVOID /*plThreadParameter*/)
     // Flickers a lot right now but perhaps moving to a GUI will solve that eventually
     while (!shouldExit)
     {
-        if (timing->render.canStart())
+        if (timing->render.ready())
         {
             display.Update(*config, ffbProcessor->DisplayData());
             PrintToLogFile();
+            timing->render.schedule();
         }
-        timing->render.finished();
     }
     return 0;
 }
