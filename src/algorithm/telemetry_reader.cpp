@@ -35,8 +35,9 @@
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-#define ICRSIG     "license with Bob"
-#define UNINIT_SIG "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND"
+#define ICR2SIG      "license with Bob"
+#define ICR2SIG_REND "Use Rendition" // or search for "-gRN1f" command line switch
+#define UNINIT_SIG   "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND"
 
 // Rendition EXE
 static const GameOffsets ICR2_Offsets_REND = {
@@ -59,7 +60,7 @@ static const GameOffsets ICR2_Offsets_REND = {
     0xEAB00, //lr tire long load
     0xEAB02, //rr tire long load
 
-    ICRSIG //offset base
+    ICR2SIG //offset base
 };
 
 // DOS4G Exe, should be 1.02
@@ -83,7 +84,7 @@ static const GameOffsets ICR2_Offsets_DOS = {
     0xC5C14,
     0xC5C16,
 
-    ICRSIG};
+    ICR2SIG};
 
 static const GameOffsets Unspecified_Offsets = {
     0x0,
@@ -221,7 +222,9 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
-    const size_t             targetLen = strlen(offsets.signatureStr);
+    const size_t             targetLen          = strlen(offsets.signatureStr);
+    const size_t             renditionSigLength = strlen(ICR2SIG_REND);
+    bool                     isRendition        = false;
 
     while (addr < maxAddr)
     {
@@ -234,12 +237,26 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
+
+                    // scan for rendition text - as its before the common search string, it should be found before the next loop may exit
+                    for (SIZE_T i = 0; i <= bytesRead - renditionSigLength; ++i)
+                    {
+                        if (memcmp(buffer.data() + i, ICR2SIG_REND, renditionSigLength) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                        {
+                            isRendition = true;
+                        }
+                    }
+
                     for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i)
                     {
                         if (memcmp(buffer.data() + i, offsets.signatureStr, targetLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                         {
                             std::wstringstream ss;
                             ss << L"[MATCH] Found Game at 0x" << std::hex << (addr + i);
+                            if (isRendition)
+                            {
+                                ss << L" in the rendition version";
+                            }
                             LogMessage(ss.str());
                             return addr + i;
                         }
