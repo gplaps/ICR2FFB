@@ -108,7 +108,7 @@ int main()
     logger = new Logger("log.txt");
     ENSURE(logger);
 
-    STATUS_CHECK(InitConsole());
+    ENSURE(InitConsole());
 
     config = new FFBConfig;
     ENSURE(config && config->Valid());
