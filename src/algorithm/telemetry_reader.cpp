@@ -204,6 +204,7 @@ static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords, co
 }
 
 // Really don't understand this, but here is where we scan the memory for the data needed
+// scanning dosbox memory may not work as expected as once a process was started and is closed it still resides in dosbox processes memory, so maybe the wrong instance / closed instance of a supported game is found and not the most recent / active. it worked if opening and closing the same exe inside dosbox multiple times but its not robust
 static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 {
 #if defined(__clang__)
@@ -237,6 +238,7 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
+                    // edge case: search string is across region boundary - this case is not covered
 
                     // scan for rendition text - as its before the common search string, it should be found before the next loop may exit
                     for (SIZE_T i = 0; i <= bytesRead - renditionSigLength; ++i)
