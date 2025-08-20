@@ -11,7 +11,7 @@ static LARGE_INTEGER start, end, frequency;
 
 #define CALCULATE_WAIT
 #if defined(CALCULATE_WAIT)
-static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time before scheduled time resulting in active wait == likely on time, but wasting resources ... set to zero, to accept slightly late
+static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time before scheduled time resulting in active wait / polling == likely on time, but wasting resources ... set to zero, to accept slightly late
 #endif
 
 #define FRAMES_PER_SECOND(x) (1000.0 / static_cast<double>(x))
@@ -51,8 +51,8 @@ bool ThreadTimer::ready()
 void ThreadTimer::schedule() const
 {
 #if defined(CALCULATE_WAIT) // predict when thread needs to wake up - results in less wasteful polling
-    const double   currentTime = timeSinceStartInMs();
-    const uint32_t waitTime    = static_cast<uint32_t>(nextTime - currentTime - SLACK_TIME_MS);
+    const double       currentTime = timeSinceStartInMs();
+    const unsigned int waitTime    = static_cast<unsigned int>(nextTime - currentTime - SLACK_TIME_MS);
     if (waitTime >= 1)
     {
 #    if defined(HAS_STL_THREAD_MUTEX)

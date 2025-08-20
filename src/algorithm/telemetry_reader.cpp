@@ -297,7 +297,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
 
     // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
     std::vector<std::wstring> keywords;
-    keywords.push_back(L"dosbox"); // don't change to emplace_back ... C++98 did not have it
+    keywords.push_back(L"dosbox");
     keywords.push_back(config.GetString(L"game"));
     std::vector<std::wstring> excludedKeywords;
     excludedKeywords.push_back(L"rready");        // Rendition wrapper window
