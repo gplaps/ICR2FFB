@@ -14,8 +14,8 @@ namespace std
 {
 template <typename T> T clamp(T v, const T& lo, const T& hi)
 {
-    if(v < lo) { return lo; }
-    else if(v > hi) { return hi; }
+    if (v < lo) { return lo; }
+    else if (v > hi) { return hi; }
     else { return v; }
 }
 } // namespace std

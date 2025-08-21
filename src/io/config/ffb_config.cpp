@@ -54,8 +54,8 @@ void FFBConfig::RegisterSettings()
     settings[L"effects"].push_back(Setting(L"damper scale", 50.0, L"Damper strength in % [0-100]"));
     settings[L"effects"].push_back(Setting(L"spring", false, L"Spring enabled - Adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
 
-    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"base",L"=== Force feedback device, general settings and game selection ==="));
-    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"effects",L"=== Effect Mix ===\nEach effect can be turned on or off with the main toggle ('true' or 'false')\nScale settings will control balance for that given force. I personally tuned it at 100% for all of them"));
+    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"base", L"=== Force feedback device, general settings and game selection ==="));
+    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"effects", L"=== Effect Mix ===\nEach effect can be turned on or off with the main toggle ('true' or 'false')\nScale settings will control balance for that given force. I personally tuned it at 100% for all of them"));
 }
 
 const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& section, const std::wstring& key) const
@@ -185,17 +185,17 @@ void FFBConfig::WriteIniFile()
         for (std::map<std::wstring, std::vector<Setting> >::const_iterator section = settings.begin(); section != settings.end(); ++section)
         {
             if (section->first == L"none") { continue; }
-            
-            if(!isFirstSecion)
+
+            if (!isFirstSecion)
             {
                 file << L'\n';
             }
             isFirstSecion = false;
-            
+
             file << L"\n[" << section->first << L"]";
-            for(std::vector<std::pair<std::wstring,std::wstring>>::const_iterator it = sectionDescription.begin(); it != sectionDescription.end(); ++it)
+            for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator it = sectionDescription.begin(); it != sectionDescription.end(); ++it)
             {
-                if(it->first == section->first)
+                if (it->first == section->first)
                 {
                     file << L' ';
                     std::vector<std::wstring> descrLines = StringSplit(it->second, L'\n');
@@ -212,7 +212,7 @@ void FFBConfig::WriteIniFile()
             for (size_t i = 0; i < sectionSettings.size(); ++i)
             {
                 const Setting& setting = sectionSettings[i];
-                if(i != 0)
+                if (i != 0)
                 {
                     file << L'\n';
                 }
