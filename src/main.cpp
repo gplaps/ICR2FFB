@@ -83,13 +83,20 @@ static void CloseCommon()
     SAFE_DELETE(logger);
 }
 
-#define ENSURE(x)      \
-    if (!(x))          \
-    {                  \
-        CloseCommon(); \
-        return -1;     \
-    }                  \
-    do {               \
+static void CloseMutexes()
+{
+    SAFE_DELETE(Logger::mutex);
+    SAFE_DELETE(TelemetryDisplay::mutex);
+}
+
+#define ENSURE(x)       \
+    if (!(x))           \
+    {                   \
+        CloseCommon();  \
+        CloseMutexes(); \
+        return -1;      \
+    }                   \
+    do {                \
     } while (0)
 
 // Where it all happens
@@ -99,10 +106,12 @@ int main()
     STATUS_CHECK(CheckAndRestartAsAdmin());
 
 #if !defined(HAS_STL_THREAD_MUTEX)
-    InitializeCriticalSection(Logger::mutex);
+    Logger::mutex = new CRITICAL_SECTION;
     ENSURE(Logger::mutex);
-    InitializeCriticalSection(TelemetryDisplay::mutex);
+    InitializeCriticalSection(Logger::mutex);
+    TelemetryDisplay::mutex = new CRITICAL_SECTION;
     ENSURE(TelemetryDisplay::mutex);
+    InitializeCriticalSection(TelemetryDisplay::mutex);
 #endif
 
     logger = new Logger("log.txt");
@@ -139,6 +148,7 @@ int main()
 
     DeleteCriticalSection(Logger::mutex);
     DeleteCriticalSection(TelemetryDisplay::mutex);
+    CloseMutexes();
 #endif
 
     return 0;

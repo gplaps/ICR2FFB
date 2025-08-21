@@ -9,6 +9,7 @@
     res = (func);          \
     if (res) return res
 
+// delete can be called on nullptr
 #define SAFE_DELETE(x) \
     delete (x);        \
     (x) = NULL
