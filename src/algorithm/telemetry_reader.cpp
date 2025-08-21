@@ -1,7 +1,5 @@
 #include "telemetry_reader.h"
 
-#include "project_dependencies.h"
-
 #include "ffb_config.h"
 #include "log.h"
 #include "string_utilities.h"

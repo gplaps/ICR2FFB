@@ -16,7 +16,7 @@ void LogMessage(const std::wstring& msg)
 
     // try - because the calling thread might be suspended by the OS while writing to the logQueue (linesQueue.push_back()) and another thread tries to lock as well
     // a multithread capable queue might be necessary to avoid dropping log messages, see e.g. concurrentQueue
-    if(!TRY_LOCK_MUTEX(Logger::mutex)) { return; } // avoids deadlocks at the expense of loosing this log message 
+    if (!TRY_LOCK_MUTEX(Logger::mutex)) { return; } // avoids deadlocks at the expense of loosing this log message
 
     // Add to in-memory deque for optional UI display (if needed)
     logger->linesQueue.push_back(msg);

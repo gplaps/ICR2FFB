@@ -1,5 +1,5 @@
 #pragma once
-#include "project_dependencies.h"
+#include "project_dependencies.h" // IWYU pragma: keep
 
 #include "ffb_config.h"
 

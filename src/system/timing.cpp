@@ -1,8 +1,9 @@
 #include "timing.h"
 
-#include "project_dependencies.h"
+#include "project_dependencies.h" // IWYU pragma: keep
 
 #include "log.h"
+#include "string_utilities.h" // IWYU pragma: keep
 #if defined(HAS_STL_THREAD_MUTEX)
 #    include <thread>
 #endif

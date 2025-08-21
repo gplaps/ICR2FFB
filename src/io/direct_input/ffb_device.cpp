@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "direct_input.h"
 #include "log.h"
-#include "string_utilities.h"
+#include "string_utilities.h" // IWYU pragma: keep
 
 #include <iostream>
 

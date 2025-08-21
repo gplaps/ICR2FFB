@@ -1,6 +1,6 @@
 #pragma once
 
-#include "project_dependencies.h"
+#include "project_dependencies.h" // IWYU pragma: keep
 
 #include "string_utilities.h"
 

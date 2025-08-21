@@ -112,7 +112,9 @@ inline std::wstring ToCamelCase(const std::wstring& input) // only ASCII - not u
     for (size_t i = 0; i < s.size(); ++i)
     {
         if (IS_UPPER_CASE(s[i]) && (i == 0 || std::isspace(s[i - 1])))
-            s[i] = ((wchar_t)((unsigned int)s[i] - 0x20));
+        {
+            s[i] = (static_cast<wchar_t>((static_cast<unsigned int>(s[i]) - 0x20)));
+        }
     }
     return s;
 }
