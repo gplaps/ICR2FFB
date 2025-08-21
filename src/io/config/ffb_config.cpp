@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 /*
  * Copyright 2025 gplaps
@@ -36,41 +37,53 @@ bool FFBConfig::Valid() const { return version != VERSION_UNINITIALIZED; }
 
 void FFBConfig::RegisterSettings()
 {
-    settings.push_back(Setting(L"General", L"Device", L"FFB Wheel", L"list your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
-    settings.push_back(Setting(L"General", L"Game", L"indycar", L"list the exe name you use ie. 'indycar' or 'cart'"));
-    settings.push_back(Setting(L"General", L"Version", L"DOS4G", L"which version of the game you are trying to run 'REND32A' or 'OS4G'"));
-    settings.push_back(Setting(L"General", L"Force", 25.0, L"Master toggle for what \\% of force do you want? 1 - 100"));
-    settings.push_back(Setting(L"General", L"Deadzone", 0.0, L"add a deadzone (based on lateral G) where forces do not apply (0 - 100)"));
-    settings.push_back(Setting(L"General", L"Invert", false, L"changes the direction of the ffb. Change this to 'true' if your wheel pulls in the wrong direction"));
-    settings.push_back(Setting(L"General", L"Limit", false, L"this limits the effect refresh rate to be more compatible with older or Belt-drive wheels\ngive it a try if you get really abrupt forces or no force at all"));
-    settings.push_back(Setting(L"Effects", L"Constant", true, L"General main effect which will add force to the wheel to simulate G load, this is the main force"));
-    settings.push_back(Setting(L"Effects", L"Constant Scale", 100.0, L"General main effect which will add force to the wheel to simulate G load, this is the main force"));
-    settings.push_back(Setting(L"Effects", L"Braking Scale", 100.0, L"How much Braking/Accelerating effects forces. Tune this if you want to feel the brake pedal more or less (can go above 100%)."));
-    settings.push_back(Setting(L"Effects", L"Damper", true, L"Damper adds friction to the wheel at slow speed (under 50mph) to help simulate non-powered steering"));
-    settings.push_back(Setting(L"Effects", L"Damper Scale", 50.0, L"Damper adds friction to the wheel at slow speed (under 50mph) to help simulate non-powered steering"));
-    settings.push_back(Setting(L"Effects", L"Spring", false, L"Spring adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
+    settings[L"none"].push_back(Setting(L"none", false, L"not found"));
+
+    settings[L"base"].push_back(Setting(L"device", L"FFB Wheel", L"list your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
+    settings[L"base"].push_back(Setting(L"game", L"indycar", L"list the exe name you use ie. 'indycar', 'cart', 'nascar', 'nascar2'"));
+    settings[L"base"].push_back(Setting(L"version", L"DOS4G", L"which version of the game you are trying to run 'REND32A' or 'OS4G'"));
+
+    settings[L"effects"].push_back(Setting(L"force", 25.0, L"Master toggle for what % of force do you want? [0-100]"));
+    settings[L"effects"].push_back(Setting(L"deadzone", 0.0, L"add a deadzone (based on lateral G) where forces do not apply [0-100]"));
+    settings[L"effects"].push_back(Setting(L"invert", false, L"changes the direction of the ffb. Change this to 'true' if your wheel pulls in the wrong direction"));
+    settings[L"effects"].push_back(Setting(L"limit", false, L"this limits the effect refresh rate to be more compatible with older or Belt-drive wheels\ngive it a try if you get really abrupt forces or no force at all"));
+    settings[L"effects"].push_back(Setting(L"constant", true, L"Constant  enabled - General main effect which will add force to the wheel to simulate G load, this is the main force"));
+    settings[L"effects"].push_back(Setting(L"constant scale", 100.0, L"Constant effect strength [0-100]"));
+    settings[L"effects"].push_back(Setting(L"braking scale", 100.0, L"How much Braking/Accelerating effects forces. Tune this if you want to feel the brake pedal more or less (can go above 100%)."));
+    settings[L"effects"].push_back(Setting(L"damper", true, L"Damper enabled - adds friction to the wheel at slow speed (under 50mph) to help simulate non-powered steering"));
+    settings[L"effects"].push_back(Setting(L"damper scale", 50.0, L"Damper strength in % [0-100]"));
+    settings[L"effects"].push_back(Setting(L"spring", false, L"Spring adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
 }
 
-const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& key) const
+const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& section, const std::wstring& key) const
 {
-    for (size_t i = 0; i < settings.size(); ++i)
+    try
     {
-        const Setting& setting = settings[i];
-        if (ToLower(setting.mKey) == key)
+        const std::vector<Setting>& sectionSettings = settings.at(section);
+        for (size_t i = 0; i < sectionSettings.size(); ++i)
         {
-            return setting;
+            const Setting& setting = sectionSettings[i];
+            if (ToLower(setting.mKey) == key)
+            {
+                return setting;
+            }
         }
     }
+    catch (std::out_of_range&)
+    {
+        const std::vector<Setting>& notFoundSection = settings.at(L"none");
+        LogMessage(L"[ERROR] Ivalid setting request: [" + section + L"] " + key);
+        return notFoundSection.front();
+    }
 
-    LogMessage(L"[ERROR] Ivalid setting request: " + key);
-    // only needed to have something to return on a const ref function - this avoids copies of objects on "frequently" used functions
-    static const FFBConfig::Setting settingNotFound = FFBConfig::Setting(L"none", L"none", false, L"not found");
-    return settingNotFound;
+    const std::vector<Setting>& notFoundSection = settings.at(L"none");
+    LogMessage(L"[ERROR] Ivalid setting request: [" + section + L"] " + key);
+    return notFoundSection.front();
 }
 
-bool FFBConfig::GetBool(const std::wstring& key) const
+bool FFBConfig::GetBool(const std::wstring& section, const std::wstring& key) const
 {
-    const Setting& setting = GetSetting(key);
+    const Setting& setting = GetSetting(section, key);
     if (setting.mValue.mType == ST_BOOL)
     {
         return setting.mValue.b;
@@ -79,9 +92,9 @@ bool FFBConfig::GetBool(const std::wstring& key) const
     return false;
 }
 
-std::wstring FFBConfig::GetString(const std::wstring& key) const
+std::wstring FFBConfig::GetString(const std::wstring& section, const std::wstring& key) const
 {
-    const Setting& setting = GetSetting(key);
+    const Setting& setting = GetSetting(section, key);
     if (setting.mValue.mType == ST_STRING)
     {
         return setting.mValue.s;
@@ -90,9 +103,9 @@ std::wstring FFBConfig::GetString(const std::wstring& key) const
     return L"";
 }
 
-double FFBConfig::GetDouble(const std::wstring& key) const
+double FFBConfig::GetDouble(const std::wstring& section, const std::wstring& key) const
 {
-    const Setting& setting = GetSetting(key);
+    const Setting& setting = GetSetting(section, key);
     if (setting.mValue.mType == ST_DOUBLE)
     {
         return setting.mValue.d;
@@ -101,31 +114,55 @@ double FFBConfig::GetDouble(const std::wstring& key) const
     return 0.0;
 }
 
-bool FFBConfig::ParseLine(const std::wstring& line)
+int FFBConfig::GetInt(const std::wstring& section, const std::wstring& key) const
+{
+    const Setting& setting = GetSetting(section, key);
+    if (setting.mValue.mType == ST_DOUBLE)
+    {
+        return setting.mValue.i;
+    }
+    // std::wcout << L"Programmer error wrong type for setting: " << setting.ToString() << L")\n";
+    return 0;
+}
+
+bool FFBConfig::ParseLine(std::wstring& currentSection, const std::wstring& line)
 {
     if (line.size() && line[0] == L'#') { return true; } // skip commented line
-    const size_t splitPos = line.find(L':');
-    if (splitPos == std::wstring::npos)
+
+    // section header []
+    const bool isSection = line.find(L'[') == 0 && line.find(L']') != std::wstring::npos;
+    if (isSection)
     {
-        if (line.size())
-            LogMessage(L"[WARNING] Skipping malformed ini line: \"" + line + L'\"');
-        return false;
+        currentSection = ToLower(line.substr(1, line.find(L']') - 1));
+        return true;
     }
-    const std::wstring lineKey = ToLower(TrimWhiteSpaces(line.substr(0, splitPos)));
-    const std::wstring lineVal = TrimWhiteSpaces(line.substr(splitPos + 1));
-    for (size_t i = 0; i < settings.size(); ++i)
+    else
     {
-        Setting& setting = settings[i];
-        if (lineKey == ToLower(setting.mKey))
+        const size_t splitPos = line.find(L'=');
+        if (splitPos == std::wstring::npos)
         {
-            const std::wstring valueString = TrimWhiteSpaces(lineVal);
-            const bool         valid       = setting.mValue.FromString(valueString);
-            // std::wcout << setting.mKey << " Parsing value: " << valueString << L'\n';
-            if (!valid)
+            if (line.size())
             {
-                LogMessage(L"[WARNING] Parsing value \"" + valueString + L" for \"" + setting.mKey + L"\" failed - default value " + setting.mValue.ToString() + L" used");
+                LogMessage(L"[WARNING] Skipping malformed ini line: \"" + line + L'\"');
             }
-            return valid;
+            return false;
+        }
+        std::vector<Setting>& sectionSettings = settings[currentSection];
+        const std::wstring    lineKey         = ToLower(TrimWhiteSpaces(line.substr(0, splitPos)));
+        const std::wstring    lineVal         = TrimWhiteSpaces(line.substr(splitPos + 1));
+        for (size_t i = 0; i < sectionSettings.size(); ++i)
+        {
+            Setting& setting = sectionSettings[i];
+            if (lineKey == ToLower(setting.mKey))
+            {
+                const std::wstring valueString = TrimWhiteSpaces(lineVal);
+                const bool         valid       = setting.mValue.FromString(valueString);
+                if (!valid)
+                {
+                    LogMessage(L"[WARNING] Parsing value \"" + valueString + L" for \"" + setting.mKey + L"\" failed - default value " + setting.mValue.ToString() + L" used");
+                }
+                return valid;
+            }
         }
     }
     return false;
@@ -141,31 +178,43 @@ void FFBConfig::WriteIniFile()
     else
     {
         file << L"# " << VERSION_STRING << L"\n\n";
-        for (size_t i = 0; i < settings.size(); ++i)
+        for (std::map<std::wstring, std::vector<Setting>>::const_iterator sectionSettings = settings.cbegin(); sectionSettings != settings.cend(); ++sectionSettings)
         {
-            const Setting& setting = settings[i];
-            if (!setting.mDescription.empty())
+            if (sectionSettings->first == L"none") { continue; }
+            file << L'[' << sectionSettings->first << L"]\n";
+
+            for (size_t i = 0; i < sectionSettings->second.size(); ++i)
             {
-                std::vector<std::wstring> descrLines = StringSplit(setting.mDescription, L'\n');
-                for (size_t j = 0; j < descrLines.size(); ++j)
+                const Setting& setting = sectionSettings->second[i];
+                if (!setting.mDescription.empty())
                 {
-                    file << L"# " << descrLines[j] << L'\n';
+                    std::vector<std::wstring> descrLines = StringSplit(setting.mDescription, L'\n');
+                    for (size_t j = 0; j < descrLines.size(); ++j)
+                    {
+                        file << L"# " << descrLines[j] << L'\n';
+                    }
                 }
+                file << setting.mKey << L" = ";
+                file << setting.mValue.ToString() << L'\n';
+                file << L'\n';
             }
-            file << setting.mKey << L": ";
-            file << setting.mValue.ToString() << L'\n';
-            file << L'\n';
         }
     }
 }
 
 void FFBConfig::LogConfig()
 {
-    for (size_t i = 0; i < settings.size(); ++i)
+    LogMessage(L"[INFO] --- Configuration in use ---\n");
+    for (std::map<std::wstring, std::vector<Setting>>::const_iterator sectionSettings = settings.cbegin(); sectionSettings != settings.cend(); ++sectionSettings)
     {
-        const Setting& setting = settings[i];
-        LogMessage(setting.ToString());
+        LogMessage(L'[' + ToCamelCase(sectionSettings->first) + L"]");
+        for (size_t i = 0; i < sectionSettings->second.size(); ++i)
+        {
+            const Setting& setting = sectionSettings->second[i];
+            LogMessage(setting.ToString());
+        }
     }
+    LogMessage(L"\n[INFO] --- Configuration end ---");
 }
 
 // Search the ini file for settings and find what the user has set them to
@@ -178,13 +227,16 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
         WriteIniFile();
         return false;
     }
+
+    std::wstring currentSection = L"none";
+
     std::wstring line;
     while (std::getline(file, line))
     {
-        ParseLine(line);
+        ParseLine(currentSection, line);
     }
     LogConfig();
-    return !GetString(L"device").empty();
+    return !GetString(L"base", L"device").empty();
 }
 
 int FFBConfig::LoadSettingsFromConfig()
@@ -193,21 +245,21 @@ int FFBConfig::LoadSettingsFromConfig()
     if (!LoadFFBSettings(L"ffb.ini"))
     {
         LogMessage(L"[ERROR] Failed to load FFB settings from ffb.ini");
-        LogMessage(L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format");
+        LogMessage(L"[ERROR] A ffb.ini was written to the current working directory. Change changes and start this program again");
 
         // SHOW ERROR ON CONSOLE immediately
         std::wcout << L"[ERROR] Failed to load FFB settings from ffb.ini" << L'\n';
-        std::wcout << L"[ERROR] Make sure ffb.ini exists in current working directory and has proper format" << L'\n';
+        std::wcout << L"[ERROR] A ffb.ini was written to the current working directory. Change changes and start this program again" << L'\n';
         std::wcout << L"Press any key to exit..." << L'\n';
         std::cin.get();
         return 1;
     }
 
     LogMessage(L"[INFO] Successfully loaded FFB settings");
-    LogMessage(L"[INFO] Target device: " + GetString(L"device"));
+    LogMessage(L"[INFO] Target device: " + GetString(L"base", L"device"));
 
-    version = ReadGameVersion(GetString(L"version"));
-    LogMessage(L"[INFO] Game version: " + PrintGameVersion());
+    version = ReadGameVersion(GetString(L"base", L"version"));
+    LogMessage(L"[INFO] Game version: " + PrintGameVersion(version));
 #if !defined(NDEBUG)
 // just in case there is a difference in the threading API
 #    if defined(HAS_STL_THREAD_MUTEX)
@@ -219,46 +271,29 @@ int FFBConfig::LoadSettingsFromConfig()
     return 0;
 }
 
-GameVersion FFBConfig::ReadGameVersion(const std::wstring& versionText)
-{
-    // Select between Dos and Rendition version. Rendition is default
-    return ToLower(versionText) == L"dos4g" ? ICR2_DOS4G_1_02 : ICR2_RENDITION;
-}
-
-std::wstring FFBConfig::PrintGameVersion() const
-{
-    switch (version)
-    {
-        case ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
-        case ICR2_RENDITION:  return L"ICR2 - Rendition";
-        case VERSION_UNINITIALIZED:
-        default:
-            break;
-    }
-    return L"Uninitialized";
-}
-
-FFBConfig::Setting::Setting(const std::wstring& section, const std::wstring& key, bool defaultValue, const std::wstring& description) :
-    mSection(section),
+FFBConfig::Setting::Setting(const std::wstring& key, bool defaultValue, const std::wstring& description) :
     mKey(key),
     mDescription(description),
     mValue(defaultValue) {}
 
-FFBConfig::Setting::Setting(const std::wstring& section, const std::wstring& key, const wchar_t* defaultValue, const std::wstring& description) :
-    mSection(section),
+FFBConfig::Setting::Setting(const std::wstring& key, const wchar_t* defaultValue, const std::wstring& description) :
     mKey(key),
     mDescription(description),
     mValue(defaultValue) {}
 
-FFBConfig::Setting::Setting(const std::wstring& section, const std::wstring& key, double defaultValue, const std::wstring& description) :
-    mSection(section),
+FFBConfig::Setting::Setting(const std::wstring& key, double defaultValue, const std::wstring& description) :
+    mKey(key),
+    mDescription(description),
+    mValue(defaultValue) {}
+
+FFBConfig::Setting::Setting(const std::wstring& key, int defaultValue, const std::wstring& description) :
     mKey(key),
     mDescription(description),
     mValue(defaultValue) {}
 
 std::wstring FFBConfig::Setting::ToString() const
 {
-    return L"[" + mSection + L"] " + mKey + L" (" + mValue.ToString() + L")";
+    return mKey + L" = " + mValue.ToString();
 }
 
 std::wstring FFBConfig::Setting::SettingValue::ToString() const
@@ -266,15 +301,15 @@ std::wstring FFBConfig::Setting::SettingValue::ToString() const
     switch (mType)
     {
         case ST_BOOL:
-            return (b ? L"true" : L"false");
+            return ToCamelCase((b ? L"true" : L"false"));
         case ST_STRING:
             return s;
         case ST_DOUBLE:
+        case ST_INT:
             return std::to_wstring(d);
         default: return L"";
     }
 }
-
 
 bool FFBConfig::Setting::SettingValue::FromString(const std::wstring& valueString)
 {
@@ -288,6 +323,9 @@ bool FFBConfig::Setting::SettingValue::FromString(const std::wstring& valueStrin
             return true;
         case ST_DOUBLE:
             d = std::stod(valueString);
+            return true;
+        case ST_INT:
+            i = std::stoi(valueString);
             return true;
         default: break;
     }

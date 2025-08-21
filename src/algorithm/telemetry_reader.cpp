@@ -289,7 +289,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     rawData(),
     carData()
 {
-    if (config.GetString(L"game").empty())
+    if (config.GetString(L"base", L"game").empty())
     {
         LogMessage(L"[ERROR] \"Game\" is not set.");
         return;
@@ -298,7 +298,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
     std::vector<std::wstring> keywords;
     keywords.push_back(L"dosbox");
-    keywords.push_back(config.GetString(L"game"));
+    keywords.push_back(config.GetString(L"base", L"game"));
     std::vector<std::wstring> excludedKeywords;
     excludedKeywords.push_back(L"rready");        // Rendition wrapper window
     excludedKeywords.push_back(L"speedy3d");      // Rendition wrapper window

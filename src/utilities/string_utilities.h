@@ -105,6 +105,18 @@ inline std::vector<std::wstring> StringSplit(const std::wstring& input, const wc
     return result;
 }
 
+inline std::wstring ToCamelCase(const std::wstring& input) // only ASCII - not unicode capable!
+{
+    std::wstring s = input;
+#define IS_UPPER_CASE(x) (x) >= L'A' && (x) <= L'Z'
+    for (size_t i = 0; i < s.size(); ++i)
+    {
+        if (IS_UPPER_CASE(s[i]) && (i == 0 || std::isspace(s[i - 1])))
+            s[i] = ((wchar_t)((unsigned int)s[i] - 0x20));
+    }
+    return s;
+}
+
 inline std::wstring TrimWhiteSpaces(const std::wstring& input)
 {
     std::wstring       s     = input;

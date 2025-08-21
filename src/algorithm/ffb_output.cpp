@@ -45,13 +45,13 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
 {
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future
-    enableRateLimit     = config.GetBool(L"limit");
-    enableConstantForce = config.GetBool(L"constant");
-    enableWeightForce   = config.GetBool(L"weight");
-    enableDamperEffect  = config.GetBool(L"damper");
-    enableSpringEffect  = config.GetBool(L"spring");
+    enableRateLimit     = config.GetBool(L"effects", L"limit");
+    enableConstantForce = config.GetBool(L"effects", L"constant");
+    enableWeightForce   = config.GetBool(L"effects", L"weight");
+    enableDamperEffect  = config.GetBool(L"effects", L"damper");
+    enableSpringEffect  = config.GetBool(L"effects", L"spring");
 
-    invert              = config.GetBool(L"invert");
+    invert              = config.GetBool(L"effects", L"invert");
 
     // Create FFB effects as needed
     if (enableConstantForce) { device.CreateConstantForceEffect(); }
@@ -60,12 +60,12 @@ int FFBOutput::ApplyFFBSettings(const FFBConfig& config)
 
     // This is to control the max % for any of the FFB effects as specified in the ffb.ini
     // Prevents broken wrists (hopefully)
-    masterForceValue   = config.GetDouble(L"force");
-    constantForceValue = config.GetDouble(L"constant scale");
-    weightForceValue   = config.GetDouble(L"weight scale");
-    deadzoneForceValue = config.GetDouble(L"deadzone");
-    damperForceValue   = config.GetDouble(L"damper scale");
-    brakingForceValue  = config.GetDouble(L"braking scale");
+    masterForceValue   = config.GetDouble(L"effects", L"force");
+    constantForceValue = config.GetDouble(L"effects", L"constant scale");
+    weightForceValue   = config.GetDouble(L"effects", L"weight scale");
+    deadzoneForceValue = config.GetDouble(L"effects", L"deadzone");
+    damperForceValue   = config.GetDouble(L"effects", L"damper scale");
+    brakingForceValue  = config.GetDouble(L"effects", L"braking scale");
 
     // Master force scale -> Keeping Hands Safe
     masterForceScale   = saturate(masterForceValue / 100.0);

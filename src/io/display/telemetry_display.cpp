@@ -40,7 +40,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     // Header section
     std::wcout << padLine(VERSION_STRING) << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
-    std::wcout << padLine(L"Connected Device: " + config.GetString(L"device")) << L"\n";
+    std::wcout << padLine(L"Connected Device: " + config.GetString(L"base", L"device")) << L"\n";
 
     std::wostringstream ss;
     ss << std::fixed << std::setprecision(2); // Set formatting for stringstream too

@@ -139,8 +139,8 @@ bool DirectInput::InitializeDevice(FFBDevice& device)
         return false;
     }
 
-    LogMessage(L"[INFO] Searching for device: " + device.config.GetString(L"device"));
-    EnumDeviceHelper edh(&device, device.config.GetString(L"device"));
+    LogMessage(L"[INFO] Searching for device: " + device.config.GetString(L"base", L"device"));
+    EnumDeviceHelper edh(&device, device.config.GetString(L"base", L"device"));
     hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumDevicesCallback, &edh, DIEDFL_ATTACHEDONLY);
 
     if (FAILED(hr))
@@ -151,7 +151,7 @@ bool DirectInput::InitializeDevice(FFBDevice& device)
 
     if (device.diDevice == NULL)
     {
-        LogMessage(L"[ERROR] Device not found: " + device.config.GetString(L"device"));
+        LogMessage(L"[ERROR] Device not found: " + device.config.GetString(L"base", L"device"));
         return false;
     }
 
