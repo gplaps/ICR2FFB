@@ -30,19 +30,23 @@
 #    include <mutex> // IWYU pragma: keep
 #    define LOCK_MUTEX(mtx) \
         const std::lock_guard<std::mutex> lock(mtx)
+#    define TRY_LOCK_MUTEX(mtx) \
+        mtx.try_lock()
 #    define UNLOCK_MUTEX(mtx)
 #    define DEFINE_MUTEX(mtx) \
         std::mutex mtx
 #    define DECLARE_MUTEX(mtx) \
         std::mutex mtx
 #else
-#    include <cassert>
+#    include <synchapi.h>
 #    define LOCK_MUTEX(mtx) \
-        assert(WaitForSingleObject(mtx, INFINITE) == WAIT_OBJECT_0)
+        EnterCriticalSection(mtx)
+#    define TRY_LOCK_MUTEX(mtx) \
+        TryEnterCriticalSection(mtx)
 #    define UNLOCK_MUTEX(mtx) \
-        ReleaseMutex(mtx)
+        LeaveCriticalSection(mtx)
 #    define DEFINE_MUTEX(mtx) \
-        HANDLE mtx
+        LPCRITICAL_SECTION mtx = NULL
 #    define DECLARE_MUTEX(mtx) \
-        HANDLE mtx
+        LPCRITICAL_SECTION mtx
 #endif

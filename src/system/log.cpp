@@ -14,21 +14,12 @@ void LogMessage(const std::wstring& msg)
 {
     if (!logger) { return; }
 
-    LOCK_MUTEX(Logger::mutex);
+    // try - because the calling thread might be suspended by the OS while writing to the logQueue (linesQueue.push_back()) and another thread tries to lock as well
+    // a multithread capable queue might be necessary to avoid dropping log messages, see e.g. concurrentQueue
+    if(!TRY_LOCK_MUTEX(Logger::mutex)) { return; } // avoids deadlocks at the expense of loosing this log message 
 
     // Add to in-memory deque for optional UI display (if needed)
-    logger->lines.push_back(msg);
-    while (logger->lines.size() > Logger::maxLogLines)
-    {
-        logger->lines.pop_front();
-    }
-
-    // Append to log.txt
-    if (logger->file.is_open())
-    {
-        logger->file << msg << L'\n';
-        logger->file.flush(); // optional, performance penalty but maybe helpful as otherwise a few log lines could be lost if the app crashes
-    }
+    logger->linesQueue.push_back(msg);
 
     UNLOCK_MUTEX(Logger::mutex);
 }
@@ -39,6 +30,26 @@ void PrintToLogFile()
 
     //Print log data
     LOCK_MUTEX(Logger::mutex);
+
+    // Append to log.txt
+    if (logger->file.is_open())
+    {
+        for (size_t i = 0; i < logger->linesQueue.size(); ++i)
+        {
+            logger->file << logger->linesQueue[i] << L'\n';
+        }
+        if (logger->linesQueue.size())
+        {
+            logger->file.flush(); // optional, performance penalty but maybe helpful as otherwise a few log lines could be lost if the app crashes
+        }
+    }
+    // append new log messages
+    logger->lines.insert(logger->lines.end(), logger->linesQueue.begin(), logger->linesQueue.end());
+    // ensure log stays compact
+    while (logger->lines.size() > Logger::maxLogLines)
+    {
+        logger->lines.pop_front();
+    }
 
     const unsigned int        maxDisplayLines = 1; //how many lines to display
     std::vector<std::wstring> recentUniqueLines;

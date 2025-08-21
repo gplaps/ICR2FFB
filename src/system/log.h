@@ -14,6 +14,7 @@ struct Logger
         lines(),
         file(filename, std::ios::trunc) {}
     std::deque<std::wstring> lines;
+    std::deque<std::wstring> linesQueue;
     std::wofstream           file;
 
     static DECLARE_MUTEX(mutex);

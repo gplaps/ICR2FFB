@@ -99,9 +99,9 @@ int main()
     STATUS_CHECK(CheckAndRestartAsAdmin());
 
 #if !defined(HAS_STL_THREAD_MUTEX)
-    Logger::mutex = CreateMutex(NULL, FALSE, NULL);
+    InitializeCriticalSection(Logger::mutex);
     ENSURE(Logger::mutex);
-    TelemetryDisplay::mutex = CreateMutex(NULL, FALSE, NULL);
+    InitializeCriticalSection(TelemetryDisplay::mutex);
     ENSURE(TelemetryDisplay::mutex);
 #endif
 
@@ -137,8 +137,8 @@ int main()
 
     CloseCommon();
 
-    CloseHandle(Logger::mutex);
-    CloseHandle(TelemetryDisplay::mutex);
+    DeleteCriticalSection(Logger::mutex);
+    DeleteCriticalSection(TelemetryDisplay::mutex);
 #endif
 
     return 0;
