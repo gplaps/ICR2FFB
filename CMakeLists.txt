@@ -26,7 +26,7 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /permissive- /Zc:__cplusplus /Zc:inline /Zc:preprocessor) # C++ standard compliance
     target_compile_options(${PROJECT_NAME} PRIVATE /Wall)
     target_compile_options(${PROJECT_NAME} PRIVATE /wd4514 /wd4626 /wd4668 /wd4710 /wd4711 /wd4820 /wd5027 /wd5039 /wd5045 /wd5105) # tested on MSVC 2019
-    target_compile_options(${PROJECT_NAME} PRIVATE /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
+    target_compile_options(${PROJECT_NAME} PRIVATE /wd4127 /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
     target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
