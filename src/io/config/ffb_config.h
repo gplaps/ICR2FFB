@@ -103,5 +103,6 @@ private:
         std::wstring ToString() const;
     };
     std::map<std::wstring, std::vector<Setting> > settings;
-    const Setting&                                GetSetting(const std::wstring& section, const std::wstring& key) const;
+    std::vector<std::pair<std::wstring, std::wstring>> sectionDescription;
+    const Setting& GetSetting(const std::wstring& section, const std::wstring& key) const;
 };

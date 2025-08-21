@@ -40,19 +40,22 @@ void FFBConfig::RegisterSettings()
     settings[L"none"].push_back(Setting(L"none", false, L"not found"));
 
     settings[L"base"].push_back(Setting(L"device", L"FFB Wheel", L"list your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
-    settings[L"base"].push_back(Setting(L"game", L"indycar", L"list the exe name you use ie. 'indycar', 'cart', 'nascar', 'nascar2'"));
-    settings[L"base"].push_back(Setting(L"version", L"DOS4G", L"which version of the game you are trying to run 'REND32A' or 'OS4G'"));
+    settings[L"base"].push_back(Setting(L"game", L"indycar", L"list the exe name you use ie. 'indycar' or 'cart'"));
+    settings[L"base"].push_back(Setting(L"version", L"DOS4G", L"which version of the game you are trying to run 'REND32A' or 'DOS4G'"));
 
     settings[L"effects"].push_back(Setting(L"force", 25.0, L"Master toggle for what % of force do you want? [0-100]"));
     settings[L"effects"].push_back(Setting(L"deadzone", 0.0, L"add a deadzone (based on lateral G) where forces do not apply [0-100]"));
     settings[L"effects"].push_back(Setting(L"invert", false, L"changes the direction of the ffb. Change this to 'true' if your wheel pulls in the wrong direction"));
     settings[L"effects"].push_back(Setting(L"limit", false, L"this limits the effect refresh rate to be more compatible with older or Belt-drive wheels\ngive it a try if you get really abrupt forces or no force at all"));
-    settings[L"effects"].push_back(Setting(L"constant", true, L"Constant  enabled - General main effect which will add force to the wheel to simulate G load, this is the main force"));
-    settings[L"effects"].push_back(Setting(L"constant scale", 100.0, L"Constant effect strength [0-100]"));
+    settings[L"effects"].push_back(Setting(L"constant", true, L"Constant enabled - General main effect which will add force to the wheel to simulate G load, this is the main force"));
+    settings[L"effects"].push_back(Setting(L"constant scale", 100.0, L"Constant effect strength in % [0-100]"));
     settings[L"effects"].push_back(Setting(L"braking scale", 100.0, L"How much Braking/Accelerating effects forces. Tune this if you want to feel the brake pedal more or less (can go above 100%)."));
     settings[L"effects"].push_back(Setting(L"damper", true, L"Damper enabled - adds friction to the wheel at slow speed (under 50mph) to help simulate non-powered steering"));
     settings[L"effects"].push_back(Setting(L"damper scale", 50.0, L"Damper strength in % [0-100]"));
-    settings[L"effects"].push_back(Setting(L"spring", false, L"Spring adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
+    settings[L"effects"].push_back(Setting(L"spring", false, L"Spring enabled - Adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
+
+    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"base",L"=== Force feedback device, general settings and game selection ==="));
+    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"effects",L"=== Effect Mix ===\nEach effect can be turned on or off with the main toggle ('true' or 'false')\nScale settings will control balance for that given force. I personally tuned it at 100% for all of them"));
 }
 
 const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& section, const std::wstring& key) const
@@ -177,15 +180,44 @@ void FFBConfig::WriteIniFile()
     }
     else
     {
-        file << L"# " << VERSION_STRING << L"\n\n";
-        for (std::map<std::wstring, std::vector<Setting> >::const_iterator sectionSettings = settings.begin(); sectionSettings != settings.end(); ++sectionSettings)
+        file << L"# " << VERSION_STRING << L" USE AT YOUR OWN RISK\n";
+        bool isFirstSecion = true;
+        for (std::map<std::wstring, std::vector<Setting> >::const_iterator section = settings.begin(); section != settings.end(); ++section)
         {
-            if (sectionSettings->first == L"none") { continue; }
-            file << L'[' << sectionSettings->first << L"]\n";
-
-            for (size_t i = 0; i < sectionSettings->second.size(); ++i)
+            if (section->first == L"none") { continue; }
+            
+            if(!isFirstSecion)
             {
-                const Setting& setting = sectionSettings->second[i];
+                file << L'\n';
+            }
+            isFirstSecion = false;
+            
+            file << L"\n[" << section->first << L"]";
+            for(std::vector<std::pair<std::wstring,std::wstring>>::const_iterator it = sectionDescription.begin(); it != sectionDescription.end(); ++it)
+            {
+                if(it->first == section->first)
+                {
+                    file << L' ';
+                    std::vector<std::wstring> descrLines = StringSplit(it->second, L'\n');
+                    for (size_t j = 0; j < descrLines.size(); ++j)
+                    {
+                        file << L"# " << descrLines[j] << L'\n';
+                    }
+                    break;
+                }
+            }
+            file << L'\n';
+
+            const std::vector<Setting>& sectionSettings = section->second;
+            for (size_t i = 0; i < sectionSettings.size(); ++i)
+            {
+                const Setting& setting = sectionSettings[i];
+                if(i != 0)
+                {
+                    file << L'\n';
+                }
+                file << setting.mKey << L" = ";
+                file << setting.mValue.ToString() << L'\n';
                 if (!setting.mDescription.empty())
                 {
                     std::vector<std::wstring> descrLines = StringSplit(setting.mDescription, L'\n');
@@ -194,9 +226,6 @@ void FFBConfig::WriteIniFile()
                         file << L"# " << descrLines[j] << L'\n';
                     }
                 }
-                file << setting.mKey << L" = ";
-                file << setting.mValue.ToString() << L'\n';
-                file << L'\n';
             }
         }
     }
