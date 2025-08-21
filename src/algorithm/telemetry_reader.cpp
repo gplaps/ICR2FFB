@@ -311,6 +311,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) { return; }
 
+    // it should be possible to detect any supported game by searching the memory for known signatures and selecting one of the known offsets for it without the need for the user to specify it
+    // if more game offsets have been found this project likely has to undergo a (significant) rewrite
     offs                    = GetGameOffsets(config.version);
     const uintptr_t sigAddr = ScanSignature(hProcess, offs);
     if (!sigAddr)
