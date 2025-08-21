@@ -178,7 +178,7 @@ void FFBConfig::WriteIniFile()
     else
     {
         file << L"# " << VERSION_STRING << L"\n\n";
-        for (std::map<std::wstring, std::vector<Setting>>::const_iterator sectionSettings = settings.cbegin(); sectionSettings != settings.cend(); ++sectionSettings)
+        for (std::map<std::wstring, std::vector<Setting> >::const_iterator sectionSettings = settings.begin(); sectionSettings != settings.end(); ++sectionSettings)
         {
             if (sectionSettings->first == L"none") { continue; }
             file << L'[' << sectionSettings->first << L"]\n";
@@ -205,7 +205,7 @@ void FFBConfig::WriteIniFile()
 void FFBConfig::LogConfig()
 {
     LogMessage(L"[INFO] --- Configuration in use ---\n");
-    for (std::map<std::wstring, std::vector<Setting>>::const_iterator sectionSettings = settings.cbegin(); sectionSettings != settings.cend(); ++sectionSettings)
+    for (std::map<std::wstring, std::vector<Setting> >::const_iterator sectionSettings = settings.begin(); sectionSettings != settings.end(); ++sectionSettings)
     {
         LogMessage(L'[' + ToCamelCase(sectionSettings->first) + L"]");
         for (size_t i = 0; i < sectionSettings->second.size(); ++i)

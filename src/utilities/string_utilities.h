@@ -1,6 +1,7 @@
 #pragma once
 #include "project_dependencies.h" // IWYU pragma: keep
 
+#include <cctype>
 #include <cstdlib>
 #include <string>
 #include <vector>
