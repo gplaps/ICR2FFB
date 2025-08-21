@@ -45,6 +45,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE dinput8)
 set(EXE_EXTENSION .exe)
 set(PROJECT_BINARY_NAME ${PROJECT_NAME}${EXE_EXTENSION})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME} DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
+# copy ini file - this may be outdated if a setting is changed in FFBConfig, so consider removing this and let the first program run generate it, directing the user appropiately
+# or adding an install step that does does this instead
 install(CODE 
      "
      if(${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini IS_NEWER_THAN ${CMAKE_INSTALL_PREFIX}/ffb.ini)
