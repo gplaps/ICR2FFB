@@ -8,7 +8,7 @@
 
 struct FFBDevice
 {
-    explicit FFBDevice(const FFBConfig& config, const std::wstring& name);
+    explicit FFBDevice(const FFBConfig& config, const std::wstring& name, bool optional = false);
 #if defined(IS_CPP11_COMPLIANT)
     FFBDevice() = delete;
 #else
@@ -36,5 +36,6 @@ private:
     DiDamperEffect*   damper;
     DiSpringEffect*   spring;
 
+    bool optionalDevice;
     bool mInitialized;
 };

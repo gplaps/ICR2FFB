@@ -8,12 +8,14 @@
 
 #include <iostream>
 
-FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name) :
+FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name, bool optional) :
     diDevice(NULL),
     js(),
     constant(NULL),
     damper(NULL),
-    spring(NULL)
+    spring(NULL),
+    optionalDevice(optional),
+    mInitialized(false)
 {
     if (!InitDevice(name))
     {
@@ -80,13 +82,16 @@ bool FFBDevice::InitDevice(const std::wstring& productNameOrIndex)
     diDevice = DirectInput::Instance()->InitializeDevice(productNameOrIndex);
     if (!diDevice)
     {
-        LogMessage(L"[ERROR] Failed to initialize DirectInput device: " + productNameOrIndex);
-        LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
-        // // SHOW ERROR ON CONSOLE immediately
-        std::wcout << L"[ERROR] Could not find controller: " << productNameOrIndex << L'\n';
-        std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
-        // std::wcout << L"Press any key to exit..." << L'\n';
-        // std::cin.get();
+        if (!productNameOrIndex.empty())
+        {
+            LogMessage(L"[ERROR] Failed to initialize DirectInput device: " + productNameOrIndex);
+            LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
+            // // SHOW ERROR ON CONSOLE immediately
+            std::wcout << L"[ERROR] Could not find controller: " << productNameOrIndex << L'\n';
+            std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
+            // std::wcout << L"Press any key to exit..." << L'\n';
+            // std::cin.get();
+        }
         return false;
     }
 
