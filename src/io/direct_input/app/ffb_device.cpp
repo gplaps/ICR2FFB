@@ -4,6 +4,7 @@
 #include "direct_input.h"
 #include "ffb_effect.h"
 #include "log.h"
+#include "math_utilities.h"
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <iostream>
@@ -56,16 +57,19 @@ void FFBDevice::Update(double constantStrength, double damperStrength, double sp
     if (constant)
     {
         double constantDirectInput = constantStrength * DEFAULT_DINPUT_GAIN_DBL;
+        SAFETY_CHECK(constantDirectInput);
         constant->Update(static_cast<LONG>(constantDirectInput), constantWithDirection);
     }
     if (damper)
     {
         double damperDirectInput = damperStrength * DEFAULT_DINPUT_GAIN_DBL;
+        SAFETY_CHECK(damperDirectInput);
         damper->Update(static_cast<LONG>(damperDirectInput));
     }
     if (spring)
     {
         double springDirectInput = springStrength * DEFAULT_DINPUT_GAIN_DBL;
+        SAFETY_CHECK(springDirectInput);
         spring->Update(static_cast<LONG>(springDirectInput));
     }
 }

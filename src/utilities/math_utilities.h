@@ -29,3 +29,12 @@ T lerp(T a, T b, T t)
 {
     return a + (b - a) * t;
 }
+
+#define SAFETY_CHECK(x)                 \
+    if (!std::isfinite((x)))            \
+    {                                   \
+        LogMessage(L"NaN encountered"); \
+        x = 0;                          \
+    }                                   \
+    do {                                \
+    } while (0)

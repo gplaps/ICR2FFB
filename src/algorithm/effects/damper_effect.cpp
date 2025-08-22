@@ -8,7 +8,7 @@ DamperEffect::DamperEffect(const FFBConfig& config) :
     maxDamper(5000.0),                                      // consider making configurable, replacing damper scale setting
     maxSpeed(config.GetDouble(L"effects", L"damper speed")) // Only goes to '40mph'
 {
-    if (maxSpeed <= 0.0) { maxSpeed = 40.0; } // div-by-zero
+    if (maxSpeed <= 0.0 || std::isfinite(maxSpeed)) { maxSpeed = 40.0; } // div-by-zero
 }
 
 double DamperEffect::LowSpeedDamperStrength(double speedMph) const

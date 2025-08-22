@@ -1,6 +1,9 @@
 #include "ffb_output.h"
 
+#include "log.h"
 #include "math_utilities.h"
+
+#include <cmath>
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     steeringDevice(config),
@@ -35,6 +38,12 @@ bool FFBOutput::Init(const FFBConfig& config)
     damperForceScale   = saturate(config.GetDouble(L"effects", L"damper scale") / 100.0);
     springForceScale   = 1.0; // not configurable - route full effect, enabled flag considered in ffb_device
 
+    // checks for user input values resulting in NaN
+    SAFETY_CHECK(masterForceScale);
+    SAFETY_CHECK(constantForceScale);
+    SAFETY_CHECK(damperForceScale);
+    SAFETY_CHECK(springForceScale);
+
     return steeringDevice.Valid() /*&& pedals.Valid()*/;
 }
 
@@ -51,9 +60,14 @@ void FFBOutput::Start()
 
 void FFBOutput::Update(double constant, double damper, double spring, bool paused)
 {
-    const double constantOut = constant * constantForceScale * masterForceScale;
-    const double damperOut   = damper * damperForceScale * masterForceScale;
-    const double springOut   = spring * springForceScale * masterForceScale;
+    double constantOut = constant * constantForceScale * masterForceScale;
+    double damperOut   = damper * damperForceScale * masterForceScale;
+    double springOut   = spring * springForceScale * masterForceScale;
+
+    SAFETY_CHECK(constantOut);
+    SAFETY_CHECK(damperOut);
+    SAFETY_CHECK(springOut);
+
     steeringDevice.Update(constantOut, damperOut, springOut, !paused);
     // pedals.Update(constantOut, damperOut, springOut, false);
 }

@@ -9,6 +9,7 @@
 SpringEffect::SpringEffect(const FFBConfig& config) :
     springStrength(config.GetDouble(L"effects", L"spring strength"))
 {
+    SAFETY_CHECK(springStrength);
 }
 
 double SpringEffect::Calculate(double input) const
