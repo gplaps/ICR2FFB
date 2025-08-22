@@ -4,6 +4,7 @@
 #include <deque>
 #include <fstream>
 #include <string>
+#include <vector>
 
 void LogMessage(const std::wstring& msg);
 void PrintToLogFile();
