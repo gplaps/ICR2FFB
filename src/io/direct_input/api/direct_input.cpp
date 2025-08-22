@@ -176,8 +176,15 @@ IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNa
     // by index
     try
     {
-        unsigned long targetIndex = std::stoul(productNameOrIndex);
-        if (targetIndex > 0)
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // wcstoul() unsafe
+#endif
+        unsigned long targetIndex = std::wcstoul(productNameOrIndex.c_str(), NULL, 10);
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#endif
+        if (targetIndex != ULONG_MAX)
         {
             device = CreateDevice(targetIndex);
             if (device)

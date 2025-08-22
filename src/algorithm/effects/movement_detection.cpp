@@ -7,7 +7,9 @@ MovementDetector::MovementDetector() :
     noMovementFrames(0),
     isPaused(true),
     pauseForceSet(false),
-    isFirstReading(true) {}
+    isFirstReading(true),
+    movementThreshold(10),
+    movementThreshold_value(0.001) {}
 
 MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& current, const RawTelemetry& /*previous*/)
 {

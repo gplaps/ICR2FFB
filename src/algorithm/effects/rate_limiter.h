@@ -8,10 +8,10 @@ struct RateLimiter
 
     int Calculate(int signedMagnitude, double force);
     // Direction calculation and smoothing for rate limiting
-    LONG lastDirection = 0;
+    LONG lastDirection;
 
     // Direction smoothing - this prevents rapid direction changes
-    const double directionSmoothingFactor = 0.3;
+    const double directionSmoothingFactor;
 
     // Rate limiting with direction smoothing
     int    lastSentMagnitude;

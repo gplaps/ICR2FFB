@@ -2,6 +2,7 @@
 
 #include "constants.h"
 #include "log.h"
+#include "string_utilities.h" // IWYU pragma: keep
 
 #include <iostream>
 

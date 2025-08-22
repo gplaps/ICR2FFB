@@ -39,7 +39,7 @@ bool shouldExit = false;
 #endif
 
 // the aim is to not have global structs as they need global constructor where the initialization order is undefined.
-// -> manual resource management is needed - be careful about possible resource leaks! - thats where C++ matured with patterns like RAII and shared_ptrs, but there are too many differeces between C++98 and later to cover everything, which would result in yet another split implementation (e.g. auto_ptr vs shared_ptr)
+// -> manual resource management is needed - be careful about possible resource leaks! - thats where C++ matured with patterns like RAII and shared_ptrs, but there are too many differences between C++98 and later to cover everything, which would result in yet another split implementation (e.g. auto_ptr vs shared_ptr)
 static FFBProcessor*    ffbProcessor = NULL;
 static Timing*          timing       = NULL;
 static const FFBConfig* config       = NULL;

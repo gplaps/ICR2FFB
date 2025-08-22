@@ -5,6 +5,7 @@
 
 RateLimiter::RateLimiter() :
     lastDirection(0),
+    directionSmoothingFactor(0.3),
     lastSentMagnitude(-1),
     lastSentSignedMagnitude(0),
     lastSentDirection(0),

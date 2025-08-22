@@ -23,6 +23,7 @@ Checks:          '
   -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-use-default-member-init,
   -hicpp-no-array-decay,
   -hicpp-signed-bitwise,
   -hicpp-use-auto,

@@ -28,8 +28,8 @@ struct MovementDetector
     bool         isPaused;
     bool         pauseForceSet;
     bool         isFirstReading;
-    const int    movementThreshold       = 10;    // Frames to consider "paused"
-    const double movementThreshold_value = 0.001; // Very small movement threshold
+    const int    movementThreshold;       // Frames to consider "paused"
+    const double movementThreshold_value; // Very small movement threshold
 
     // deprecated variables - likely delete
     // bool hasEverMoved = false;
