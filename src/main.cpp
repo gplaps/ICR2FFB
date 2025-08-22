@@ -28,6 +28,7 @@
 #include "timing.h"
 #include "utilities.h"
 #include "window.h"
+#include <iostream>
 
 // === Shared Globals ===
 #if defined(HAS_STL_THREAD_MUTEX)

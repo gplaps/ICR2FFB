@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <cmath> // IWYU pragma: keep
 
 #if defined(__cplusplus) && __cplusplus < 201703L
 namespace std

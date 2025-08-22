@@ -24,6 +24,8 @@ FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name, bool opt
     }
     InitEffects(config);
     mInitialized = diDevice && (constant || damper || spring);
+
+    (void)optionalDevice; // unused - maybe needed to stop log messages for them
 }
 
 FFBDevice::~FFBDevice() {}
