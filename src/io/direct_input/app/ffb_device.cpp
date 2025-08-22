@@ -52,24 +52,40 @@ void FFBDevice::InitEffects(const FFBConfig& config)
     }
 }
 
+static double CheckOutOfRangeValue(double value, const std::wstring& effectName)
+{
+    if (value > 1.0 || value < -1.0)
+    {
+        LogMessage(L"[WARNING] Calculated " + effectName + L" effect out of range [-1:1]: " + std::to_wstring(value));
+        value = std::clamp(value, -1.0, 1.0);
+    }
+    if (!std ::isfinite((value)))
+    {
+        LogMessage(L"NaN encountered in effect: " + effectName);
+        value = 0;
+    }
+    return value;
+}
+
 void FFBDevice::Update(double constantStrength, double damperStrength, double springStrength, bool constantWithDirection)
 {
     if (constant)
     {
+        constantStrength           = CheckOutOfRangeValue(constantStrength, L"constant");
         double constantDirectInput = constantStrength * DEFAULT_DINPUT_GAIN_DBL;
-        SAFETY_CHECK(constantDirectInput);
         constant->Update(static_cast<LONG>(constantDirectInput), constantWithDirection);
     }
     if (damper)
     {
+        damperStrength = CheckOutOfRangeValue(damperStrength, L"damper");
+        CheckOutOfRangeValue(constantStrength, L"damper");
         double damperDirectInput = damperStrength * DEFAULT_DINPUT_GAIN_DBL;
-        SAFETY_CHECK(damperDirectInput);
         damper->Update(static_cast<LONG>(damperDirectInput));
     }
     if (spring)
     {
+        springStrength           = CheckOutOfRangeValue(springStrength, L"spring");
         double springDirectInput = springStrength * DEFAULT_DINPUT_GAIN_DBL;
-        SAFETY_CHECK(springDirectInput);
         spring->Update(static_cast<LONG>(springDirectInput));
     }
 }
