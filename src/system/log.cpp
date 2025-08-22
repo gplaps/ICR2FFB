@@ -14,13 +14,9 @@ void LogMessage(const std::wstring& msg)
 {
     if (!logger) { return; }
 
-    // try - because the calling thread might be suspended by the OS while writing to the logQueue (linesQueue.push_back()) and another thread tries to lock as well
-    // a multithread capable queue might be necessary to avoid dropping log messages, see e.g. concurrentQueue
-    if (!TRY_LOCK_MUTEX(Logger::mutex)) { return; } // avoids deadlocks at the expense of loosing this log message
-
+    LOCK_MUTEX(Logger::mutex);
     // Add to in-memory deque for optional UI display (if needed)
     logger->linesQueue.push_back(msg);
-
     UNLOCK_MUTEX(Logger::mutex);
 }
 
@@ -28,23 +24,29 @@ void PrintToLogFile()
 {
     if (!logger) { return; }
 
-    //Print log data
-    LOCK_MUTEX(Logger::mutex);
+    // Copy new log message to local variable
+    std::vector<std::wstring> queuedLines;
+    {
+        LOCK_MUTEX(Logger::mutex);
+        queuedLines = logger->linesQueue;
+        logger->linesQueue.clear();
+        UNLOCK_MUTEX(Logger::mutex);
+    }
 
-    // Append to log.txt
+    // Append to log file
     if (logger->file.is_open())
     {
-        for (size_t i = 0; i < logger->linesQueue.size(); ++i)
+        for (size_t i = 0; i < queuedLines.size(); ++i)
         {
-            logger->file << logger->linesQueue[i] << L'\n';
+            logger->file << queuedLines[i] << L'\n';
         }
-        if (logger->linesQueue.size())
+        if (queuedLines.size())
         {
             logger->file.flush(); // optional, performance penalty but maybe helpful as otherwise a few log lines could be lost if the app crashes
         }
     }
     // append new log messages
-    logger->lines.insert(logger->lines.end(), logger->linesQueue.begin(), logger->linesQueue.end());
+    logger->lines.insert(logger->lines.end(), queuedLines.begin(), queuedLines.end());
     // ensure log stays compact
     while (logger->lines.size() > Logger::maxLogLines)
     {
@@ -71,6 +73,13 @@ void PrintToLogFile()
         padded.resize(80, L' '); // pad to 80 characters to clear old line leftovers
         std::wcout << padded << L"\n";
     }
+}
 
-    UNLOCK_MUTEX(Logger::mutex);
+Logger::Logger(const char* filename) :
+    lines(),
+    file(filename, std::ios::trunc) {}
+
+Logger::~Logger()
+{
+    PrintToLogFile();
 }

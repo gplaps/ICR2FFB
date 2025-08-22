@@ -81,8 +81,8 @@ static void CloseCommon()
     SAFE_DELETE(ffbProcessor);
     SAFE_DELETE(timing);
     SAFE_DELETE(config);
-    SAFE_DELETE(logger);
     DirectInput::CloseInstance(); // only singleton, consider reworking the other structs to singletons as well or leave as is
+    SAFE_DELETE(logger);
 }
 
 static void CloseMutexes()
@@ -93,14 +93,15 @@ static void CloseMutexes()
 #endif
 }
 
-#define ENSURE(x)       \
-    if (!(x))           \
-    {                   \
-        CloseCommon();  \
-        CloseMutexes(); \
-        return -1;      \
-    }                   \
-    do {                \
+#define ENSURE(x)                             \
+    if (!(x))                                 \
+    {                                         \
+        std::wcout << L"Closing early ...\n"; \
+        CloseCommon();                        \
+        CloseMutexes();                       \
+        return -1;                            \
+    }                                         \
+    do {                                      \
     } while (0)
 
 // Where it all happens
