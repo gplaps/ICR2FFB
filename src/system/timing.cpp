@@ -54,7 +54,8 @@ void ThreadTimer::schedule() const
 #if defined(CALCULATE_WAIT) // predict when thread needs to wake up - results in less wasteful polling
     const double       currentTime = timeSinceStartInMs();
     const unsigned int waitTime    = static_cast<unsigned int>(nextTime - currentTime - SLACK_TIME_MS);
-    if (waitTime >= 1)
+    const bool messedUp = waitTime > static_cast<unsigned int>(interval);
+    if (waitTime >= 1 && !messedUp)
     {
 #    if defined(HAS_STL_THREAD_MUTEX)
         std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
