@@ -5,7 +5,7 @@
 
 // Create damper to make it feel like the steering is not powered, mostly for pitlane, maybe hairpin use
 DamperEffect::DamperEffect(const FFBConfig& config) :
-    maxDamper(5000.0),
+    maxDamper(5000.0),                                      // consider making configurable, replacing damper scale setting
     maxSpeed(config.GetDouble(L"effects", L"damper speed")) // Only goes to '40mph'
 {
     if (maxSpeed <= 0.0) { maxSpeed = 40.0; } // div-by-zero
@@ -25,5 +25,4 @@ double DamperEffect::Calculate(double speedMph) const
     const double damperRaw = lerp(maxDamper, minDamper, damperScale);
     const double damper01  = damperRaw / maxDamper;
     return damper01;
-    // return std::clamp(1.0 - damperScale,minDamper,1.0) * maxDamper;
 }

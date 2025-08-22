@@ -53,7 +53,7 @@ void FFBOutput::Update(double constant, double damper, double spring, bool pause
 {
     const double constantOut = constant * constantForceScale * masterForceScale;
     const double damperOut   = damper * damperForceScale * masterForceScale;
-    const double springOut   = spring /* * springForceScale*/ * masterForceScale;
+    const double springOut   = spring * springForceScale * masterForceScale;
     steeringDevice.Update(constantOut, damperOut, springOut, !paused);
     // pedals.Update(constantOut, damperOut, springOut, false);
 }

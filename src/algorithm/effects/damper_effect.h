@@ -3,7 +3,7 @@
 
 struct DamperEffect
 {
-    DamperEffect(const FFBConfig& config);
+    explicit DamperEffect(const FFBConfig& config);
     double LowSpeedDamperStrength(double speedMph) const;
     double Calculate(double speedMph) const;
 
