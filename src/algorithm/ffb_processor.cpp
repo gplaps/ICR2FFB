@@ -94,7 +94,11 @@ void FFBProcessor::Update()
             springStrength = springEffect.Calculate(1.0); // constant, nothing "dynamic", see comments in SpringEffect
 
             movementState  = movementDetector.Calculate(current, previous);
-            if (movementState == MovementDetector::MS_DRIVING)
+            if (movementState != MovementDetector::MS_DRIVING)
+            {
+                constantForceCalculation = ConstantForceEffectResult();
+            }
+            else
             {
                 //This is what will add the "Constant Force" effect if all the calculations work.
                 // Probably could smooth all this out
@@ -103,10 +107,6 @@ void FFBProcessor::Update()
                     enableRateLimit,                      // settings
                     deadzoneForceScale,
                     brakingForceScale, weightForceScale);
-            }
-            else
-            {
-                constantForceCalculation = ConstantForceEffectResult();
             }
         }
     }
