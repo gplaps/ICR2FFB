@@ -69,12 +69,14 @@ bool DirectInput::Valid() const
 
 void DirectInput::LogDeviceList() const
 {
-    // Show available devices on console
+    // Show available devices on console and in log file
     const std::vector<std::wstring>& deviceList = AvailableDevices();
     for (size_t i = 0; i < deviceList.size(); ++i)
     {
         // user facing indices starting at 1
-        std::wcout << std::to_wstring(i + 1) << deviceList[i] << L'\n';
+        std::wstring msg(std::to_wstring(i + 1) + L": " + deviceList[i]);
+        std::wcout << msg << L'\n';
+        LogMessage(msg);
     }
 }
 
@@ -144,13 +146,14 @@ void DirectInput::UpdateAvailableDevice()
 {
     if (directInputObject)
     {
-        LogMessage(L"[INFO] Enumerating available game controllers");
         knownDevices.clear();
-        const HRESULT hr = directInputObject->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, this, DIEDFL_ATTACHEDONLY);
+        EnumDeviceHelper edh(this);
+        const HRESULT    hr = directInputObject->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, &edh, DIEDFL_ATTACHEDONLY);
         if (FAILED(hr))
         {
             LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
         }
+        LogMessage(L"[INFO] Available game controllers: " + std::to_wstring(knownDevices.size()));
     }
     else
     {
@@ -173,6 +176,8 @@ std::vector<std::wstring> DirectInput::AvailableDevices() const
 IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNameOrIndex)
 {
     IDirectInputDevice8* device = NULL;
+    if (productNameOrIndex.empty()) { return NULL; }
+
     // by index
     try
     {
@@ -181,10 +186,11 @@ IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNa
 #    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // wcstoul() unsafe
 #endif
         unsigned long targetIndex = std::wcstoul(productNameOrIndex.c_str(), NULL, 10);
+        LogMessage(L"[INFO] Checking " + productNameOrIndex + L": " + std::to_wstring(targetIndex));
 #if defined(__clang__)
 #    pragma clang diagnostic pop
 #endif
-        if (targetIndex != ULONG_MAX)
+        if (targetIndex != ULONG_MAX && targetIndex != 0)
         {
             device = CreateDevice(targetIndex);
             if (device)
@@ -206,11 +212,6 @@ IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNa
         {
             LogMessage(L"[INFO] Found matching device by name: " + productNameOrIndex);
         }
-    }
-
-    if (!device)
-    {
-        LogMessage(L"[ERROR] Failed to find device " + productNameOrIndex);
     }
 
     return device;

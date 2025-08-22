@@ -84,10 +84,8 @@ bool FFBDevice::InitDevice(const std::wstring& productNameOrIndex)
     {
         if (!productNameOrIndex.empty())
         {
-            LogMessage(L"[ERROR] Failed to initialize DirectInput device: " + productNameOrIndex);
             LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
             // // SHOW ERROR ON CONSOLE immediately
-            std::wcout << L"[ERROR] Could not find controller: " << productNameOrIndex << L'\n';
             std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
             // std::wcout << L"Press any key to exit..." << L'\n';
             // std::cin.get();
