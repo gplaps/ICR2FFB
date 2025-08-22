@@ -85,8 +85,10 @@ static void CloseCommon()
 
 static void CloseMutexes()
 {
+#if !defined(HAS_STL_THREAD_MUTEX)
     SAFE_DELETE(Logger::mutex);
     SAFE_DELETE(TelemetryDisplay::mutex);
+#endif
 }
 
 #define ENSURE(x)       \

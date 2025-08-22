@@ -44,7 +44,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 
     std::wostringstream ss;
     ss << std::fixed << std::setprecision(2); // Set formatting for stringstream too
-    ss << L"Master Force Scale: " << displayData.masterForceValue << L"%";
+    ss << L"Master Force Scale: " << displayData.masterForceScale * 100.0 << L"%";
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n"; // Empty line
 
@@ -54,12 +54,12 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 
     ss.str(L"");
     ss.clear();
-    ss << L"dLat: " << std::setw(10) << displayData.raw.dlat << L"   dLong: " << std::setw(10) << displayData.raw.dlong;
+    ss << L"dLat: " << std::setw(10) << displayData.raw.pos.dlat << L"   dLong: " << std::setw(10) << displayData.raw.pos.dlong;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L"");
     ss.clear();
-    ss << L"Centerline Rotation: " << std::setw(8) << displayData.raw.rotation_deg << L" deg";
+    ss << L"Centerline Rotation: " << std::setw(8) << displayData.raw.pos.rotation_deg << L" deg";
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L"");

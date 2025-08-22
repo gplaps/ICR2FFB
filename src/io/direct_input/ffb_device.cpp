@@ -2,305 +2,127 @@
 
 #include "constants.h"
 #include "direct_input.h"
+#include "ffb_effect.h"
 #include "log.h"
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <iostream>
 
-FFBDevice::FFBDevice(const FFBConfig& configIn) :
+FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name) :
     diDevice(NULL),
-    config(configIn),
     js(),
-    constantForceEffect(NULL),
-    damperEffect(NULL),
-    springEffect(NULL),
-    constantStarted(false),
-    damperStarted(false),
-    springStarted(false) {}
-
-// === Force Effect Creators ===
-void FFBDevice::CreateConstantForceEffect()
+    constant(NULL),
+    damper(NULL),
+    spring(NULL),
+    productName(name)
 {
-    if (!diDevice) { return; }
-
-    DICONSTANTFORCE cf        = {0};
-
-    DIEFFECT eff              = {};
-    eff.dwSize                = sizeof(DIEFFECT);
-    eff.dwFlags               = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration            = INFINITE;
-    eff.dwGain                = DEFAULT_DINPUT_GAIN;
-    eff.dwTriggerButton       = DIEB_NOTRIGGER;
-    eff.cAxes                 = 1;
-    DWORD axes[1]             = {DIJOFS_X};
-    LONG  dir[1]              = {0};
-    eff.rgdwAxes              = axes;
-    eff.rglDirection          = dir;
-    eff.cbTypeSpecificParams  = sizeof(DICONSTANTFORCE);
-    eff.lpvTypeSpecificParams = &cf;
-
-    DIPROPRANGE diprg         = {};
-    diprg.diph.dwSize         = sizeof(DIPROPRANGE);
-    diprg.diph.dwHeaderSize   = sizeof(DIPROPHEADER);
-    diprg.diph.dwHow          = DIPH_BYOFFSET;
-    diprg.diph.dwObj          = DIJOFS_X;
-    diprg.lMin                = -static_cast<LONG>(DEFAULT_DINPUT_GAIN);
-    diprg.lMax                = DEFAULT_DINPUT_GAIN;
-    diDevice->SetProperty(DIPROP_RANGE, &diprg.diph);
-
-    const HRESULT hr = diDevice->CreateEffect(GUID_ConstantForce, &eff, &constantForceEffect, NULL);
-    if (FAILED(hr))
+    // InitDevice();
+    InitEffects(config);
+    if (!DirectInputSetup())
     {
-        LogMessage(L"[ERROR] Failed to create constant force effect. HRESULT: 0x" + std::to_wstring(hr));
+        return;
     }
-    else
+    mInitialized = true;
+}
+
+// FFBDevice::FFBDevice(IDirectInputDevice8* diPtr, const std::wstring& name) :
+//     diDevice(diPtr),
+//     js(),
+//     constant(NULL),
+//     damper(NULL),
+//     spring(NULL),
+//     productName(name)
+// {
+//     if (!DirectInputSetup())
+//     {
+//         return;
+//     }
+//     mInitialized = true;
+// }
+
+void FFBDevice::InitEffects(const FFBConfig& config)
+{
+    if (!mInitialized) { return; }
+
+    // Create FFB effects as needed
+    if (config.GetBool(L"effects", L"constant"))
     {
-        LogMessage(L"[INFO] Initial constant force created");
+        constant = new DiConstantEffect(diDevice);
+    }
+    if (config.GetBool(L"effects", L"damper"))
+    {
+        damper = new DiDamperEffect(diDevice);
+    }
+    if (config.GetBool(L"effects", L"spring"))
+    {
+        spring = new DiSpringEffect(diDevice);
     }
 }
 
-void FFBDevice::CreateDamperEffect()
+void FFBDevice::Update(double constantStrength, double damperStrength, double springStrength, bool constantWithDirection)
 {
-    if (!diDevice) { return; }
-
-    DICONDITION condition          = {};
-    condition.lOffset              = 0;
-    condition.lPositiveCoefficient = 8000;
-    condition.lNegativeCoefficient = 8000;
-    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
-    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
-    condition.lDeadBand            = 0;
-
-    DIEFFECT eff                   = {};
-    eff.dwSize                     = sizeof(DIEFFECT);
-    eff.dwFlags                    = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration                 = INFINITE;
-    eff.dwGain                     = DEFAULT_DINPUT_GAIN;
-    eff.dwTriggerButton            = DIEB_NOTRIGGER;
-    eff.cAxes                      = 1;
-    DWORD axes[1]                  = {DIJOFS_X};
-    LONG  dir[1]                   = {0};
-    eff.rgdwAxes                   = axes;
-    eff.rglDirection               = dir;
-    eff.cbTypeSpecificParams       = sizeof(DICONDITION);
-    eff.lpvTypeSpecificParams      = &condition;
-
-    const HRESULT hr               = diDevice->CreateEffect(GUID_Damper, &eff, &damperEffect, NULL);
-    if (FAILED(hr) || !damperEffect)
+    if (constant)
     {
-        LogMessage(L"[ERROR] Failed to create damper effect. HRESULT: 0x" + std::to_wstring(hr));
+        double constantDirectInput = constantStrength * DEFAULT_DINPUT_GAIN_DBL;
+        constant->Update(static_cast<LONG>(constantDirectInput), constantWithDirection);
     }
-    else
+    if (damper)
     {
-        LogMessage(L"[INFO] Initial damper effect created");
+        double damperDirectInput = damperStrength * DEFAULT_DINPUT_GAIN_DBL;
+        damper->Update(static_cast<LONG>(damperDirectInput));
+    }
+    if (spring)
+    {
+        double springDirectInput = springStrength * DEFAULT_DINPUT_GAIN_DBL;
+        spring->Update(static_cast<LONG>(springDirectInput));
     }
 }
 
-void FFBDevice::CreateSpringEffect()
+void FFBDevice::Start()
 {
-    if (!diDevice) { return; }
-
-    DICONDITION condition          = {};
-    condition.lOffset              = 0;
-    condition.lPositiveCoefficient = 8000;
-    condition.lNegativeCoefficient = 8000;
-    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
-    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
-    condition.lDeadBand            = 0;
-
-    DIEFFECT eff                   = {};
-    eff.dwSize                     = sizeof(DIEFFECT);
-    eff.dwFlags                    = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration                 = INFINITE;
-    eff.dwGain                     = DEFAULT_DINPUT_GAIN;
-    eff.dwTriggerButton            = DIEB_NOTRIGGER;
-    eff.cAxes                      = 1;
-    DWORD axes[1]                  = {DIJOFS_X};
-    LONG  dir[1]                   = {0};
-    eff.rgdwAxes                   = axes;
-    eff.rglDirection               = dir;
-    eff.cbTypeSpecificParams       = sizeof(DICONDITION);
-    eff.lpvTypeSpecificParams      = &condition;
-
-    const HRESULT hr               = diDevice->CreateEffect(GUID_Spring, &eff, &springEffect, NULL);
-    if (FAILED(hr) || !springEffect)
-    {
-        LogMessage(L"[ERROR] Failed to create spring effect. HRESULT: 0x" + std::to_wstring(hr));
-    }
-    else
-    {
-        LogMessage(L"[INFO] Initial spring effect created");
-    }
+    if (constant) { constant->Start(); }
+    if (damper) { damper->Start(); }
+    if (spring) { spring->Start(); }
 }
 
-void FFBDevice::UpdateDamperEffect(LONG damperStrength)
-{
-    if (!damperEffect) { return; }
+// int FFBDevice::InitDevice()
+// {
+//     // Initialize DirectInput device
+//     // I don't really know how this works yet. It enabled "exclusive" mode on the device and calls it a "type 2" joystick.. OK!
+//     if (!directInput->InitializeDevice(*this))
+//     {
+//         // LogMessage(L"[ERROR] Failed to initialize DirectInput or find device: " + config.GetString(L"base", L"device"));
+//         // LogMessage(L"[ERROR] Available devices:");
 
-    DICONDITION condition          = {};
-    condition.lOffset              = 0;
-    condition.lPositiveCoefficient = damperStrength;
-    condition.lNegativeCoefficient = damperStrength;
-    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
-    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
-    condition.lDeadBand            = 0;
+//         // // List available devices to help user
+//         // directInput->UpdateAvailableDevice();
 
-    DIEFFECT eff                   = {};
-    eff.dwSize                     = sizeof(DIEFFECT);
-    eff.dwFlags                    = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.cAxes                      = 1;
-    DWORD axes[1]                  = {DIJOFS_X};
-    LONG  dir[1]                   = {0};
-    eff.rgdwAxes                   = axes;
-    eff.rglDirection               = dir;
-    eff.cbTypeSpecificParams       = sizeof(DICONDITION);
-    eff.lpvTypeSpecificParams      = &condition;
+//         // LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
 
-    const HRESULT hr               = damperEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
-    if (FAILED(hr))
-    {
-        std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << L'\n';
-    }
-}
+//         // // SHOW ERROR ON CONSOLE immediately
+//         // std::wcout << L"[ERROR] Could not find controller: " << config.GetString(L"base", L"device") << L'\n';
+//         // std::wcout << L"[ERROR] Available devices:" << L'\n';
 
-void FFBDevice::UpdateSpringEffect(LONG springStrength)
-{
-    if (!springEffect) { return; }
+//         DirectInput::LogDeviceList();
+//         std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
+//         std::wcout << L"Press any key to exit..." << L'\n';
+//         std::cin.get();
+//         return 1;
+//     }
 
-    DICONDITION condition          = {};
-    condition.lOffset              = 0;
-    condition.lPositiveCoefficient = springStrength;
-    condition.lNegativeCoefficient = springStrength;
-    condition.dwPositiveSaturation = DEFAULT_DINPUT_GAIN;
-    condition.dwNegativeSaturation = DEFAULT_DINPUT_GAIN;
-    condition.lDeadBand            = 0; // Reduce deadzone
+//     LogMessage(L"[INFO] Device found and initialized successfully");
 
-    DWORD axes[1]                  = {DIJOFS_X};
-    LONG  direction[1]             = {0};
+//     return DirectInputSetup();
+// }
 
-    DIEFFECT eff                   = {};
-    eff.dwSize                     = sizeof(DIEFFECT);
-    eff.dwFlags                    = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration                 = INFINITE;
-    eff.dwSamplePeriod             = 0;
-    eff.dwGain                     = DI_FFNOMINALMAX;
-    eff.cAxes                      = 1;
-    eff.rgdwAxes                   = axes;
-    eff.rglDirection               = direction;
-    eff.lpEnvelope                 = NULL;
-    eff.cbTypeSpecificParams       = sizeof(DICONDITION);
-    eff.lpvTypeSpecificParams      = &condition;
-    eff.dwStartDelay               = 0;
-
-    const HRESULT hr               = springEffect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
-    if (FAILED(hr))
-    {
-        std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << L'\n';
-    }
-}
-
-void FFBDevice::UpdateConstantForceEffect(LONG magnitude, bool withDirection)
-{
-    if (!constantForceEffect) { return; }
-
-    DICONSTANTFORCE cf        = {magnitude};
-    DIEFFECT        eff       = {};
-    eff.dwSize                = sizeof(DIEFFECT);
-    eff.dwFlags               = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    eff.dwDuration            = INFINITE;
-    eff.dwGain                = DEFAULT_DINPUT_GAIN;
-    eff.dwTriggerButton       = DIEB_NOTRIGGER;
-    eff.cAxes                 = 1;
-    DWORD axes[1]             = {DIJOFS_X};
-    LONG  dir[1]              = {0}; // ← Always zero direction now, this broke Moza wheels
-    eff.rgdwAxes              = axes;
-    eff.rglDirection          = dir;
-    eff.cbTypeSpecificParams  = sizeof(DICONSTANTFORCE);
-    eff.lpvTypeSpecificParams = &cf;
-
-    // Only set magnitude params, skip direction
-    const DWORD   parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
-    const HRESULT hr         = constantForceEffect->SetParameters(&eff, parameters);
-    if (FAILED(hr))
-    {
-        std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << L'\n';
-    }
-}
-
-void FFBDevice::StartConstant()
-{
-    if (!constantStarted)
-    {
-        constantForceEffect->Start(1, 0);
-        constantStarted = true;
-        LogMessage(L"[INFO] Constant force started");
-    }
-}
-
-void FFBDevice::StartDamper()
-{
-    if (!damperStarted && damperEffect)
-    {
-        damperEffect->Start(1, 0);
-        damperStarted = true;
-        LogMessage(L"[INFO] Damper effect started");
-    }
-}
-
-void FFBDevice::StartSpring()
-{
-    if (!springStarted && springEffect)
-    {
-        springEffect->Start(1, 0);
-        springStarted = true;
-        LogMessage(L"[INFO] Spring effect started");
-    }
-}
-
-int FFBDevice::InitDevice()
-{
-    // Initialize DirectInput device
-    // I don't really know how this works yet. It enabled "exclusive" mode on the device and calls it a "type 2" joystick.. OK!
-    if (!DirectInput::InitializeDevice(*this))
-    {
-        LogMessage(L"[ERROR] Failed to initialize DirectInput or find device: " + config.GetString(L"base", L"device"));
-        LogMessage(L"[ERROR] Available devices:");
-
-        // List available devices to help user
-        DirectInput::ListAvailableDevices();
-
-        LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
-
-        // SHOW ERROR ON CONSOLE immediately
-        std::wcout << L"[ERROR] Could not find controller: " << config.GetString(L"base", L"device") << L'\n';
-        std::wcout << L"[ERROR] Available devices:" << L'\n';
-
-        // Show available devices on console too
-        DirectInput::ShowAvailableDevicesOnConsole();
-
-        std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
-        std::wcout << L"Press any key to exit..." << L'\n';
-        std::cin.get();
-        return 1;
-    }
-
-    LogMessage(L"[INFO] Device found and initialized successfully");
-
-    return DirectInputSetup();
-}
-
-int FFBDevice::DirectInputSetup() const
+bool FFBDevice::DirectInputSetup() const
 {
     // ONLY configure device if it was found successfully
     HRESULT hr = diDevice->SetDataFormat(&c_dfDIJoystick2);
     if (FAILED(hr))
     {
         LogMessage(L"[ERROR] Failed to set data format: 0x" + std::to_wstring(hr));
-
-        std::wcout << L"[ERROR] Failed to set data format: 0x" << std::hex << hr << L'\n';
-        std::wcout << L"Press any key to exit..." << L'\n';
-        std::cin.get();
-        return 1;
+        return false;
     }
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_WIN2K
@@ -309,12 +131,7 @@ int FFBDevice::DirectInputSetup() const
     {
         LogMessage(L"[ERROR] Failed to set cooperative level: 0x" + std::to_wstring(hr));
         LogMessage(L"[ERROR] Another application may be using the device exclusively");
-
-        std::wcout << L"[ERROR] Failed to set cooperative level: 0x" << std::hex << hr << L'\n';
-        std::wcout << L"[ERROR] Another application may be using the device exclusively" << L'\n';
-        std::wcout << L"Press any key to exit..." << L'\n';
-        std::cin.get();
-        return 1;
+        return false;
     }
 #endif
 
@@ -328,15 +145,7 @@ int FFBDevice::DirectInputSetup() const
         LogMessage(L"[INFO] Device acquired successfully");
     }
 
-    return 0;
-}
-
-void FFBDevice::Start()
-{
-}
-
-void FFBDevice::Update()
-{
+    return true;
 }
 
 void FFBDevice::Poll()

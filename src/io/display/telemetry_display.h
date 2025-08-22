@@ -14,11 +14,11 @@ struct TelemetryDisplay
             raw(),
             slip(),
             vehicleDynamics(),
-            masterForceValue(0.0) {}
+            masterForceScale(0.0) {}
         RawTelemetry              raw;
         CalculatedSlip            slip; // Legacy calculated data
         CalculatedVehicleDynamics vehicleDynamics;
-        double                    masterForceValue; // or create another struct containing this if more data is of interest for display
+        double                    masterForceScale; // or create another struct containing this if more data is of interest for display
         ConstantForceEffectResult constantForce;
     };
 

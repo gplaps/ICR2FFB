@@ -1,7 +1,9 @@
 #include "ffb_processor.h"
 
+#include "constants.h"
 #include "lateral_load.h"
 #include "log.h"
+#include "math_utilities.h"
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
@@ -9,16 +11,17 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     current(),
     previous(),
     hasFirstReading(false),
-    noMovementFrames(0),
-    movementThreshold(3),
-    effectPaused(false),
     previousPos(),
     hasFirstPos(false),
-    constantForceCalculation(),
-    constantForceEffect(),
+    movementDetector(),
+    enableRateLimit(false),
     slip(),
     vehicleDynamics(),
     load(),
+    constantForceCalculation(),
+    constantForceEffect(),
+    damperEffect(),
+    springEffect(),
     telemetryReader(config),
     ffbOutput(config),
     displayData(),
@@ -36,6 +39,18 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     }
 
     mInitialized = true;
+}
+
+void FFBProcessor::Init(const FFBConfig& config)
+{
+    // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
+    // Would be nice to add a % per effect in the future
+    enableRateLimit              = config.GetBool(L"effects", L"limit");
+    const bool enableWeightForce = config.GetBool(L"effects", L"weight");
+
+    deadzoneForceScale           = saturate(config.GetDouble(L"effects", L"deadzone") / 100.0);
+    weightForceScale             = enableWeightForce ? saturate(config.GetDouble(L"effects", L"weight scale") / 100.0) : 0.0;
+    brakingForceScale            = std::clamp(config.GetDouble(L"effects", L"braking scale") / 100.0, 0.0, 10.0 /* subject to change - this restricts user*/);
 }
 
 bool FFBProcessor::Valid() const { return mInitialized; }
@@ -63,74 +78,39 @@ void FFBProcessor::Update()
     // The goal should be to simply call ffbOutput.update(constant,damper,spring) with final effect scale and keep application logic / force calculation in this class, FFBOutput just scales and toggles the channels and the FFBDevice implements the directInput API translation.
     // Effect calculations are "orchestrated" in FFBProcessor ... with how many submodules seem right
 
-    // Update Effects
-    ffbOutput.UpdateDamper(current.speed_mph);
-    ffbOutput.UpdateSpring();
-
-    ffbOutput.Update();
+    // Update Effects results
+    double                          damperStrength = 0.0;
+    double                          springStrength = 0.0;
+    MovementDetector::MovementState movementState  = MovementDetector::MS_UNKNOWN;
 
     if (!hasFirstReading)
     {
-        previous        = current;
-        hasFirstReading = true;
+        previous                 = current;
+        hasFirstReading          = true;
+        constantForceCalculation = ConstantForceEffectResult();
     }
     else
     {
         if (ProcessTelemetryInput())
         {
-            if (ffbOutput.enableConstantForce)
-            {
-                //This is what will add the "Constant Force" effect if all the calculations work.
-                // Probably could smooth all this out
-                constantForceCalculation = constantForceEffect.Calculate(
-                    current, load, slip, vehicleDynamics,                   // inputs
-                    ffbOutput.enableWeightForce, ffbOutput.enableRateLimit, // settings - thats where it might need restructuring of the implementation, probably all the scales should be kept in FFBOutput and not be added in this function. likely make the Result struct contain seperate channels and do the multiply with scales in FFBOutput depending on the enable flags
-                    ffbOutput.masterForceScale, ffbOutput.deadzoneForceScale,
-                    ffbOutput.constantForceScale, ffbOutput.brakingForceScale, ffbOutput.weightForceScale, ffbOutput.invert);
-                previousPos = current;
+            // Update Effects
+            damperStrength = damperEffect.Calculate(current.speed_mph);
+            springStrength = springEffect.Calculate(1.0); // constant, nothing "dynamic", see comments in SpringEffect
 
-                ffbOutput.UpdateConstantForce(constantForceCalculation);
-            }
+            movementState  = movementDetector.Calculate(current);
 
-            /*
-            // Auto-pause force if not moving
-            // I think this is broken or I could detect pause in a better way
-            // Maybe DLONG not moving?
-            bool isStationary = std::abs(current.dlong - previous.dlong) < 0.01;
-            if (isStationary) {
-                noMovementFrames++;
-                if (noMovementFrames >= movementThreshold && !effectPaused) {
-                    //add damper and spring?
-                    constantForceEffect->Stop();
-                    effectPaused = true;
-                    LogMessage(L"[INFO] FFB paused due to no movement");
-                }
-            }
-            else {
-                noMovementFrames = 0;
-                //  if (effectPaused) {
-                    //add damper and spring?
-                //      constantForceEffect->Start(1, 0);
-                //      effectPaused = false;
-                //      std::wcout << L"FFB resumed\n";
-                //  }
-                // Added Alpha v0.6 to prevent issues with Moza?
-                if (effectPaused) {
-                    HRESULT startHr = constantForceEffect->Start(1, 0);
-                    if (FAILED(startHr)) {
-                        LogMessage(L"[ERROR] Failed to restart constant force: 0x" + std::to_wstring(startHr));
-                    }
-                    else {
-                        effectPaused = false;
-                        LogMessage(L"[INFO] FFB resumed");
-                    }
-                }   
-            }
-            */
-
-            UpdateDisplayData();
+            //This is what will add the "Constant Force" effect if all the calculations work.
+            // Probably could smooth all this out
+            constantForceCalculation = constantForceEffect.Calculate(
+                current, load, slip, vehicleDynamics, // inputs
+                enableRateLimit,                      // settings
+                deadzoneForceScale,
+                brakingForceScale, weightForceScale);
+            previousPos = current;
         }
     }
+    ffbOutput.Update(constantForceCalculation.magnitude10000 / static_cast<double>(MAX_FORCE_IN_N /* or is this DEFAULT_DINPUT_GAIN ? */), damperStrength, springStrength, constantForceCalculation.paused);
+    UpdateDisplayData();
 }
 
 bool FFBProcessor::ProcessTelemetryInput()
@@ -156,7 +136,7 @@ void FFBProcessor::UpdateDisplayData()
     displayData.slip             = slip;
     displayData.vehicleDynamics  = vehicleDynamics;
 
-    displayData.masterForceValue = ffbOutput.masterForceValue;
+    displayData.masterForceScale = ffbOutput.masterForceScale;
     displayData.constantForce    = constantForceCalculation;
 
     UNLOCK_MUTEX(TelemetryDisplay::mutex);

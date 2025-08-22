@@ -17,8 +17,10 @@
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #    define NO_EXCEPT noexcept
+#    define OVERRIDE  override
 #else
 #    define NO_EXCEPT
+#    define OVERRIDE
 #endif
 
 // C++98 does not contain threads and mutexes, so use Windows API instead

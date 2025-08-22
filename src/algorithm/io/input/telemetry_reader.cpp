@@ -366,12 +366,14 @@ void TelemetryReader::ConvertCarData()
 {
     // Set variables to be used everywhere else
     // Little bit of math to make the data sensible. Save big calculations for specific "Calculation" sets
-    out.dlong        = static_cast<double>(carData.data[4]);
-    out.dlat         = static_cast<double>(carData.data[5]);
-    out.rotation_deg = static_cast<double>(carData.data[7]) / static_cast<double>(INT_MAX - 1) * 180.0;
-    out.speed_mph    = static_cast<double>(carData.data[8]) / 75.0;
-    out.steering_deg = static_cast<double>(carData.data[10]) / 11600000.0;
-    out.steering_raw = static_cast<double>(carData.data[10]);
+    out.pos.dlong        = static_cast<double>(carData.data[4]);
+    out.pos.dlat         = static_cast<double>(carData.data[5]);
+    out.pos.rotation_deg = static_cast<double>(carData.data[7]) / static_cast<double>(INT_MAX - 1) * 180.0;
+
+    out.speed_mph        = static_cast<double>(carData.data[8]) / 75.0;
+
+    out.steering_deg     = static_cast<double>(carData.data[10]) / 11600000.0;
+    out.steering_raw     = static_cast<double>(carData.data[10]);
 }
 
 void TelemetryReader::ConvertTireData()

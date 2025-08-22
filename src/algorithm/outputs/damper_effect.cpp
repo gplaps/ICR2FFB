@@ -13,8 +13,8 @@ double              DamperEffect::LowSpeedDamperStrength(double speedMph)
     return t;
 }
 
-double DamperEffect::Calculate(double speedMph, double masterForceScale, double damperForceScale)
+double DamperEffect::Calculate(double speedMph)
 {
     const double damperScale = LowSpeedDamperStrength(speedMph);
-    return ((1.0 - damperScale) * maxDamper * masterForceScale) * damperForceScale;
+    return (1.0 - damperScale) * maxDamper;
 }

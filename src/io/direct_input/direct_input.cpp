@@ -1,12 +1,14 @@
 #include "direct_input.h"
 
+#include "ffb_device.h"
 #include "log.h"
 #include "string_utilities.h"
 
 #include <iostream>
 #include <string>
 
-LPDIRECTINPUT8 DirectInput::directInput = NULL;
+// "singleton"
+DirectInput* directInput = NULL;
 
 struct EnumDeviceHelper
 {
@@ -19,91 +21,124 @@ struct EnumDeviceHelper
     int          currentIndex;
 };
 
-static BOOL CALLBACK ConsoleListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
+struct EnumDeviceHelper2
 {
-    int*               index      = static_cast<int*>(pContext);
-    const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
-    std::wcout << L"  " << *index << L": " << deviceName << L'\n';
-    (*index)++;
-    return DIENUM_CONTINUE;
+    explicit EnumDeviceHelper2(DirectInput* d) :
+        di(d) {}
+    DirectInput* di;
+};
+
+DirectInput::DirectInputDevice* DirectInput::GetDevice(const std::wstring& productName)
+{
+    for (size_t i = 0; i < knownDevices.size(); ++i)
+    {
+        if (productName == ToWideString(knownDevices[i].instance.tszProductName))
+        {
+            return &knownDevices[i];
+        }
+    }
+    LogMessage(L"[ERROR] Failed to find device by name: " + productName);
+    return NULL;
 }
 
-static BOOL CALLBACK EnumDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
+DirectInput::DirectInputDevice* DirectInput::GetDevice(size_t index)
 {
-    if (!pContext) { return DIENUM_CONTINUE; }
-
-    EnumDeviceHelper* edh         = static_cast<EnumDeviceHelper*>(pContext);
-    edh->currentIndex             = 1;
-    const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
-
-    // First try exact name match
-    if (deviceName == edh->targetDeviceName)
+    for (size_t i = 0; i < knownDevices.size(); ++i)
     {
-        LogMessage(L"[INFO] Found matching device by name: " + deviceName);
-        const HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);
+        if (i == index - 1)
+        {
+            return &knownDevices[i];
+        }
+    }
+    LogMessage(L"[ERROR] Failed to find device by index: " + std::to_wstring(index) + L" is out of range " + std::to_wstring(knownDevices.size() + 1));
+    return NULL;
+}
+
+// consider changing the following three to IDirectInputDevice8 ... thats where this rework is undecided and becomes unclean
+FFBDevice* DirectInput::CreateDevice(const std::wstring& productName)
+{
+    DirectInputDevice* device = GetDevice(productName);
+    return CreateDeviceInternal(device);
+}
+
+FFBDevice* DirectInput::CreateDevice(size_t index)
+{
+    DirectInputDevice* device = GetDevice(index);
+    return CreateDeviceInternal(device);
+}
+
+FFBDevice* DirectInput::CreateDeviceInternal(DirectInputDevice* device)
+{
+    if (device)
+    {
+        const HRESULT hr = DirectInput::directInputObject->CreateDevice(device->instance.guidInstance, &device->runtime, NULL);
         if (FAILED(hr))
         {
             LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
-            edh->currentIndex++;
-            return DIENUM_CONTINUE;
+            return NULL;
         }
-        LogMessage(L"[INFO] Successfully created device interface");
-        edh->currentIndex = 1; // Reset for next time
-        return DIENUM_STOP;
+        else
+        {
+            return new FFBDevice(device->runtime, ToWideString(device->instance.tszProductName));
+        }
     }
+    return NULL;
+}
 
-    // If name didn't match, check if targetDeviceName is a number (index)
+static FFBDevice* CreateTheDeviceFromConfig(const FFBConfig& config)
+{
+    FFBDevice*          device     = NULL;
+    const std::wstring& deviceName = config.GetString(L"base", L"device");
+    // by index
     try
     {
-        int targetIndex = std::stoi(edh->targetDeviceName);
-        if (edh->currentIndex == targetIndex)
+        unsigned long targetIndex = std::stoul(deviceName);
+        if (targetIndex > 0)
         {
-            LogMessage(L"[INFO] Found matching device by index " + std::to_wstring(edh->currentIndex) + L": " + deviceName);
-            const HRESULT hr = DirectInput::directInput->CreateDevice(pdidInstance->guidInstance, &edh->device->diDevice, NULL);
-            if (FAILED(hr))
+            device = directInput->CreateDevice(targetIndex);
+            if (device)
             {
-                LogMessage(L"[ERROR] Failed to create device: 0x" + std::to_wstring(hr));
-                edh->currentIndex++;
-                return DIENUM_CONTINUE;
+                LogMessage(L"[INFO] Found matching device by index " + std::to_wstring(targetIndex) + L": " + deviceName);
             }
-            LogMessage(L"[INFO] Successfully created device interface");
-            return DIENUM_STOP;
         }
     }
     catch (const std::exception&) // NOLINT(bugprone-empty-catch)
     {
-        // targetDeviceName is not a valid number, that's fine
-        // We already tried name matching above
+        // not a number
     }
 
-    edh->currentIndex++;
-    return DIENUM_CONTINUE;
+    // by name
+    if (!device)
+    {
+        device = directInput->CreateDevice(deviceName);
+    }
+
+    if (!device)
+    {
+        LogMessage(L"[ERROR] Failed to find device " + deviceName);
+    }
+    return device;
 }
 
-// Device lists for better error messages
+// Fill Device lists
 static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
-    int*               index      = static_cast<int*>(pContext);
-    const std::wstring deviceName = ToWideString(pdidInstance->tszProductName);
-    LogMessage(L"[INFO] Available device " + std::to_wstring(*index) + L": " + deviceName);
-    (*index)++;
+    DirectInput* edh2 = static_cast<DirectInput*>(pContext);
+    edh2->knownDevices.push_back(DirectInput::DirectInputDevice(*pdidInstance));
     return DIENUM_CONTINUE; // Continue enumerating all devices
 }
 
-void DirectInput::ListAvailableDevices()
+void DirectInput::UpdateAvailableDevice()
 {
-    if (directInput)
+    if (directInputObject)
     {
-        int index = 1;
-        LogMessage(L"[INFO] Enumerating available game controllers:");
-        const HRESULT hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, &index, DIEDFL_ATTACHEDONLY);
+        LogMessage(L"[INFO] Enumerating available game controllers");
+        knownDevices.clear();
+        EnumDeviceHelper2 edh2(this);
+        const HRESULT     hr = directInputObject->EnumDevices(DI8DEVCLASS_GAMECTRL, ListDevicesCallback, &edh2, DIEDFL_ATTACHEDONLY);
         if (FAILED(hr))
         {
             LogMessage(L"[ERROR] Failed to enumerate devices: 0x" + std::to_wstring(hr));
-        }
-        else
-        {
-            LogMessage(L"[INFO] Device enumeration complete");
         }
     }
     else
@@ -112,49 +147,78 @@ void DirectInput::ListAvailableDevices()
     }
 }
 
-void DirectInput::ShowAvailableDevicesOnConsole()
+std::vector<std::wstring> DirectInput::AvailableDevices() const
 {
-    if (directInput)
+    std::vector<std::wstring> deviceNames;
+    deviceNames.reserve(knownDevices.size());
+    for (size_t i = 0; i < knownDevices.size(); ++i)
     {
-        int index = 1;
-        std::wcout << L"Available devices:" << L'\n';
-        directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, ConsoleListDevicesCallback, &index, DIEDFL_ATTACHEDONLY);
-        std::wcout << L"You can use either the device name or index number in your INI file." << L'\n';
+        deviceNames.push_back(ToWideString(knownDevices[i].instance.tszProductName));
     }
-    else
-    {
-        std::wcout << L"  (Could not enumerate devices - DirectInput not initialized)" << L'\n';
-    }
+    return deviceNames;
 }
 
 // Kick-off DirectInput
 bool DirectInput::InitializeDevice(FFBDevice& device)
 {
-    LogMessage(L"[INFO] Initializing DirectInput...");
+    // LogMessage(L"[INFO] Searching for device: " + device.config.GetString(L"base", L"device"));
+    // EnumDeviceHelper edh(&device, device.config.GetString(L"base", L"device"));
+    // HRESULT          hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumDevicesCallback, &edh, DIEDFL_ATTACHEDONLY);
 
-    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, reinterpret_cast<VOID**>(&directInput), NULL);
-    if (FAILED(hr))
+    // if (FAILED(hr))
+    // {
+    //     LogMessage(L"[ERROR] EnumDevices failed: 0x" + std::to_wstring(hr));
+    //     return false;
+    // }
+
+    // if (device.diDevice == NULL)
+    // {
+    //     LogMessage(L"[ERROR] Device not found: " + device.config.GetString(L"base", L"device"));
+    //     return false;
+    // }
+
+    // LogMessage(L"[INFO] Device initialization successful");
+    return true;
+}
+
+DirectInput::DirectInput() :
+    knownDevices(),
+    directInputObject(NULL),
+    mInitialized(false)
+{
+    if (!Initialize())
+    {
+        return;
+    }
+    UpdateAvailableDevice();
+
+    mInitialized = true;
+}
+
+bool DirectInput::Initialize()
+{
+    LogMessage(L"[INFO] Initializing DirectInput...");
+    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, reinterpret_cast<VOID**>(&directInputObject), NULL);
+    if (FAILED(hr) || directInputObject == NULL)
     {
         LogMessage(L"[ERROR] DirectInput8Create failed: 0x" + std::to_wstring(hr));
         return false;
     }
-
-    LogMessage(L"[INFO] Searching for device: " + device.config.GetString(L"base", L"device"));
-    EnumDeviceHelper edh(&device, device.config.GetString(L"base", L"device"));
-    hr = directInput->EnumDevices(DI8DEVCLASS_GAMECTRL, EnumDevicesCallback, &edh, DIEDFL_ATTACHEDONLY);
-
-    if (FAILED(hr))
-    {
-        LogMessage(L"[ERROR] EnumDevices failed: 0x" + std::to_wstring(hr));
-        return false;
-    }
-
-    if (device.diDevice == NULL)
-    {
-        LogMessage(L"[ERROR] Device not found: " + device.config.GetString(L"base", L"device"));
-        return false;
-    }
-
-    LogMessage(L"[INFO] Device initialization successful");
     return true;
+}
+
+bool DirectInput::Valid() const
+{
+    return mInitialized;
+}
+
+void DirectInput::LogDeviceList() const
+{
+    // Show available devices on console
+    const std::vector<std::wstring>& deviceList = AvailableDevices();
+    for (size_t i = 0; i < deviceList.size(); ++i)
+    {
+        // user facing is indices starting at 1
+        std::wcout << std::to_wstring(i + 1) << deviceList[i] << L'\n';
+    }
 }

@@ -8,12 +8,19 @@
 #    include <stdint.h>
 #endif
 
-struct RawTelemetry
+struct WorldPos
 {
     double dlat;
     double dlong;
     double rotation_deg;
+};
+
+struct RawTelemetry
+{
+    WorldPos pos;
+
     double speed_mph;
+
     double steering_deg;
     double steering_raw;
 

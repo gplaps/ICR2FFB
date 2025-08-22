@@ -23,99 +23,127 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
+RateLimiter::RateLimiter() :
+    lastDirection(0),
+    lastSentMagnitude(-1),
+    lastSentSignedMagnitude(0),
+    lastSentDirection(0),
+    lastProcessedMagnitude(-1),
+    framesSinceLastUpdate(0),
+    accumulatedMagnitudeChange(0.0),
+    accumulatedDirectionChange(0.0) {}
 
+int RateLimiter::Calculate(int signedMagnitude, double force)
+{
+    int magnitude = std::abs(signedMagnitude);
 
+    // Direction calculation and smoothing for rate limiting
+    const LONG targetDir = static_cast<LONG>(-sign(force)) * static_cast<LONG>(MAX_FORCE_IN_N);
+
+    // Direction smoothing - this prevents rapid direction changes
+    lastDirection = static_cast<LONG>(((1.0 - directionSmoothingFactor) * lastDirection) + (directionSmoothingFactor * targetDir));
+
+    // Track accumulated changes since last update
+    if (lastSentMagnitude != -1)
+    {
+        accumulatedMagnitudeChange += std::abs(magnitude - lastProcessedMagnitude);
+        accumulatedDirectionChange += std::abs(lastDirection - lastSentDirection); // Use smoothed direction
+    }
+
+    framesSinceLastUpdate++;
+    bool shouldUpdate = false;
+
+    // 1. Large immediate change
+    if (std::abs(magnitude - lastSentMagnitude) >= 400 ||
+        std::abs(lastDirection - lastSentDirection) >= 2000)
+    { // Use smoothed direction
+        shouldUpdate = true;
+    }
+    // 2. Accumulated changes
+    else if (accumulatedMagnitudeChange >= 300 ||
+             accumulatedDirectionChange >= 1500)
+    { // Use direction accumulation
+        shouldUpdate = true;
+    }
+    // 3. Direction sign change (use smoothed direction)
+    else if ((lastSentDirection > 0 && lastDirection < 0) ||
+             (lastSentDirection < 0 && lastDirection > 0) ||
+             (lastSentDirection == 0 && lastDirection != 0) ||
+             (lastSentDirection != 0 && lastDirection == 0))
+    {
+        shouldUpdate = true;
+    }
+    // 4. Timeout
+    else if (framesSinceLastUpdate >= 12)
+    {
+        shouldUpdate = true;
+    }
+    // 5. Zero force
+    else if (magnitude == 0 && lastSentMagnitude != 0)
+    {
+        shouldUpdate = true;
+    }
+
+    if (!shouldUpdate)
+    {
+        lastProcessedMagnitude = magnitude;
+        return 0; //ConstantForceEffectResult(0, false); // Skip this frame
+    }
+
+    // Reset tracking when we send an update
+    lastSentMagnitude          = magnitude;
+    lastSentSignedMagnitude    = signedMagnitude;
+    lastSentDirection          = lastDirection; // Track the smoothed direction
+    framesSinceLastUpdate      = 0;
+    accumulatedMagnitudeChange = 0.0;
+    accumulatedDirectionChange = 0.0;
+    lastProcessedMagnitude     = magnitude;
+
+    return signedMagnitude;
+}
+
+double ConstantForceEffect::ApplyDeadzone(double physicsForce, double deadzoneForceScale)
+{
+    double force = physicsForce;
+
+    if (deadzoneForceScale > 0.0)
+    {
+        // Calculate deadzone threshold using magnitude
+        const double maxPossibleForce  = MAX_FORCE_IN_N; // ~10200
+        const double deadzoneThreshold = maxPossibleForce * deadzoneForceScale;
+
+        // Apply deadzone: remove bottom X% and rescale remaining range
+        if (std::abs(physicsForce) <= deadzoneThreshold)
+        {
+            force = 0.0; // Force is in deadzone - zero output
+        }
+        else
+        {
+            // Rescale remaining force range to maintain full output range
+            const double remainingRange  = maxPossibleForce - deadzoneThreshold;
+            const double adjustedInput   = std::abs(physicsForce) - deadzoneThreshold;
+            const double scaledMagnitude = (adjustedInput / remainingRange) * maxPossibleForce;
+
+            // Restore original sign
+            force = (physicsForce >= 0) ? scaledMagnitude : -scaledMagnitude;
+        }
+    }
+    return force;
+}
 ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& current,
                                                          const CalculatedLateralLoad& /*load*/,
                                                          const CalculatedSlip& /*slip*/,
                                                          const CalculatedVehicleDynamics& vehicleDynamics,
-                                                         bool /*enableWeightForce*/,
-                                                         bool   enableRateLimit,
-                                                         double masterForceScale,
-                                                         double deadzoneForcePercentage,
-                                                         double constantForceScale,
-                                                         double brakingForceScale,
-                                                         double /*weightForceScale*/,
-                                                         bool invert)
+                                                         bool                             enableRateLimit,
+                                                         double                           deadzoneForceScale,
+                                                         double                           brakingForceScale,
+                                                         double /*weightForceScale*/)
 {
-
     int signedMagnitude    = 0;
 
     const double speed_mph = current.speed_mph;
+    (void)speed_mph; // used in commented code
     // const double steering_deg = current.steering_deg;
-
-    // Beta 0.5
-    // This is a bunch of logic to pause/unpause or prevent forces when the game isn't running
-    // I think this could probably be a lot simpler so maybe up for a redo
-    // It works right now though, although it feels a bit delayed
-
-    static double     lastDlong    = 0.0;
-    static const bool hasEverMoved = false;
-    (void)hasEverMoved; // unused currently
-    static int   noMovementFrames        = 0;
-    static bool  isPaused                = true;
-    static bool  pauseForceSet           = false;
-    static bool  isFirstReading          = true;
-    const int    movementThreshold       = 10;    // Frames to consider "paused"
-    const double movementThreshold_value = 0.001; // Very small movement threshold
-
-    if (isFirstReading)
-    {
-        lastDlong      = current.dlong; // Set baseline from first real data
-        isFirstReading = false;
-        pauseForceSet  = true;
-        return ConstantForceEffectResult(signedMagnitude, true);
-    }
-
-    const bool isStationary = std::abs(current.dlong - lastDlong) < movementThreshold_value;
-
-    if (isStationary)
-    {
-        noMovementFrames++;
-        if (noMovementFrames >= movementThreshold && !isPaused)
-        {
-            isPaused      = true;
-            pauseForceSet = false; // ← Reset when entering pause
-            LogMessage(L"[INFO] Game paused detected - sending zero force");
-        }
-    }
-    else
-    {
-        if (isPaused || noMovementFrames > 0)
-        {
-            noMovementFrames = 0;
-            if (isPaused)
-            {
-                isPaused      = false;
-                pauseForceSet = false; // ← Reset when exiting pause
-                LogMessage(L"[INFO] Game resumed - restoring normal forces");
-            }
-        }
-        lastDlong = current.dlong;
-    }
-
-    // If paused, send zero force and return
-    if (isPaused)
-    {
-        pauseForceSet = true;
-        return ConstantForceEffectResult(signedMagnitude, true);
-    }
-
-    // Low speed filtering
-    if (speed_mph < 5.0)
-    {
-        // static bool wasLowSpeed = false;
-        // if (!wasLowSpeed) {
-        //     // Send zero force when entering low speed
-        //     wasLowSpeed = true;
-        // }
-        return ConstantForceEffectResult(signedMagnitude, true);
-    }
-
-    // static bool wasLowSpeed = false;
-    // if (wasLowSpeed)
-    //     wasLowSpeed = false;  // Reset when speed picks up
-
 
     // === CALC 1 - Lateral G ===
 
@@ -190,62 +218,21 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     // Keep frontTireLoad for logging compatibility
     const double frontTireLoad = frontTireLoadMagnitude;
 
-    // Physics constants from your engineer friend
-    const double CURVE_STEEPNESS = 1.0e-4;
-    const double MAX_THEORETICAL = 8500;
-    const double SCALE_FACTOR    = 1.20;
-    // that part that should be moved to the end of the processing chain in FFBOutput when sending to FFBDevice
-    const double DIRECT_INPUT_GAIN_SCALE = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
-
     // Calculate magnitude using physics formula
-    const double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * DIRECT_INPUT_GAIN_SCALE;
+    const double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * MAX_FORCE_IN_N;
 
     // Apply the natural sign from the tire load sum
     const double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
 
     // Apply proportional deadzone
-    double force = physicsForce;
-    if (deadzoneForcePercentage > 0.0)
-    {
-        // Convert deadzoneForcePercentage (0-100) to scale (0.0-1.0)
-        const double deadzoneScale = deadzoneForcePercentage / 100.0;
-
-        // Calculate deadzone threshold using magnitude
-        const double maxPossibleForce  = DIRECT_INPUT_GAIN_SCALE; // ~10200
-        const double deadzoneThreshold = maxPossibleForce * deadzoneScale;
-
-        // Apply deadzone: remove bottom X% and rescale remaining range
-        if (std::abs(physicsForce) <= deadzoneThreshold)
-        {
-            force = 0.0; // Force is in deadzone - zero output
-        }
-        else
-        {
-            // Rescale remaining force range to maintain full output range
-            const double remainingRange  = maxPossibleForce - deadzoneThreshold;
-            const double adjustedInput   = std::abs(physicsForce) - deadzoneThreshold;
-            const double scaledMagnitude = (adjustedInput / remainingRange) * maxPossibleForce;
-
-            // Restore original sign
-            force = (physicsForce >= 0) ? scaledMagnitude : -scaledMagnitude;
-        }
-    }
+    double force = ApplyDeadzone(physicsForce, deadzoneForceScale);
 
     // Cap maximum force magnitude while preserving sign
-    if (std::abs(force) > static_cast<double>(DEFAULT_DINPUT_GAIN))
-    {
-        force = (force >= 0) ? static_cast<double>(DEFAULT_DINPUT_GAIN) : -static_cast<double>(DEFAULT_DINPUT_GAIN);
-    }
-
-    // Handle invert option (no more complex direction logic needed!)
-    if (invert)
-    {
-        force = -force;
-    }
+    force = std::clamp(force, static_cast<double>(-MAX_FORCE_IN_N), static_cast<double>(MAX_FORCE_IN_N));
 
     // Convert to signed magnitude
     const double smoothed  = force;
-    const int    magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
+    const int    magnitude = static_cast<int>(std::abs(smoothed));
     signedMagnitude        = magnitude;
     if (smoothed < 0.0)
     {
@@ -415,7 +402,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
                 }
             }
 
-            signedMagnitude += static_cast<int>((weightTransferForce * masterForceScale) * weightForceScale);
+            signedMagnitude += static_cast<int>((weightTransferForce) * weightForceScale);
             lastFrontImbalance = currentImbalance;
         }
     }
@@ -490,79 +477,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     // === Reimplemnted older style to try to make compatible with Thrustmaster wheels ===
     if (enableRateLimit)
     {
-        // Direction calculation and smoothing for rate limiting
-        const LONG  targetDir     = static_cast<LONG>(-sign(smoothed)) * static_cast<LONG>(DEFAULT_DINPUT_GAIN);
-        static LONG lastDirection = 0;
-
-        // Direction smoothing - this prevents rapid direction changes
-        const double directionSmoothingFactor = 0.3;
-        lastDirection                         = static_cast<LONG>(((1.0 - directionSmoothingFactor) * lastDirection) + (directionSmoothingFactor * targetDir));
-
-        // Rate limiting with direction smoothing
-        static int lastSentMagnitude       = -1;
-        static int lastSentSignedMagnitude = 0;
-        (void)lastSentSignedMagnitude;                // unused currently
-        static LONG   lastSentDirection          = 0; // Track smoothed direction
-        static int    lastProcessedMagnitude     = -1;
-        static int    framesSinceLastUpdate      = 0;
-        static double accumulatedMagnitudeChange = 0.0;
-        static double accumulatedDirectionChange = 0.0; // Track direction changes
-
-        // Track accumulated changes since last update
-        if (lastSentMagnitude != -1)
-        {
-            accumulatedMagnitudeChange += std::abs(magnitude - lastProcessedMagnitude);
-            accumulatedDirectionChange += std::abs(lastDirection - lastSentDirection); // Use smoothed direction
-        }
-
-        framesSinceLastUpdate++;
-        bool shouldUpdate = false;
-
-        // 1. Large immediate change
-        if (std::abs(magnitude - lastSentMagnitude) >= 400 ||
-            std::abs(lastDirection - lastSentDirection) >= 2000)
-        { // Use smoothed direction
-            shouldUpdate = true;
-        }
-        // 2. Accumulated changes
-        else if (accumulatedMagnitudeChange >= 300 ||
-                 accumulatedDirectionChange >= 1500)
-        { // Use direction accumulation
-            shouldUpdate = true;
-        }
-        // 3. Direction sign change (use smoothed direction)
-        else if ((lastSentDirection > 0 && lastDirection < 0) ||
-                 (lastSentDirection < 0 && lastDirection > 0) ||
-                 (lastSentDirection == 0 && lastDirection != 0) ||
-                 (lastSentDirection != 0 && lastDirection == 0))
-        {
-            shouldUpdate = true;
-        }
-        // 4. Timeout
-        else if (framesSinceLastUpdate >= 12)
-        {
-            shouldUpdate = true;
-        }
-        // 5. Zero force
-        else if (magnitude == 0 && lastSentMagnitude != 0)
-        {
-            shouldUpdate = true;
-        }
-
-        if (!shouldUpdate)
-        {
-            lastProcessedMagnitude = magnitude;
-            return ConstantForceEffectResult(0, false); // Skip this frame
-        }
-
-        // Reset tracking when we send an update
-        lastSentMagnitude          = magnitude;
-        lastSentSignedMagnitude    = signedMagnitude;
-        lastSentDirection          = lastDirection; // Track the smoothed direction
-        framesSinceLastUpdate      = 0;
-        accumulatedMagnitudeChange = 0.0;
-        accumulatedDirectionChange = 0.0;
-        lastProcessedMagnitude     = magnitude;
+        signedMagnitude = rateLimiter.Calculate(signedMagnitude, smoothed);
     }
 
     //Logging
