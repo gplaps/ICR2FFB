@@ -9,7 +9,7 @@
 
 DirectInput* DirectInput::singleton = NULL;
 
-std::vector<DirectInputDevice>& EnumDeviceHelper::AccessKnownDevices() const
+std::vector<DiDeviceData>& EnumDeviceHelper::AccessKnownDevices() const
 {
     return di->knownDevices;
 }
@@ -78,7 +78,7 @@ void DirectInput::LogDeviceList() const
     }
 }
 
-DirectInputDevice* DirectInput::GetDevice(const std::wstring& productName)
+DiDeviceData* DirectInput::GetDevice(const std::wstring& productName)
 {
     for (size_t i = 0; i < knownDevices.size(); ++i)
     {
@@ -91,7 +91,7 @@ DirectInputDevice* DirectInput::GetDevice(const std::wstring& productName)
     return NULL;
 }
 
-DirectInputDevice* DirectInput::GetDevice(size_t index)
+DiDeviceData* DirectInput::GetDevice(size_t index)
 {
     for (size_t i = 0; i < knownDevices.size(); ++i)
     {
@@ -106,17 +106,17 @@ DirectInputDevice* DirectInput::GetDevice(size_t index)
 
 IDirectInputDevice8* DirectInput::CreateDevice(const std::wstring& productName)
 {
-    DirectInputDevice* device = GetDevice(productName);
+    DiDeviceData* device = GetDevice(productName);
     return CreateDeviceInternal(device);
 }
 
 IDirectInputDevice8* DirectInput::CreateDevice(size_t index)
 {
-    DirectInputDevice* device = GetDevice(index);
+    DiDeviceData* device = GetDevice(index);
     return CreateDeviceInternal(device);
 }
 
-IDirectInputDevice8* DirectInput::CreateDeviceInternal(DirectInputDevice* device)
+IDirectInputDevice8* DirectInput::CreateDeviceInternal(DiDeviceData* device)
 {
     if (device)
     {
@@ -136,7 +136,7 @@ IDirectInputDevice8* DirectInput::CreateDeviceInternal(DirectInputDevice* device
 static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
     EnumDeviceHelper* edh = static_cast<EnumDeviceHelper*>(pContext);
-    edh->AccessKnownDevices().push_back(DirectInputDevice(*pdidInstance));
+    edh->AccessKnownDevices().push_back(DiDeviceData(*pdidInstance));
     return DIENUM_CONTINUE; // Continue enumerating all devices
 }
 

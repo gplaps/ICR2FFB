@@ -22,6 +22,11 @@ struct FFBConfig
     std::wstring GetString(const std::wstring& section, const std::wstring& key) const;
     double       GetDouble(const std::wstring& section, const std::wstring& key) const;
     int          GetInt(const std::wstring& section, const std::wstring& key) const;
+    // this can be achieved elegantly with boost/std::any / boost/std::variant in C++17 to let it do the runtime conversion, here its implemented not as flexible
+    // template<typename T>
+    // T         GetSetting(const std::wstring& key) const {}
+    // template<typename T>
+    // T         SetSetting(const std::wstring& key) {}
 
 private:
     void RegisterSettings();
@@ -29,12 +34,6 @@ private:
     void WriteIniFile();
     void LogConfig();
     bool ParseLine(std::wstring& currentSection, const std::wstring& line);
-
-    // this can be achieved elegantly with std::any / boost::variant in C++17 to let it do the runtime conversion, here its implemented not as flexible
-    // template<typename T>
-    // T         GetSetting(const std::wstring& key) const {}
-    // template<typename T>
-    // T         SetSetting(const std::wstring& key) {}
 
     enum SettingType
 #if defined(IS_CPP11_COMPLIANT)

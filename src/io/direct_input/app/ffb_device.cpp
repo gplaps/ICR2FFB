@@ -25,6 +25,11 @@ FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name) :
 
 FFBDevice::~FFBDevice() {}
 
+bool FFBDevice::Valid() const
+{
+    return mInitialized;
+}
+
 void FFBDevice::InitEffects(const FFBConfig& config)
 {
     if (mInitialized) { return; }

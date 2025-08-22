@@ -1,6 +1,7 @@
 #pragma once
 
 #include "lateral_load.h"
+#include "rate_limiter.h"
 #include "slip_angle.h"
 #include "telemetry_reader.h"
 #include "vehicle_dynamics.h"
@@ -17,27 +18,6 @@ struct ConstantForceEffectResult
         paused(isPaused) {}
     int  magnitude10000; // ideally redo the calculation in [0..1] scale (floating point) and let the directInput part do the scaling
     bool paused;
-};
-
-struct RateLimiter
-{
-    RateLimiter();
-
-    int Calculate(int signedMagnitude, double force);
-    // Direction calculation and smoothing for rate limiting
-    LONG lastDirection = 0;
-
-    // Direction smoothing - this prevents rapid direction changes
-    const double directionSmoothingFactor = 0.3;
-
-    // Rate limiting with direction smoothing
-    int    lastSentMagnitude;
-    int    lastSentSignedMagnitude;
-    LONG   lastSentDirection; // Track smoothed direction
-    int    lastProcessedMagnitude;
-    int    framesSinceLastUpdate;
-    double accumulatedMagnitudeChange;
-    double accumulatedDirectionChange; // Track direction changes
 };
 
 struct ConstantForceEffect

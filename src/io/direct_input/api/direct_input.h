@@ -6,10 +6,10 @@
 #include <vector>
 
 class DirectInput;
-// internal represenation, with all the info returned from DirectInput API and runtime instance if created
-struct DirectInputDevice
+// internal representation, with all the info returned from DirectInput API and runtime instance if created
+struct DiDeviceData
 {
-    explicit DirectInputDevice(const DIDEVICEINSTANCE& instanceIn) :
+    explicit DiDeviceData(const DIDEVICEINSTANCE& instanceIn) :
         instance(instanceIn),
         runtime(NULL) {}
     DIDEVICEINSTANCE     instance;
@@ -21,8 +21,8 @@ class EnumDeviceHelper
 public:
     explicit EnumDeviceHelper(DirectInput* d) :
         di(d) {}
-    DirectInput*                    di;
-    std::vector<DirectInputDevice>& AccessKnownDevices() const;
+    DirectInput*               di;
+    std::vector<DiDeviceData>& AccessKnownDevices() const;
 };
 
 class DirectInput
@@ -49,17 +49,17 @@ private:
     bool Initialize();
     void UpdateAvailableDevice();
 
-    std::vector<DirectInputDevice> knownDevices;
+    std::vector<DiDeviceData> knownDevices;
     friend class EnumDeviceHelper; // only accessor to knownDevices to fill the vector
 
     IDirectInputDevice8* CreateDevice(const std::wstring& productName);
     IDirectInputDevice8* CreateDevice(size_t index);
-    IDirectInputDevice8* CreateDeviceInternal(DirectInputDevice* device);
-    DirectInputDevice*   GetDevice(const std::wstring& productName);
-    DirectInputDevice*   GetDevice(size_t index);
+    IDirectInputDevice8* CreateDeviceInternal(DiDeviceData* device);
+    DiDeviceData*        GetDevice(const std::wstring& productName);
+    DiDeviceData*        GetDevice(size_t index);
 
-    LPDIRECTINPUT8      directInputObject; // consider making it static
-    static DirectInput* singleton;         // as there is only one instance across the program
+    LPDIRECTINPUT8      directInputObject; // thats why there should only be one instance of DirectInput in the program
+    static DirectInput* singleton;         // ensures only one instance across the program
 
     bool mInitialized;
 };

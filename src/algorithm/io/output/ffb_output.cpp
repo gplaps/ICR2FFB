@@ -32,9 +32,9 @@ bool FFBOutput::Init(const FFBConfig& config)
 
     constantForceScale = saturate(config.GetDouble(L"effects", L"constant scale") / 100.0);
     damperForceScale   = saturate(config.GetDouble(L"effects", L"damper scale") / 100.0);
-    springForceScale   = 1.0; // not configurable
+    springForceScale   = 1.0; // not configurable - route full effect, enabled flag considered in ffb_device
 
-    return true; // evaluate if this can fail
+    return steeringDevice.Valid();
 }
 
 void FFBOutput::Start()

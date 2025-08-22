@@ -8,11 +8,13 @@
 
 struct MovementDetector
 {
+    // derived from telemetry
+    // unfortunately a mix of both simulation state (paused, running, in replay, in menu) and vehicle movement state
     enum MovementState
 #if defined(IS_CPP11_COMPLIANT)
         : unsigned char
 #endif
-    { // likly the simulation state variable may be accessible, otherwise the "in menu"/"in driving mode" and "simulation paused", "simulation running"/"simulation replay"
+    {
         MS_UNKNOWN,
         MS_IDLE,
         MS_DRIVING

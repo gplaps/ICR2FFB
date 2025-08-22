@@ -53,7 +53,7 @@ void FFBProcessor::Init(const FFBConfig& config)
 
     deadzoneForceScale           = saturate(config.GetDouble(L"effects", L"deadzone") / 100.0);
     weightForceScale             = enableWeightForce ? saturate(config.GetDouble(L"effects", L"weight scale") / 100.0) : 0.0;
-    brakingForceScale            = std::clamp(config.GetDouble(L"effects", L"braking scale") / 100.0, 0.0, 10.0 /* subject to change - this restricts user*/);
+    brakingForceScale            = std::clamp(config.GetDouble(L"effects", L"braking scale") / 100.0, 0.0, 10.0 /* upper limit subject to change - this restricts user*/);
 }
 
 bool FFBProcessor::Valid() const { return mInitialized; }
@@ -69,10 +69,9 @@ void FFBProcessor::Update()
     current = telemetryReader.Data();
 
     ffbOutput.Start();
-
     ffbOutput.Poll();
 
-    // The goal should be to simply call ffbOutput.update(constant,damper,spring) with final effect scale and keep application logic / force calculation in this class, FFBOutput just scales and toggles the channels and the FFBDevice implements the directInput API translation.
+    // The goal should be to simply call ffbOutput.update(constant,damper,spring) with final effect scale and keep application logic / force calculation in this class, FFBOutput just scales and toggles the effect strengths and the FFBDevice implements the directInput API translation.
     // Effect calculations are "orchestrated" in FFBProcessor ... with how many submodules seem right
 
     // Update Effects results
@@ -107,7 +106,7 @@ void FFBProcessor::Update()
             }
             else
             {
-                constantForceCalculation = ConstantForceEffectResult(0, true);
+                constantForceCalculation = ConstantForceEffectResult();
             }
         }
     }

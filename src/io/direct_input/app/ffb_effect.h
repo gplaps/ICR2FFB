@@ -7,16 +7,18 @@
 
 struct FFBEffect
 {
-    explicit FFBEffect(const std::wstring& typeName) :
-        effect(NULL),
-        started(false),
-        effectName(typeName) {}
+public:
     virtual ~FFBEffect();
 
     void         Start();
     virtual void Update(LONG magnitude_strength, bool withDirection = false) = 0;
 
 protected:
+    explicit FFBEffect(const std::wstring& typeName) :
+        effect(NULL),
+        started(false),
+        effectName(typeName) {}
+
     IDirectInputEffect* effect;
     bool                started;
     std::wstring        effectName;
