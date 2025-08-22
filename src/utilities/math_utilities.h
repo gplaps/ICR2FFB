@@ -23,3 +23,9 @@ T sign(T input)
     else if (input < static_cast<T>(0)) { return static_cast<T>(-1); }
     else { return 0; }
 }
+
+template <typename T>
+T lerp(T a, T b, T t)
+{
+    return a + (b - a) * t;
+}
