@@ -20,7 +20,7 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     load(),
     constantForceCalculation(),
     constantForceEffect(),
-    damperEffect(),
+    damperEffect(config),
     springEffect(),
     deadzoneForceScale(),
     brakingForceScale(),

@@ -76,7 +76,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     int signedMagnitude    = 0;
 
     const double speed_mph = current.speed_mph;
-    (void)speed_mph; // used in commented code
+    (void)speed_mph; // used in commented code - be aware of spinning / reversing with negative speed, e.g. std::abs(speed_mph)
     // const double steering_deg = current.steering_deg;
 
     // === CALC 1 - Lateral G ===

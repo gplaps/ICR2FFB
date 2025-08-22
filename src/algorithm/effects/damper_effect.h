@@ -1,7 +1,12 @@
 #pragma once
+#include "ffb_config.h"
 
 struct DamperEffect
 {
-    double LowSpeedDamperStrength(double speedMph);
-    double Calculate(double speedMph);
+    DamperEffect(const FFBConfig& config);
+    double LowSpeedDamperStrength(double speedMph) const;
+    double Calculate(double speedMph) const;
+
+    double maxDamper;
+    double maxSpeed;
 };

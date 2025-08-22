@@ -52,6 +52,7 @@ void FFBConfig::RegisterSettings()
     settings[L"effects"].push_back(Setting(L"braking scale", 100.0, L"How much Braking/Accelerating effects forces. Tune this if you want to feel the brake pedal more or less (can go above 100%)."));
     settings[L"effects"].push_back(Setting(L"damper", true, L"Damper enabled - adds friction to the wheel at slow speed (under 50mph) to help simulate non-powered steering"));
     settings[L"effects"].push_back(Setting(L"damper scale", 50.0, L"Damper strength in % [0-100]"));
+    settings[L"effects"].push_back(Setting(L"damper speed", 40.0, L"Damper upper speed threshold (mph) where effect strength is zero"));
     settings[L"effects"].push_back(Setting(L"spring", false, L"Spring enabled - Adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
 
     sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"base", L"=== Force feedback device, general settings and game selection ==="));
