@@ -21,6 +21,7 @@
 #include "main.h"
 
 // === Project Includes ===
+#include "direct_input.h"
 #include "ffb_processor.h"
 #include "log.h"
 #include "telemetry_display.h"
@@ -81,6 +82,7 @@ static void CloseCommon()
     SAFE_DELETE(timing);
     SAFE_DELETE(config);
     SAFE_DELETE(logger);
+    DirectInput::CloseInstance(); // only singleton, consider reworking the other structs to singletons as well or leave as is
 }
 
 static void CloseMutexes()

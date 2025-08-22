@@ -11,7 +11,7 @@ struct FFBEffect
         effect(NULL),
         started(false),
         effectName(typeName) {}
-    virtual ~FFBEffect() = 0;
+    virtual ~FFBEffect();
 
     void         Start();
     virtual void Update(LONG magnitude_strength, bool withDirection = false) = 0;

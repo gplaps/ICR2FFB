@@ -27,6 +27,7 @@ struct FFBOutput
     void Update();
     void Poll();
 
+    // expects [0-1] scaled values
     void Update(double constantStrength, double damperStrength, double springStrength, bool paused);
 
     // Master force scale -> Keeping Hands Safe

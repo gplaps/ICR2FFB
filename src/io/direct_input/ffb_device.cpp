@@ -13,36 +13,21 @@ FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name) :
     js(),
     constant(NULL),
     damper(NULL),
-    spring(NULL),
-    productName(name)
+    spring(NULL)
 {
-    // InitDevice();
-    InitEffects(config);
-    if (!DirectInputSetup())
+    if (!InitDevice(name))
     {
         return;
     }
-    mInitialized = true;
+    InitEffects(config);
+    mInitialized = diDevice && (constant || damper || spring);
 }
 
-// FFBDevice::FFBDevice(IDirectInputDevice8* diPtr, const std::wstring& name) :
-//     diDevice(diPtr),
-//     js(),
-//     constant(NULL),
-//     damper(NULL),
-//     spring(NULL),
-//     productName(name)
-// {
-//     if (!DirectInputSetup())
-//     {
-//         return;
-//     }
-//     mInitialized = true;
-// }
+FFBDevice::~FFBDevice() {}
 
 void FFBDevice::InitEffects(const FFBConfig& config)
 {
-    if (!mInitialized) { return; }
+    if (mInitialized) { return; }
 
     // Create FFB effects as needed
     if (config.GetBool(L"effects", L"constant"))
@@ -85,36 +70,28 @@ void FFBDevice::Start()
     if (spring) { spring->Start(); }
 }
 
-// int FFBDevice::InitDevice()
-// {
-//     // Initialize DirectInput device
-//     // I don't really know how this works yet. It enabled "exclusive" mode on the device and calls it a "type 2" joystick.. OK!
-//     if (!directInput->InitializeDevice(*this))
-//     {
-//         // LogMessage(L"[ERROR] Failed to initialize DirectInput or find device: " + config.GetString(L"base", L"device"));
-//         // LogMessage(L"[ERROR] Available devices:");
+bool FFBDevice::InitDevice(const std::wstring& productNameOrIndex)
+{
+    diDevice = DirectInput::Instance()->InitializeDevice(productNameOrIndex);
+    if (!diDevice)
+    {
+        LogMessage(L"[ERROR] Failed to initialize DirectInput device: " + productNameOrIndex);
+        LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
+        // // SHOW ERROR ON CONSOLE immediately
+        std::wcout << L"[ERROR] Could not find controller: " << productNameOrIndex << L'\n';
+        std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
+        // std::wcout << L"Press any key to exit..." << L'\n';
+        // std::cin.get();
+        return false;
+    }
 
-//         // // List available devices to help user
-//         // directInput->UpdateAvailableDevice();
+    LogMessage(L"[INFO] Device found and initialized successfully");
 
-//         // LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
+    return DirectInputSetup();
+}
 
-//         // // SHOW ERROR ON CONSOLE immediately
-//         // std::wcout << L"[ERROR] Could not find controller: " << config.GetString(L"base", L"device") << L'\n';
-//         // std::wcout << L"[ERROR] Available devices:" << L'\n';
-
-//         DirectInput::LogDeviceList();
-//         std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
-//         std::wcout << L"Press any key to exit..." << L'\n';
-//         std::cin.get();
-//         return 1;
-//     }
-
-//     LogMessage(L"[INFO] Device found and initialized successfully");
-
-//     return DirectInputSetup();
-// }
-
+// matter of taste if this should be moved into InitDevice
+// I don't really know how this works yet. It enabled "exclusive" mode on the device and calls it a "type 2" joystick.. OK!
 bool FFBDevice::DirectInputSetup() const
 {
     // ONLY configure device if it was found successfully

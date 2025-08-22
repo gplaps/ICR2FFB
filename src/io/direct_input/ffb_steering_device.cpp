@@ -10,6 +10,8 @@ FFBSteeringDevice::FFBSteeringDevice(const FFBConfig& config) :
     Init(config);
 }
 
+FFBSteeringDevice::~FFBSteeringDevice() {}
+
 void FFBSteeringDevice::Init(const FFBConfig& config)
 {
     invert = config.GetBool(L"effects", L"invert");

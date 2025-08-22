@@ -1,9 +1,11 @@
 #include "ffb_processor.h"
 
+#include "constant_force.h"
 #include "constants.h"
 #include "lateral_load.h"
 #include "log.h"
 #include "math_utilities.h"
+#include "movement_detection.h"
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
@@ -11,8 +13,6 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     current(),
     previous(),
     hasFirstReading(false),
-    previousPos(),
-    hasFirstPos(false),
     movementDetector(),
     enableRateLimit(false),
     slip(),
@@ -65,12 +65,6 @@ void FFBProcessor::Update()
 
     current = telemetryReader.Data();
 
-    if (!hasFirstPos)
-    {
-        previousPos = current;
-        hasFirstPos = true;
-    }
-
     ffbOutput.Start();
 
     ffbOutput.Poll();
@@ -97,16 +91,21 @@ void FFBProcessor::Update()
             damperStrength = damperEffect.Calculate(current.speed_mph);
             springStrength = springEffect.Calculate(1.0); // constant, nothing "dynamic", see comments in SpringEffect
 
-            movementState  = movementDetector.Calculate(current);
-
-            //This is what will add the "Constant Force" effect if all the calculations work.
-            // Probably could smooth all this out
-            constantForceCalculation = constantForceEffect.Calculate(
-                current, load, slip, vehicleDynamics, // inputs
-                enableRateLimit,                      // settings
-                deadzoneForceScale,
-                brakingForceScale, weightForceScale);
-            previousPos = current;
+            movementState  = movementDetector.Calculate(current, previous);
+            if (movementState == MovementDetector::MS_DRIVING)
+            {
+                //This is what will add the "Constant Force" effect if all the calculations work.
+                // Probably could smooth all this out
+                constantForceCalculation = constantForceEffect.Calculate(
+                    current, load, slip, vehicleDynamics, // inputs
+                    enableRateLimit,                      // settings
+                    deadzoneForceScale,
+                    brakingForceScale, weightForceScale);
+            }
+            else
+            {
+                constantForceCalculation = ConstantForceEffectResult(0, true);
+            }
         }
     }
     ffbOutput.Update(constantForceCalculation.magnitude10000 / static_cast<double>(MAX_FORCE_IN_N /* or is this DEFAULT_DINPUT_GAIN ? */), damperStrength, springStrength, constantForceCalculation.paused);

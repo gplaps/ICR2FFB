@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+FFBEffect::~FFBEffect() {}
+
 void FFBEffect::Start()
 {
     if (!started)

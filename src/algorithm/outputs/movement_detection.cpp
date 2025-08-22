@@ -9,7 +9,7 @@ MovementDetector::MovementDetector() :
     pauseForceSet(false),
     isFirstReading(true) {}
 
-MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& current)
+MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& current, const RawTelemetry& /*previous*/)
 {
     if (isFirstReading)
     {

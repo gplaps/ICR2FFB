@@ -16,24 +16,24 @@ struct FFBDevice
     FFBDevice(); // intentionally declared but undefined -> linker error if used
 #endif
     virtual ~FFBDevice();
-    IDirectInputDevice8* diDevice;
 
     // expected range is [0-1] for strength values
     virtual void Update(double constantStrength, double damperStrength, double springStrength, bool constantWithDirection);
-
-    void InitEffects(const FFBConfig& config);
-    bool DirectInputSetup() const;
 
     void Start();
     void Poll();
 
 private:
-    DIJOYSTATE2 js; // this is the read state of all axis and buttons
+    bool InitDevice(const std::wstring& productNameOrIndex);
+    void InitEffects(const FFBConfig& config);
+    bool DirectInputSetup() const;
+
+    IDirectInputDevice8* diDevice;
+    DIJOYSTATE2          js; // this is the read state of all axis and buttons
 
     DiConstantEffect* constant;
     DiDamperEffect*   damper;
     DiSpringEffect*   spring;
 
-    std::wstring productName;
-    bool         mInitialized;
+    bool mInitialized;
 };

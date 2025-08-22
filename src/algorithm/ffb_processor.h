@@ -33,10 +33,6 @@ private:
     RawTelemetry previous;
     bool         hasFirstReading;
 
-    //Added for feedback skipping if stopped
-    RawTelemetry previousPos;
-    bool         hasFirstPos;
-
     MovementDetector movementDetector;
 
     bool enableRateLimit;

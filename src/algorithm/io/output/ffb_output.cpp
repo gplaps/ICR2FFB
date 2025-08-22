@@ -37,14 +37,11 @@ bool FFBOutput::Init(const FFBConfig& config)
 void FFBOutput::Start()
 {
     steeringDevice.Start();
+    // init of damper/spring done in steeringDevice.Start()
 
     // Start damper/spring effects once telemetry is valid
     // Probably need to also figure out how to stop these when the game pauses
     // Also need to maybe fade in and out the effects when waking/sleeping
-
-    // init done in steeringDevice.Start() considering the config
-    // if (enableDamperEffect) { steeringDevice.StartDamper(); }
-    // if (enableSpringEffect) { steeringDevice.StartSpring(); }
 }
 
 void FFBOutput::Update(double constant, double damper, double spring, bool paused)

@@ -25,7 +25,7 @@ struct MovementDetector
     };
 
     MovementDetector();
-    MovementState Calculate(const RawTelemetry& current);
+    MovementState Calculate(const RawTelemetry& current, const RawTelemetry& previous /* unused but consider removing some state in this struct and derive from the RawTelemetry delta in every loop */);
 
     double       lastDlong;
     int          noMovementFrames;
