@@ -59,7 +59,7 @@ static int RestartAsAdmin()
     }
 }
 
-int CheckAndRestartAsAdmin()
+bool CheckAndRestartAsAdmin()
 {
     if (!IsRunningAsAdmin())
     {
@@ -84,9 +84,9 @@ int CheckAndRestartAsAdmin()
                 // If we get here, the restart failed
                 std::wcout << L"Press any key to exit..." << L'\n';
                 std::cin.get();
-                return 1;
+                return false;
             }
-            return 1;
+            return false;
         }
         else
         {
@@ -96,11 +96,11 @@ int CheckAndRestartAsAdmin()
             std::wcout << L"Press any key to exit..." << L'\n';
             std::wcin.ignore();
             std::wcin.get();
-            return 1;
+            return false;
         }
     }
 
-    return 0;
+    return true;
 }
 
 // Console drawing stuff

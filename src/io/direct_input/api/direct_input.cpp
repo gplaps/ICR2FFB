@@ -1,6 +1,5 @@
 #include "direct_input.h"
 
-#include "ffb_device.h"
 #include "log.h"
 #include "string_utilities.h"
 #include "utilities.h"
@@ -10,7 +9,7 @@
 
 DirectInput* DirectInput::singleton = NULL;
 
-std::vector<DirectInputDevice>& EnumDeviceHelper::AccessKnownDevices()
+std::vector<DirectInputDevice>& EnumDeviceHelper::AccessKnownDevices() const
 {
     return di->knownDevices;
 }

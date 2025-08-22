@@ -106,8 +106,10 @@ static void CloseMutexes()
 // Where it all happens
 int main()
 {
-    int res = 0;
-    STATUS_CHECK(CheckAndRestartAsAdmin());
+    if (!CheckAndRestartAsAdmin())
+    {
+        return 1;
+    }
 
 #if !defined(HAS_STL_THREAD_MUTEX)
     Logger::mutex = new CRITICAL_SECTION;

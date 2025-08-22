@@ -1,7 +1,6 @@
 #include "ffb_steering_device.h"
 
 #include "ffb_config.h"
-#include "math_utilities.h"
 
 FFBSteeringDevice::FFBSteeringDevice(const FFBConfig& config) :
     FFBDevice(config, config.GetString(L"base", L"device")),

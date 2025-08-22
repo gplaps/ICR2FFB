@@ -53,7 +53,7 @@ public:
         const CalculatedSlip&            slip,
         const CalculatedVehicleDynamics& vehicleDynamics,
         bool                             enableRateLimit,
-        double                           deadzoneForcePercentage,
+        double                           deadzoneForceScale,
         double                           brakingForceScale,
         double                           weightForceScale);
 

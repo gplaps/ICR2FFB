@@ -1,10 +1,13 @@
 #include "ffb_output.h"
 
 #include "math_utilities.h"
-#include "utilities.h"
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     steeringDevice(config),
+    masterForceScale(),
+    constantForceScale(),
+    damperForceScale(),
+    springForceScale(),
     mInitialized(false)
 {
     if (!Init(config))

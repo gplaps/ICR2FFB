@@ -228,7 +228,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     double force = ApplyDeadzone(physicsForce, deadzoneForceScale);
 
     // Cap maximum force magnitude while preserving sign
-    force = std::clamp(force, static_cast<double>(-MAX_FORCE_IN_N), static_cast<double>(MAX_FORCE_IN_N));
+    force = std::clamp(force, -MAX_FORCE_IN_N, MAX_FORCE_IN_N);
 
     // Convert to signed magnitude
     const double smoothed  = force;

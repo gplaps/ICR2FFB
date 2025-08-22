@@ -1,7 +1,7 @@
 #pragma once
 
 // Check Admin rights
-int CheckAndRestartAsAdmin();
+bool CheckAndRestartAsAdmin();
 
 // Console drawing stuff
 // little function to help with display refreshing

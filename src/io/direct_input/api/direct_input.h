@@ -1,8 +1,8 @@
 #pragma once
 
-#include "project_dependencies.h"
-#include "ffb_device.h"
+#include <dinput.h>
 
+#include <string>
 #include <vector>
 
 class DirectInput;
@@ -12,7 +12,7 @@ struct DirectInputDevice
     explicit DirectInputDevice(const DIDEVICEINSTANCE& instanceIn) :
         instance(instanceIn),
         runtime(NULL) {}
-    DIDEVICEINSTANCE    instance;
+    DIDEVICEINSTANCE     instance;
     IDirectInputDevice8* runtime;
 };
 
@@ -22,7 +22,7 @@ public:
     explicit EnumDeviceHelper(DirectInput* d) :
         di(d) {}
     DirectInput*                    di;
-    std::vector<DirectInputDevice>& AccessKnownDevices();
+    std::vector<DirectInputDevice>& AccessKnownDevices() const;
 };
 
 class DirectInput
