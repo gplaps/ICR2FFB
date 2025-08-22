@@ -4,6 +4,7 @@
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     steeringDevice(config),
+    pedals(config),
     masterForceScale(),
     constantForceScale(),
     damperForceScale(),
@@ -34,12 +35,13 @@ bool FFBOutput::Init(const FFBConfig& config)
     damperForceScale   = saturate(config.GetDouble(L"effects", L"damper scale") / 100.0);
     springForceScale   = 1.0; // not configurable - route full effect, enabled flag considered in ffb_device
 
-    return steeringDevice.Valid();
+    return steeringDevice.Valid() /*&& pedals.Valid()*/;
 }
 
 void FFBOutput::Start()
 {
     steeringDevice.Start();
+    // pedals.Start();
     // init of damper/spring done in steeringDevice.Start()
 
     // Start damper/spring effects once telemetry is valid
@@ -49,10 +51,15 @@ void FFBOutput::Start()
 
 void FFBOutput::Update(double constant, double damper, double spring, bool paused)
 {
-    steeringDevice.Update(constant * constantForceScale * masterForceScale, damper * damperForceScale * masterForceScale, spring /* * springForceScale*/ * masterForceScale, !paused);
+    const double constantOut = constant * constantForceScale * masterForceScale;
+    const double damperOut   = damper * damperForceScale * masterForceScale;
+    const double springOut   = spring /* * springForceScale*/ * masterForceScale;
+    steeringDevice.Update(constantOut, damperOut, springOut, !paused);
+    // pedals.Update(constantOut, damperOut, springOut, false);
 }
 
 void FFBOutput::Poll()
 {
     steeringDevice.Poll();
+    // pedals.Poll();
 }

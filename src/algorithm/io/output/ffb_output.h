@@ -2,6 +2,7 @@
 
 
 #include "constant_force.h"
+#include "ffb_pedals.h"
 #include "ffb_steering_device.h"
 
 struct FFBOutput
@@ -10,7 +11,7 @@ struct FFBOutput
     virtual ~FFBOutput();
 
     FFBSteeringDevice steeringDevice;
-    // leave option for further devices, like pedal vibrations
+    FFBPedals         pedals; // not implemented - optional, like pedal vibrations motors on Fanatec products
 
     // === Force Feedback Flags & States ===
     // I have 3 effects right now which all get calculated separately
