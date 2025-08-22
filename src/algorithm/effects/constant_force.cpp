@@ -52,6 +52,18 @@ double ConstantForceEffect::ApplyDeadzone(double physicsForce, double deadzoneFo
     return force;
 }
 
+// Take final magnitude and prevent any massive jumps over a small frame range
+int ConstantForceEffect::SmoothSpikes(int signedMagnitude)
+{
+    magnitudeHistory.push_back(signedMagnitude);
+    while (magnitudeHistory.size() > 2)
+    {
+        magnitudeHistory.pop_front();
+    }
+    signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
+    return signedMagnitude;
+}
+
 ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& current,
                                                          const CalculatedLateralLoad& /*load*/,
                                                          const CalculatedSlip& /*slip*/,
@@ -153,14 +165,10 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     force = std::clamp(force, -MAX_FORCE_IN_N, MAX_FORCE_IN_N);
 
     // Convert to signed magnitude
-    const double smoothed  = force;
-    const int    magnitude = static_cast<int>(std::abs(smoothed));
-    signedMagnitude        = magnitude;
-    if (smoothed < 0.0)
-    {
-        signedMagnitude = -signedMagnitude;
-    }
-
+    const double smoothed = force;
+    signedMagnitude       = static_cast<int>(smoothed);
+    // int magnitude      = std::abs(signedMagnitude);
+    // (void)magnitude;
 
 
     // === Self-Aligning Torque ===
@@ -271,15 +279,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     }
 */
     // === Output Smoothing ===
-
-    // Take final magnitude and prevent any massive jumps over a small frame range
-
-    magnitudeHistory.push_back(signedMagnitude);
-    while (magnitudeHistory.size() > 2)
-    {
-        magnitudeHistory.pop_front();
-    }
-    signedMagnitude = std::accumulate(magnitudeHistory.begin(), magnitudeHistory.end(), 0) / static_cast<int>(magnitudeHistory.size());
+    signedMagnitude = SmoothSpikes(signedMagnitude);
 
 
     // === CALC 3 Weight Force ===

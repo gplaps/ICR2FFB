@@ -27,6 +27,7 @@ public:
         magnitudeHistory() {}
 
     double                    ApplyDeadzone(double physicsForce, double deadzoneForceScale);
+    int                       SmoothSpikes(int signedMagnitude);
     ConstantForceEffectResult Calculate(
         const RawTelemetry&              current,
         const CalculatedLateralLoad&     load,
