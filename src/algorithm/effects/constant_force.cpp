@@ -413,5 +413,5 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
 
     // Use signed magnitude
     // Only set magnitude params, skip direction
-    return ConstantForceEffectResult(signedMagnitude, false);
+    return ConstantForceEffectResult(static_cast<double>(signedMagnitude) / MAX_FORCE_IN_N /* or is this DEFAULT_DINPUT_GAIN ? */, false);
 }

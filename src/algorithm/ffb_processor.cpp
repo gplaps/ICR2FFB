@@ -103,7 +103,7 @@ void FFBProcessor::Update()
             }
         }
     }
-    ffbOutput.Update(constantForceCalculation.magnitude10000 / static_cast<double>(MAX_FORCE_IN_N /* or is this DEFAULT_DINPUT_GAIN ? */), damperStrength, springStrength, constantForceCalculation.paused);
+    ffbOutput.Update(constantForceCalculation.magnitude01, damperStrength, springStrength, constantForceCalculation.paused);
     UpdateDisplayData(constantForceCalculation);
     previous = current;
 }
