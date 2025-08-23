@@ -77,7 +77,7 @@ void FFBProcessor::Update()
     double                          damperStrength           = 0.0;
     double                          springStrength           = 0.0;
     MovementDetector::MovementState movementState            = MovementDetector::MS_UNKNOWN;
-    ConstantForceEffectResult       constantForceCalculation = {};
+    ConstantForceEffectResult       constantForceCalculation = ConstantForceEffectResult();
 
     if (!hasFirstReading)
     {
