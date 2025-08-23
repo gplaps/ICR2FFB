@@ -6,16 +6,12 @@
 #include <string>
 #include <vector>
 
-/* project specific ini parser - ini files are not structured in sections */
+/* simple project specific ini parser */
 struct FFBConfig
 {
     FFBConfig();
     bool        Valid() const;
     GameVersion version;
-
-    // private:
-    // Search the ini file for settings and find what the user has set them to
-    int LoadSettingsFromConfig();
 
     //settings from the ffb.ini
     bool         GetBool(const std::wstring& section, const std::wstring& key) const;
@@ -30,6 +26,8 @@ struct FFBConfig
 
 private:
     void RegisterSettings();
+    // Search the ini file for settings and find what the user has set them to
+    int  LoadSettingsFromConfig();
     bool LoadFFBSettings(const std::wstring& filename);
     void WriteIniFile();
     void LogConfig();
