@@ -18,6 +18,7 @@ struct ThreadTimer
 struct Timing
 {
     Timing();
+    ~Timing();
 
     // Timing buffers
     ThreadTimer ffb;

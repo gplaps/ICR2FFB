@@ -7,6 +7,7 @@
 #if defined(HAS_STL_THREAD_MUTEX)
 #    include <thread>
 #endif
+#include <mmsystem.h>
 
 static LARGE_INTEGER start, end, frequency;
 
@@ -22,9 +23,14 @@ Timing::Timing() :
     telemetry(FRAMES_PER_SECOND(60)),
     render(FRAMES_PER_SECOND(15.0), false)
 {
-    //timing
+    timeBeginPeriod(1); // otherwise calculating the sleep timing is totally off - defaults to 15.6ms, this way its better but still not garanteed - in case of timing issues (log.txt contains frequent timing reports), fall back to active wait/spinning by removing the CALCULATE_WAIT define. may be negative effects on power consumptions as well
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&start);
+}
+
+Timing::~Timing()
+{
+    timeEndPeriod(1);
 }
 
 static double timeSinceStartInMs()
@@ -41,7 +47,7 @@ bool ThreadTimer::ready()
         const double lateMs = (currentTime - nextTime);
         if (report && lateMs > 1.0) // there is little you can do to OS threading being late, at least log about and to notice if adjustments are necessary
         {
-            LogMessage(L"T " + std::to_wstring(currentTime) + L" D: " + std::to_wstring(lateMs) + L" I: " + std::to_wstring(interval));
+            LogMessage(L"FFB thread was late at: " + std::to_wstring(currentTime) + L" D: " + std::to_wstring(lateMs) + L" I: " + std::to_wstring(interval));
         }
         nextTime = currentTime + interval;
         return true;
@@ -52,10 +58,10 @@ bool ThreadTimer::ready()
 void ThreadTimer::schedule() const
 {
 #if defined(CALCULATE_WAIT) // predict when thread needs to wake up - results in less wasteful polling
-    const double       currentTime = timeSinceStartInMs();
-    const unsigned int waitTime    = static_cast<unsigned int>(nextTime - currentTime - SLACK_TIME_MS);
-    const bool messedUp = waitTime > static_cast<unsigned int>(interval);
-    if (waitTime >= 1 && !messedUp)
+    const double currentTime = timeSinceStartInMs();
+    const int    waitTime    = static_cast<int>(nextTime - currentTime - SLACK_TIME_MS);
+    const bool   notOvertime = waitTime < static_cast<int>(interval) - 1;
+    if (waitTime >= 1 && notOvertime)
     {
 #    if defined(HAS_STL_THREAD_MUTEX)
         std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
@@ -66,6 +72,6 @@ void ThreadTimer::schedule() const
 #    endif
     }
 #else
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
 }

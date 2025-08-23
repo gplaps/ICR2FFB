@@ -48,7 +48,7 @@ else()
     endif()
 endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800 _WIN32_WINNT=0x501) # _WIN32_WINNT_WINXP
-target_link_libraries(${PROJECT_NAME} PRIVATE dinput8)
+target_link_libraries(${PROJECT_NAME} PRIVATE dinput8 winmm)
 set(EXE_EXTENSION .exe)
 set(PROJECT_BINARY_NAME ${PROJECT_NAME}${EXE_EXTENSION})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME} DESTINATION .) # instead of TARGETS because with MinGW cross-compile its fails with "file INSTALL cannot find ${PROJECT_BINARY_NAME}" as its missing the .exe extension
