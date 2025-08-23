@@ -12,8 +12,8 @@ SpringEffect::SpringEffect(const FFBConfig& config) :
     SAFETY_CHECK(springStrength);
 }
 
-double SpringEffect::Calculate(double input) const
+double SpringEffect::Calculate() const
 {
     // How much centering force?
-    return springStrength * input;
+    return springStrength;
 }

@@ -47,9 +47,9 @@ private:
     CalculatedLateralLoad     load;
 
     // FFB Algo Outputs / calculations
-    ConstantForceEffect       constantForceEffect;
-    DamperEffect              damperEffect;
-    SpringEffect              springEffect;
+    ConstantForceEffect constantForceEffect;
+    DamperEffect        damperEffect;
+    SpringEffect        springEffect;
 
     // settings
     double deadzoneForceScale;

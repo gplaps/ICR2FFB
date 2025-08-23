@@ -18,7 +18,6 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     slip(),
     vehicleDynamics(),
     load(),
-    constantForceCalculation(),
     constantForceEffect(),
     damperEffect(config),
     springEffect(config),
@@ -75,14 +74,14 @@ void FFBProcessor::Update()
     // Effect calculations are "orchestrated" in FFBProcessor ... with how many submodules seem right
 
     // Update Effects results
-    double                          damperStrength = 0.0;
-    double                          springStrength = 0.0;
-    MovementDetector::MovementState movementState  = MovementDetector::MS_UNKNOWN;
-    ConstantForceEffectResult constantForceCalculation = {};
+    double                          damperStrength           = 0.0;
+    double                          springStrength           = 0.0;
+    MovementDetector::MovementState movementState            = MovementDetector::MS_UNKNOWN;
+    ConstantForceEffectResult       constantForceCalculation = {};
 
     if (!hasFirstReading)
     {
-        hasFirstReading          = true;
+        hasFirstReading = true;
     }
     else
     {
@@ -90,7 +89,7 @@ void FFBProcessor::Update()
         {
             // Update Effects
             damperStrength = damperEffect.Calculate(current.speed_mph);
-            springStrength = springEffect.Calculate(1.0); // constant, nothing "dynamic", see comments in SpringEffect
+            springStrength = springEffect.Calculate(); // constant, nothing "dynamic", see comments in SpringEffect
 
             movementState  = movementDetector.Calculate(current, previous);
             if (movementState == MovementDetector::MS_DRIVING)
@@ -105,8 +104,8 @@ void FFBProcessor::Update()
         }
     }
     ffbOutput.Update(constantForceCalculation.magnitude10000 / static_cast<double>(MAX_FORCE_IN_N /* or is this DEFAULT_DINPUT_GAIN ? */), damperStrength, springStrength, constantForceCalculation.paused);
-    UpdateDisplayData();
-    previous                 = current;
+    UpdateDisplayData(constantForceCalculation);
+    previous = current;
 }
 
 bool FFBProcessor::ProcessTelemetryInput()

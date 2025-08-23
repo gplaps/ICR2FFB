@@ -6,7 +6,7 @@ struct SpringEffect
 {
     explicit SpringEffect(const FFBConfig& config);
 
-    double Calculate(double input) const;
+    double Calculate() const;
 
     double springStrength;
 };
