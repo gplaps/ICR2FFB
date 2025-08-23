@@ -4,7 +4,7 @@
 
 struct SpringEffect
 {
-    explicit SpringEffect(const FFBConfig& config);
+    explicit SpringEffect();
 
     double Calculate() const;
 

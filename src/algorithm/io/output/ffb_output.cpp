@@ -37,7 +37,7 @@ bool FFBOutput::Init(const FFBConfig& config)
 
     constantForceScale = saturate(config.GetDouble(L"effects", L"constant scale") / 100.0);
     damperForceScale   = saturate(config.GetDouble(L"effects", L"damper scale") / 100.0);
-    springForceScale   = 1.0; // not configurable - route full effect, enabled flag considered in ffb_device
+    springForceScale   = saturate(config.GetDouble(L"effects", L"spring scale") / 100.0);
 
     // checks for user input values resulting in NaN
     SAFETY_CHECK(masterForceScale);

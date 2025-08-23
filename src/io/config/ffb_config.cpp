@@ -55,7 +55,7 @@ void FFBConfig::RegisterSettings()
     settings[L"effects"].push_back(Setting(L"damper scale", 50.0, L"Damper strength in % [0-100]"));
     settings[L"effects"].push_back(Setting(L"damper speed", 40.0, L"Damper upper speed threshold (mph) where effect strength is zero"));
     settings[L"effects"].push_back(Setting(L"spring", false, L"Spring enabled - Adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
-    settings[L"effects"].push_back(Setting(L"spring strength", 6500.0, L"Spring strength - default at 6500 - allowed range [0-10000]"));
+    settings[L"effects"].push_back(Setting(L"spring scale", 65.0, L"Spring strength in % [0-100]"));
 
     sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"base", L"=== Force feedback device, general settings and game selection ==="));
     sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"effects", L"=== Effect Mix ===\nEach effect can be turned on or off with the main toggle ('true' or 'false')\nScale settings will control balance for that given force. I personally tuned it at 100% for all of them"));
