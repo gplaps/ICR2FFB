@@ -167,7 +167,7 @@ static BOOL
     const std::wstring wTitle   = ToLower(titleStr);
     if (!titleStr.empty())
     {
-        LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
+        // LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
         for (size_t i = 0; i < wdata->keywords.size(); ++i)
         {
             const std::wstring& key = ToLower(wdata->keywords[i]);
