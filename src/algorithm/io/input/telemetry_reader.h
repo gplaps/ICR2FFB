@@ -86,12 +86,12 @@ private:
     bool ReadCarData();
     bool ReadTireData();
     template <typename T>
-    bool ReadValue(T& dest, uintptr_t offset)
+    bool ReadValue(T& dest, uintptr_t src)
     {
         SIZE_T bytesRead = 0;
-        return ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(offset), &dest, sizeof(dest), &bytesRead) && bytesRead == sizeof(dest);
+        return ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(src), &dest, sizeof(dest), &bytesRead) && bytesRead == sizeof(dest);
     }
-    bool ReadRaw(void* dest, uintptr_t offset, SIZE_T size);
+    bool ReadRaw(void* dest, uintptr_t src, SIZE_T size);
 
     struct RawData
     {

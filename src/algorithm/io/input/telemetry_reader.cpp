@@ -354,10 +354,10 @@ const RawTelemetry& TelemetryReader::Data() const
     return out;
 }
 
-bool TelemetryReader::ReadRaw(void* dest, uintptr_t offset, SIZE_T size)
+bool TelemetryReader::ReadRaw(void* dest, uintptr_t src, SIZE_T size)
 {
     SIZE_T bytesRead = 0;
-    return ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(offset), dest, size, &bytesRead) && bytesRead == size;
+    return ReadProcessMemory(hProcess, reinterpret_cast<LPCVOID>(src), dest, size, &bytesRead) && bytesRead == size;
 }
 
 // === Main ===
@@ -368,7 +368,7 @@ void TelemetryReader::ConvertCarData()
     // Little bit of math to make the data sensible. Save big calculations for specific "Calculation" sets
     out.pos.dlong        = static_cast<double>(carData.data[4]);
     out.pos.dlat         = static_cast<double>(carData.data[5]);
-    out.pos.rotation_deg = static_cast<double>(carData.data[7]) / static_cast<double>(INT_MAX - 1) * 180.0;
+    out.pos.rotation_deg = static_cast<double>(carData.data[7]) / 2147483648.0 /*static_cast<double>(INT_MAX - 1)*/ * 180.0;
 
     out.speed_mph        = static_cast<double>(carData.data[8]) / 75.0;
 
