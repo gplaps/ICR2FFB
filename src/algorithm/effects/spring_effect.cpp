@@ -1,5 +1,6 @@
 #include "spring_effect.h"
 
+#include "constants.h"
 #include "log.h" // IWYU pragma: keep
 #include "safety_check.h"
 
@@ -15,5 +16,5 @@ SpringEffect::SpringEffect(const FFBConfig& config) :
 double SpringEffect::Calculate() const
 {
     // How much centering force?
-    return springStrength;
+    return springStrength / DEFAULT_DINPUT_GAIN_DBL;
 }
