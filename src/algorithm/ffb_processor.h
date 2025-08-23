@@ -20,7 +20,7 @@ struct FFBProcessor
     const TelemetryDisplay::TelemetryDisplayData& DisplayData() const;
 
 private:
-    void UpdateDisplayData();
+    void UpdateDisplayData(const ConstantForceEffectResult& constantResult);
     bool ProcessTelemetryInput();
 
     void Init(const FFBConfig& config);
@@ -47,7 +47,6 @@ private:
     CalculatedLateralLoad     load;
 
     // FFB Algo Outputs / calculations
-    ConstantForceEffectResult constantForceCalculation;
     ConstantForceEffect       constantForceEffect;
     DamperEffect              damperEffect;
     SpringEffect              springEffect;

@@ -78,12 +78,11 @@ void FFBProcessor::Update()
     double                          damperStrength = 0.0;
     double                          springStrength = 0.0;
     MovementDetector::MovementState movementState  = MovementDetector::MS_UNKNOWN;
+    ConstantForceEffectResult constantForceCalculation = {};
 
     if (!hasFirstReading)
     {
-        previous                 = current;
         hasFirstReading          = true;
-        constantForceCalculation = ConstantForceEffectResult();
     }
     else
     {
@@ -94,11 +93,7 @@ void FFBProcessor::Update()
             springStrength = springEffect.Calculate(1.0); // constant, nothing "dynamic", see comments in SpringEffect
 
             movementState  = movementDetector.Calculate(current, previous);
-            if (movementState != MovementDetector::MS_DRIVING)
-            {
-                constantForceCalculation = ConstantForceEffectResult();
-            }
-            else
+            if (movementState == MovementDetector::MS_DRIVING)
             {
                 //This is what will add the "Constant Force" effect if all the calculations work.
                 // Probably could smooth all this out
@@ -111,6 +106,7 @@ void FFBProcessor::Update()
     }
     ffbOutput.Update(constantForceCalculation.magnitude10000 / static_cast<double>(MAX_FORCE_IN_N /* or is this DEFAULT_DINPUT_GAIN ? */), damperStrength, springStrength, constantForceCalculation.paused);
     UpdateDisplayData();
+    previous                 = current;
 }
 
 bool FFBProcessor::ProcessTelemetryInput()
@@ -127,7 +123,7 @@ bool FFBProcessor::ProcessTelemetryInput()
     return load.Calculate(current, previous, slip);
 }
 
-void FFBProcessor::UpdateDisplayData()
+void FFBProcessor::UpdateDisplayData(const ConstantForceEffectResult& constantResult)
 {
     LOCK_MUTEX(TelemetryDisplay::mutex);
 
@@ -137,7 +133,7 @@ void FFBProcessor::UpdateDisplayData()
     displayData.vehicleDynamics  = vehicleDynamics;
 
     displayData.masterForceScale = ffbOutput.masterForceScale;
-    displayData.constantForce    = constantForceCalculation;
+    displayData.constantForce    = constantResult;
 
     UNLOCK_MUTEX(TelemetryDisplay::mutex);
 }
