@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "math_utilities.h"
+#include "safety_check.h"
 
 #include <cmath>
 
