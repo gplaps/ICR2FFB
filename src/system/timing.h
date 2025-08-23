@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ffb_config.h"
+
 struct ThreadTimer
 {
     explicit ThreadTimer(double intervalMs, bool log = false) :
@@ -17,7 +19,7 @@ struct ThreadTimer
 
 struct Timing
 {
-    Timing();
+    Timing(const FFBConfig& config);
     ~Timing();
 
     // Timing buffers

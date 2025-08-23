@@ -42,6 +42,7 @@ void FFBConfig::RegisterSettings()
     settings[L"base"].push_back(Setting(L"device", L"FFB Wheel", L"list your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
     settings[L"base"].push_back(Setting(L"game", L"indycar", L"list the exe name you use ie. 'indycar' or 'cart'"));
     settings[L"base"].push_back(Setting(L"version", L"DOS4G", L"which version of the game you are trying to run 'REND32A' or 'DOS4G'"));
+    settings[L"base"].push_back(Setting(L"verbose", false, L"Verbose logging - e.g. used config and FFB thread timing"));
 
     settings[L"effects"].push_back(Setting(L"force", 25.0, L"Master toggle for what % of force do you want? [0-100]"));
     settings[L"effects"].push_back(Setting(L"deadzone", 0.0, L"add a deadzone (based on lateral G) where forces do not apply [0-100]"));
@@ -266,7 +267,10 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
     {
         ParseLine(currentSection, line);
     }
-    LogConfig();
+    if(GetBool(L"base",L"verbose"))
+    {
+        LogConfig();
+    }
     return !GetString(L"base", L"device").empty();
 }
 

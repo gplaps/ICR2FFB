@@ -129,7 +129,7 @@ int main()
     ENSURE(!InitConsole());
     config = new FFBConfig;
     ENSURE(config && config->Valid());
-    timing = new Timing;
+    timing = new Timing(*config);
     ENSURE(timing);
     ffbProcessor = new FFBProcessor(*config);
     ENSURE(ffbProcessor && ffbProcessor->Valid());

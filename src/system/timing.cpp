@@ -7,30 +7,40 @@
 #if defined(HAS_STL_THREAD_MUTEX)
 #    include <thread>
 #endif
+#include <cmath>
 #include <mmsystem.h>
 
 static LARGE_INTEGER start, end, frequency;
-
-#define CALCULATE_WAIT
-#if defined(CALCULATE_WAIT)
-static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time before scheduled time resulting in active wait / polling == likely on time, but wasting resources ... set to zero, to accept slightly late
+#define PUT_THREADS_TO_SLEEP
+#if defined(PUT_THREADS_TO_SLEEP)
+const int DesiredTimerResolution=1;
+// default scheduler resolution in Windows is 15.6ms - to ensure the calculated sleep time is not constantly overrun, adjust to minimum configurable 1ms timing. This may have negative effects on power consumptions!
+// in case of timing issues (log.txt contains frequent timing reports), fall back to active wait/spinning by removing the PUT_THREADS_TO_SLEEP define.
+// thread being late was observed when changing window focus and does not need to be fixed
+// if it does happen constantly - e.g. between the at the time of writing - [DEBUG] tire load messages - it needs to be addressed
+// also consider calling timeBeginPeriod only if FFB output is required (game not paused). otherwise jitter may be tolerable
+static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time before scheduled time resulting in active wait / polling == likely on time, but wasting some resources ... set to zero, to accept slightly late
 #endif
 
 #define FRAMES_PER_SECOND(x) (1000.0 / static_cast<double>(x))
 
-Timing::Timing() :
-    ffb(FRAMES_PER_SECOND(60), true),
+Timing::Timing(const FFBConfig& config) :
+    ffb(FRAMES_PER_SECOND(60), config.GetBool(L"base",L"verbose")),
     telemetry(FRAMES_PER_SECOND(60)),
     render(FRAMES_PER_SECOND(15.0), false)
 {
-    timeBeginPeriod(1); // otherwise calculating the sleep timing is totally off - defaults to 15.6ms, this way its better but still not garanteed - in case of timing issues (log.txt contains frequent timing reports), fall back to active wait/spinning by removing the CALCULATE_WAIT define. may be negative effects on power consumptions as well
+#if defined(PUT_THREADS_TO_SLEEP)
+    timeBeginPeriod(DesiredTimerResolution);
+#endif
     QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&start);
 }
 
 Timing::~Timing()
 {
-    timeEndPeriod(1);
+#if defined(PUT_THREADS_TO_SLEEP)
+    timeEndPeriod(DesiredTimerResolution);
+#endif
 }
 
 static double timeSinceStartInMs()
@@ -44,9 +54,10 @@ bool ThreadTimer::ready()
     const double currentTime = timeSinceStartInMs();
     if (currentTime >= nextTime)
     {
-        const double lateMs = (currentTime - nextTime);
-        if (report && lateMs > 1.0) // there is little you can do to OS threading being late, at least log about and to notice if adjustments are necessary
+        const double lateMs = currentTime - nextTime;
+        if (report && lateMs > static_cast<double>(DesiredTimerResolution * 2))
         {
+            // there is little you can do to OS threading being late, at least log about and to notice if adjustments are necessary
             LogMessage(L"FFB thread was late at: " + std::to_wstring(currentTime) + L" D: " + std::to_wstring(lateMs) + L" I: " + std::to_wstring(interval));
         }
         nextTime = currentTime + interval;
@@ -57,17 +68,23 @@ bool ThreadTimer::ready()
 
 void ThreadTimer::schedule() const
 {
-#if defined(CALCULATE_WAIT) // predict when thread needs to wake up - results in less wasteful polling
+#if defined(PUT_THREADS_TO_SLEEP) // predict when thread needs to wake up - results in less wasteful polling
     const double currentTime = timeSinceStartInMs();
-    const int    waitTime    = static_cast<int>(nextTime - currentTime - SLACK_TIME_MS);
-    const bool   notOvertime = waitTime < static_cast<int>(interval) - 1;
-    if (waitTime >= 1 && notOvertime)
+    const double waitTime    = nextTime - currentTime - SLACK_TIME_MS;
+    const int    waitTimeI   = static_cast<int>(std::floor(waitTime));
+    const double thresholdT  = std::floor(interval - static_cast<double>(DesiredTimerResolution) - SLACK_TIME_MS);
+    const bool   notOverTime = waitTimeI > static_cast<int>(thresholdT);
+    if (waitTimeI >= 1 && notOverTime)
     {
+        // if (report) // there is little you can do, at least log about and to notice if adjustments are necessary - although logging can slow things done significantly
+        // {
+        //     LogMessage(L"FFB thread sleeping at: " + std::to_wstring(currentTime) + L"ms for " + std::to_wstring(waitTime) +  + L"ms threshold: " + std::to_wstring(thresholdT)L"ms - interval " + std::to_wstring(interval) + L"ms");
+        // }
 #    if defined(HAS_STL_THREAD_MUTEX)
-        std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+        std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeI));
         // std::this_thread::yield();
 #    else
-        Sleep(static_cast<DWORD>(waitTime));
+        Sleep(static_cast<DWORD>(waitTimeI));
         // Sleep(0); // == yield
 #    endif
     }
