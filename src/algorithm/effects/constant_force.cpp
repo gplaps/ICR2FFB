@@ -6,7 +6,6 @@
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <cmath>
-
 #include <numeric>
 
 /*

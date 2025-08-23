@@ -3,9 +3,8 @@
 #include "constants.h"
 #include "math_utilities.h"
 
-#include <cmath>
-
 #include <algorithm>
+#include <cmath>
 // #include <deque>
 #if !defined(IS_CPP11_COMPLIANT)
 #    include <stdint.h>
@@ -33,7 +32,7 @@ static DecodedSlip decodeSlip(uint16_t raw)
     const bool    right            = raw > 0x8000;
     const int32_t mag              = right ? (0x10000 - raw) : raw;
     const double  normalized       = saturate(static_cast<double>(mag) / MAX_EXPECTED_SLIP);
-    const double signedNorm        = right ? -normalized : normalized;
+    const double  signedNorm       = right ? -normalized : normalized;
     return DecodedSlip(signedNorm, normalized);
 }
 

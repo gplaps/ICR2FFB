@@ -74,7 +74,7 @@ IncludeCategories:
     Priority:        1
   - Regex:           '"(.*)"'
     Priority:        2
-  - Regex:           '<(.*).h>'
+  - Regex:           '<(.*)\.h>'
     Priority:        3
   - Regex:           '.*'
     Priority:        4
