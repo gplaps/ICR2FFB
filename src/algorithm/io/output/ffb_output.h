@@ -1,7 +1,5 @@
 #pragma once
 
-
-#include "constant_force.h"
 #include "ffb_pedals.h"
 #include "ffb_steering_device.h"
 

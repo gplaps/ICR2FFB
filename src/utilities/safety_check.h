@@ -1,8 +1,8 @@
 #pragma once
-#include "log.h"
-#include "string_utilities.h"
+#include "log.h" // IWYU pragma: keep
+#include "string_utilities.h" // IWYU pragma: keep
 
-#include <cmath>
+#include <cmath> // IWYU pragma: keep
 
 #define SAFETY_CHECK(x)                                                                              \
     if (!std::isfinite((x)))                                                                         \

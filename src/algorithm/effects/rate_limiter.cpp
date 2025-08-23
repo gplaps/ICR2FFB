@@ -16,7 +16,7 @@ RateLimiter::RateLimiter() :
 
 int RateLimiter::Calculate(int signedMagnitude, double force)
 {
-    int magnitude = std::abs(signedMagnitude);
+    const int magnitude = std::abs(signedMagnitude);
 
     // Direction calculation and smoothing for rate limiting
     const double targetDir = -sign(force) * MAX_FORCE_IN_N;

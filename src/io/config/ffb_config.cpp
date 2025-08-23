@@ -132,7 +132,7 @@ int FFBConfig::GetInt(const std::wstring& section, const std::wstring& key) cons
 
 bool FFBConfig::ParseLine(std::wstring& currentSection, const std::wstring& line)
 {
-    if (line.size() && line[0] == L'#') { return true; } // skip commented line
+    if (!line.empty() && line[0] == L'#') { return true; } // skip commented line
 
     // section header []
     const bool isSection = line.find(L'[') == 0 && line.find(L']') != std::wstring::npos;
@@ -146,7 +146,7 @@ bool FFBConfig::ParseLine(std::wstring& currentSection, const std::wstring& line
         const size_t splitPos = line.find(L'=');
         if (splitPos == std::wstring::npos)
         {
-            if (line.size())
+            if (!line.empty())
             {
                 LogMessage(L"[WARNING] Skipping malformed ini line: \"" + line + L'\"');
             }

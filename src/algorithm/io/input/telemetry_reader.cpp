@@ -165,7 +165,7 @@ static BOOL
     GetWindowText(hwnd, title, sizeof(title) / sizeof(TCHAR));
     const std::wstring titleStr = ToWideString(title);
     const std::wstring wTitle   = ToLower(titleStr);
-    if (titleStr.size())
+    if (!titleStr.empty())
     {
         LogMessage(L"[DEBUG] Checking window \"" + titleStr + L"\"");
         for (size_t i = 0; i < wdata->keywords.size(); ++i)

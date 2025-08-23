@@ -53,7 +53,7 @@ DirectInput::~DirectInput() {}
 bool DirectInput::Initialize()
 {
     LogMessage(L"[INFO] Initializing DirectInput...");
-    HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, reinterpret_cast<VOID**>(&directInputObject), NULL);
+    const HRESULT hr = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION, IID_IDirectInput8, reinterpret_cast<VOID**>(&directInputObject), NULL);
     if (FAILED(hr) || directInputObject == NULL)
     {
         LogMessage(L"[ERROR] DirectInput8Create failed: 0x" + std::to_wstring(hr));
@@ -74,7 +74,7 @@ void DirectInput::LogDeviceList() const
     for (size_t i = 0; i < deviceList.size(); ++i)
     {
         // user facing indices starting at 1
-        std::wstring msg(std::to_wstring(i + 1) + L": " + deviceList[i]);
+        const std::wstring msg(std::to_wstring(i + 1) + L": " + deviceList[i]);
         std::wcout << msg << L'\n';
         LogMessage(msg);
     }
@@ -185,7 +185,7 @@ IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNa
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // wcstoul() unsafe
 #endif
-        unsigned long targetIndex = std::wcstoul(productNameOrIndex.c_str(), NULL, 10);
+        const unsigned long targetIndex = std::wcstoul(productNameOrIndex.c_str(), NULL, 10);
         LogMessage(L"[INFO] Checking " + productNameOrIndex + L": " + std::to_wstring(targetIndex));
 #if defined(__clang__)
 #    pragma clang diagnostic pop

@@ -28,5 +28,5 @@ T sign(T input)
 template <typename T>
 T lerp(T a, T b, T t)
 {
-    return a + (b - a) * t;
+    return a + ((b - a) * t);
 }
