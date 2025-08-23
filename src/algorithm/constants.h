@@ -23,7 +23,7 @@ const double SLIP_SPEED_THRESHOLD          = SPEED_THRESHOLD;
 const double CURVE_STEEPNESS = 1.0e-4;
 const double MAX_THEORETICAL = 8500;
 const double SCALE_FACTOR    = 1.20;
-const double MAX_FORCE_IN_N  = MAX_THEORETICAL * SCALE_FACTOR; // ~10200
+const double MAX_FORCE_IN_N  = MAX_THEORETICAL * SCALE_FACTOR; // 10200 - correlates to DEFAULT_DINPUT_GAIN 10000 - needs to be moved out of force calculation though, keep it at 0-1 scale
 
 #if !defined(M_PI)
 #    define M_PI 3.14159265358979323846

@@ -161,13 +161,9 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
         const double response_ratio = expected_lateral_accel > 0.1 ? actual_lateral_accel / expected_lateral_accel : 1.0;
 
         // Front vs rear force balance
-        const double total_force   = std::abs(front_lateral_force + rear_lateral_force);
-        double       force_balance = 0.0;
-        if (total_force > 100.0)
-        {
-            // Positive = rear working harder (oversteer), Negative = front working harder (understeer)
-            force_balance = (std::abs(rear_lateral_force) - std::abs(front_lateral_force)) / total_force;
-        }
+        const double total_force = std::abs(front_lateral_force + rear_lateral_force);
+        // Positive = rear working harder (oversteer), Negative = front working harder (understeer)
+        const double force_balance = total_force > 100.0 ? (std::abs(rear_lateral_force) - std::abs(front_lateral_force)) / total_force : 0.0;
 
         // Method 3: Left/right tire imbalance (detects if one end is sliding)
         const double front_imbalance = std::abs(std::abs(force_lf_N) - std::abs(force_rf_N)) / std::max(1.0, std::abs(force_lf_N + force_rf_N));
@@ -228,7 +224,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     // Apply speed scaling (reduce forces at low speeds like your other calculations)
     const double speedScale = saturate((current.speed_mph - SPEED_THRESHOLD) / SPEED_SCALE_RAMP_RANGE);
 
-    forceMagnitude          = gForceScale * speedScale;
+    forceMagnitude          = static_cast<int>(gForceScale * speedScale * MAX_FORCE_IN_N);
 
     // Store basic telemetry for output
     speedMph    = current.speed_mph;

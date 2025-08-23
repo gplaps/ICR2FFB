@@ -73,7 +73,7 @@ bool CalculatedSlip::Calculate(const RawTelemetry& current, RawTelemetry& /*prev
     // Compute output force scaling
     const double absSlipDeg_ = std::abs(slipAngleDeg);
     const double slipScale   = saturate((current.speed_mph - SPEED_THRESHOLD) / SLIP_SPEED_RAMP_RANGE);
-    const double force       = saturate(absSlipDeg_ * 400.0 * slipScale);
+    const double force       = saturate((absSlipDeg_ * 400.0 * slipScale) / MAX_FORCE_IN_N);
     (void)force; // unused currently
 
     // Output

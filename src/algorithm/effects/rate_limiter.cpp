@@ -19,10 +19,10 @@ int RateLimiter::Calculate(int signedMagnitude, double force)
     int magnitude = std::abs(signedMagnitude);
 
     // Direction calculation and smoothing for rate limiting
-    const LONG targetDir = static_cast<LONG>(-sign(force)) * static_cast<LONG>(MAX_FORCE_IN_N);
+    const double targetDir = -sign(force) * MAX_FORCE_IN_N;
 
     // Direction smoothing - this prevents rapid direction changes
-    lastDirection = static_cast<LONG>(((1.0 - directionSmoothingFactor) * lastDirection) + (directionSmoothingFactor * targetDir));
+    lastDirection = static_cast<LONG>(lerp(targetDir, static_cast<double>(lastDirection), directionSmoothingFactor));
 
     // Track accumulated changes since last update
     if (lastSentMagnitude != -1)

@@ -72,8 +72,6 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
                                                          double                           brakingForceScale,
                                                          double /*weightForceScale*/)
 {
-    int signedMagnitude    = 0;
-
     const double speed_mph = current.speed_mph;
     (void)speed_mph; // used in commented code - be aware of spinning / reversing with negative speed, e.g. std::abs(speed_mph)
     // const double steering_deg = current.steering_deg;
@@ -164,8 +162,8 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     force = std::clamp(force, -MAX_FORCE_IN_N, MAX_FORCE_IN_N);
 
     // Convert to signed magnitude
-    const double smoothed = force;
-    signedMagnitude       = static_cast<int>(smoothed);
+    const double smoothed        = force;
+    int          signedMagnitude = static_cast<int>(smoothed);
     // int magnitude      = std::abs(signedMagnitude);
     // (void)magnitude;
 
