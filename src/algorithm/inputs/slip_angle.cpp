@@ -32,8 +32,7 @@ static DecodedSlip decodeSlip(uint16_t raw)
 
     const bool    right            = raw > 0x8000;
     const int32_t mag              = right ? (0x10000 - raw) : raw;
-    double        normalized       = static_cast<double>(mag) / MAX_EXPECTED_SLIP;
-    normalized                     = saturate(normalized);
+    const double  normalized       = saturate(static_cast<double>(mag) / MAX_EXPECTED_SLIP);
     const double signedNorm        = right ? -normalized : normalized;
     return DecodedSlip(signedNorm, normalized);
 }

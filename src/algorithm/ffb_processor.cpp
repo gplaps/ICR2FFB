@@ -105,8 +105,7 @@ void FFBProcessor::Update()
                 constantForceCalculation = constantForceEffect.Calculate(
                     current, load, slip, vehicleDynamics, // inputs
                     enableRateLimit,                      // settings
-                    deadzoneForceScale,
-                    brakingForceScale, weightForceScale);
+                    deadzoneForceScale, brakingForceScale, weightForceScale);
             }
         }
     }
