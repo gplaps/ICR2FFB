@@ -267,7 +267,7 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
     {
         ParseLine(currentSection, line);
     }
-    if(GetBool(L"base",L"verbose"))
+    if (GetBool(L"base", L"verbose"))
     {
         LogConfig();
     }

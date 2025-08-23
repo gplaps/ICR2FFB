@@ -25,7 +25,7 @@ double DamperEffect::Calculate(double speedMph) const
 {
     const double minDamper   = 0.0;
     const double damperScale = LowSpeedDamperStrength(speedMph);
-    const double damper01 = lerp(maxDamper, minDamper, damperScale) / maxDamper;
+    const double damper01    = lerp(maxDamper, minDamper, damperScale) / maxDamper;
     // experiment with curve shapes - this should model working against tyre friction of big slick tires without them rolling which is super heavy at zero but falls of pretty quickly if tyres rotate
     // const double damperCurve = quadraticEasing(damper01);
     const double damperCurve = saturate(cubicEasing(damper01));

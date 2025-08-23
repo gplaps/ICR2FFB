@@ -7,13 +7,14 @@
 #if defined(HAS_STL_THREAD_MUTEX)
 #    include <thread>
 #endif
-#include <cmath>
 #include <mmsystem.h>
+
+#include <cmath>
 
 static LARGE_INTEGER start, end, frequency;
 #define PUT_THREADS_TO_SLEEP
 #if defined(PUT_THREADS_TO_SLEEP)
-const int DesiredTimerResolution=1;
+const int DesiredTimerResolution = 1;
 // default scheduler resolution in Windows is 15.6ms - to ensure the calculated sleep time is not constantly overrun, adjust to minimum configurable 1ms timing. This may have negative effects on power consumptions!
 // in case of timing issues (log.txt contains frequent timing reports), fall back to active wait/spinning by removing the PUT_THREADS_TO_SLEEP define.
 // thread being late was observed when changing window focus and does not need to be fixed
@@ -25,7 +26,7 @@ static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time b
 #define FRAMES_PER_SECOND(x) (1000.0 / static_cast<double>(x))
 
 Timing::Timing(const FFBConfig& config) :
-    ffb(FRAMES_PER_SECOND(60), config.GetBool(L"base",L"verbose")),
+    ffb(FRAMES_PER_SECOND(60), config.GetBool(L"base", L"verbose")),
     telemetry(FRAMES_PER_SECOND(60)),
     render(FRAMES_PER_SECOND(15.0), false)
 {

@@ -1,5 +1,5 @@
 #pragma once
-#include "log.h" // IWYU pragma: keep
+#include "log.h"              // IWYU pragma: keep
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <cmath> // IWYU pragma: keep

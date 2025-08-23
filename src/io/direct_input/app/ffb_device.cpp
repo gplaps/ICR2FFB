@@ -4,7 +4,7 @@
 #include "direct_input.h"
 #include "ffb_effect.h"
 #include "log.h"
-#include "math_utilities.h" // IWYU pragma: keep
+#include "math_utilities.h"   // IWYU pragma: keep
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <cmath>
@@ -74,7 +74,7 @@ void FFBDevice::Update(double constantStrength, double damperStrength, double sp
 {
     if (constant)
     {
-        constantStrength           = CheckOutOfRangeValue(constantStrength, L"constant");
+        constantStrength                 = CheckOutOfRangeValue(constantStrength, L"constant");
         const double constantDirectInput = constantStrength * DEFAULT_DINPUT_GAIN_DBL;
         constant->Update(static_cast<LONG>(constantDirectInput), constantWithDirection);
     }
@@ -87,7 +87,7 @@ void FFBDevice::Update(double constantStrength, double damperStrength, double sp
     }
     if (spring)
     {
-        springStrength           = CheckOutOfRangeValue(springStrength, L"spring");
+        springStrength                 = CheckOutOfRangeValue(springStrength, L"spring");
         const double springDirectInput = springStrength * DEFAULT_DINPUT_GAIN_DBL;
         spring->Update(static_cast<LONG>(springDirectInput));
     }
