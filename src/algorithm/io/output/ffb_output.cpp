@@ -8,7 +8,7 @@
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     steeringDevice(config),
-    pedals(config),
+    // pedals(config),
     masterForceScale(),
     constantForceScale(),
     damperForceScale(),

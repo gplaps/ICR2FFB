@@ -9,7 +9,7 @@ struct FFBOutput
     virtual ~FFBOutput();
 
     FFBSteeringDevice steeringDevice;
-    FFBPedals         pedals; // not implemented - optional, like pedal vibrations motors on Fanatec products
+    // FFBPedals         pedals; // not implemented - optional, like pedal vibrations motors on Fanatec products
 
     // === Force Feedback Flags & States ===
     // I have 3 effects right now which all get calculated separately
