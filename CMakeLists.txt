@@ -56,7 +56,9 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_BINARY_NAME} DESTINATION .) 
 # or adding an install step that does does this instead
 install(CODE 
      "
-     if(${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini IS_NEWER_THAN ${CMAKE_INSTALL_PREFIX}/ffb.ini)
+     set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini)
+     set(DEST_DIR ${CMAKE_INSTALL_PREFIX}/ffb.ini)
+     if(${SRC_DIR} IS_NEWER_THAN ${DEST_DIR})
          file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini DESTINATION ${CMAKE_INSTALL_PREFIX})
          message(STATUS \"ffb.ini copied\")
      else()
