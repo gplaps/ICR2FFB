@@ -25,8 +25,8 @@ private:
     // Search the ini file for settings and find what the user has set them to
     int  LoadFFBSettings();
     bool LoadIniSettings(const std::wstring& filename);
-    void WriteFFBIniFile();
-    void LogConfig();
+    void WriteFFBIniFile() const;
+    void LogConfig() const;
     bool ParseLine(std::wstring& currentSection, const std::wstring& line);
 
     enum SettingType

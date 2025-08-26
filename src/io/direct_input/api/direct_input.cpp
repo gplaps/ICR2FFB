@@ -137,7 +137,7 @@ IDirectInputDevice8* DirectInput::CreateDeviceInternal(DiDeviceData* device)
 
 static BOOL CALLBACK ListDevicesCallback(const DIDEVICEINSTANCE* pdidInstance, VOID* pContext)
 {
-    EnumDeviceHelper* edh = static_cast<EnumDeviceHelper*>(pContext);
+    const EnumDeviceHelper* edh = static_cast<EnumDeviceHelper*>(pContext);
     edh->AccessKnownDevices().push_back(DiDeviceData(*pdidInstance));
     return DIENUM_CONTINUE; // Continue enumerating all devices
 }

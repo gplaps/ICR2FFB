@@ -176,7 +176,7 @@ bool FFBConfig::ParseLine(std::wstring& currentSection, const std::wstring& line
     return false;
 }
 
-void FFBConfig::WriteFFBIniFile()
+void FFBConfig::WriteFFBIniFile() const
 {
     std::wofstream file(L"ffb.ini");
     if (!file)
@@ -236,7 +236,7 @@ void FFBConfig::WriteFFBIniFile()
     }
 }
 
-void FFBConfig::LogConfig()
+void FFBConfig::LogConfig() const
 {
     LogMessage(L"[INFO] --- Configuration in use ---\n");
     for (std::map<std::wstring, std::vector<Setting> >::const_iterator sectionSettings = settings.begin(); sectionSettings != settings.end(); ++sectionSettings)

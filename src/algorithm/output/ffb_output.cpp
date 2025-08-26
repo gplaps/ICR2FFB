@@ -59,11 +59,11 @@ void FFBOutput::Start()
     // Also need to maybe fade in and out the effects when waking/sleeping
 }
 
-void FFBOutput::Update(double constant, double damper, double spring, bool paused)
+void FFBOutput::Update(double constantStrength, double damperStrength, double springStrength, bool paused)
 {
-    double constantOut = constant * constantForceScale * masterForceScale;
-    double damperOut   = damper * damperForceScale * masterForceScale;
-    double springOut   = spring * springForceScale * masterForceScale;
+    double constantOut = constantStrength * constantForceScale * masterForceScale;
+    double damperOut   = damperStrength * damperForceScale * masterForceScale;
+    double springOut   = springStrength * springForceScale * masterForceScale;
 
     SAFETY_CHECK(constantOut);
     SAFETY_CHECK(damperOut);
