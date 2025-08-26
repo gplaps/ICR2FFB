@@ -39,6 +39,8 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
         return;
     }
 
+    Init(config);
+
     mInitialized = true;
 }
 
