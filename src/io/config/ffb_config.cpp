@@ -340,6 +340,21 @@ std::wstring FFBConfig::Setting::SettingValue::ToString() const
         case ST_STRING:
             return s;
         case ST_DOUBLE:
+        {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // swprintf() unsafe
+#endif
+            wchar_t buffer[32] = {};
+            std::swprintf(buffer,32,L"%.2f",d); // NOLINT(*-vararg)
+            // format shortening is highly subjective! adjust this if necessary
+            // at the time of writing ini values are percentages,
+            // but also support scale values with "pecentage steps" resolution.
+            return buffer;
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#endif
+        }
         case ST_INT:
             return std::to_wstring(d);
         default: return L"";
