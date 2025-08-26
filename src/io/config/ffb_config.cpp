@@ -4,6 +4,8 @@
 #include "string_utilities.h"
 #include "version.h"
 
+#include <cstdio>
+#include <cwchar>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -27,7 +29,7 @@ FFBConfig::FFBConfig() :
     settings()
 {
     RegisterSettings();
-    if (!LoadSettingsFromConfig())
+    if (!LoadFFBSettings())
     {
         return; // yes, useless statement as nothing follows
     }
@@ -174,7 +176,7 @@ bool FFBConfig::ParseLine(std::wstring& currentSection, const std::wstring& line
     return false;
 }
 
-void FFBConfig::WriteIniFile()
+void FFBConfig::WriteFFBIniFile()
 {
     std::wofstream file(L"ffb.ini");
     if (!file)
@@ -250,13 +252,13 @@ void FFBConfig::LogConfig()
 }
 
 // Search the ini file for settings and find what the user has set them to
-bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
+bool FFBConfig::LoadIniSettings(const std::wstring& filename)
 {
     std::wifstream file(filename.c_str());
     if (!file.is_open())
     {
         LogMessage(L"[INFO] No ini file found, creating default log.txt");
-        WriteIniFile();
+        WriteFFBIniFile();
         return false;
     }
 
@@ -274,10 +276,10 @@ bool FFBConfig::LoadFFBSettings(const std::wstring& filename)
     return !GetString(L"base", L"device").empty();
 }
 
-int FFBConfig::LoadSettingsFromConfig()
+int FFBConfig::LoadFFBSettings()
 {
     // Load FFB configuration file "ffb.ini"
-    if (!LoadFFBSettings(L"ffb.ini"))
+    if (!LoadIniSettings(L"ffb.ini"))
     {
         LogMessage(L"[ERROR] Failed to load FFB settings from ffb.ini");
         LogMessage(L"[ERROR] A ffb.ini was written to the current working directory. Change changes and start this program again");
@@ -331,7 +333,7 @@ std::wstring FFBConfig::Setting::ToString() const
     return mKey + L" = " + mValue.ToString();
 }
 
-std::wstring FFBConfig::Setting::SettingValue::ToString() const
+std::wstring FFBConfig::Setting::Value::ToString() const
 {
     switch (mType)
     {
@@ -361,7 +363,7 @@ std::wstring FFBConfig::Setting::SettingValue::ToString() const
     }
 }
 
-bool FFBConfig::Setting::SettingValue::FromString(const std::wstring& valueString)
+bool FFBConfig::Setting::Value::FromString(const std::wstring& valueString)
 {
     switch (mType)
     {

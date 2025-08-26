@@ -18,18 +18,14 @@ struct FFBConfig
     std::wstring GetString(const std::wstring& section, const std::wstring& key) const;
     double       GetDouble(const std::wstring& section, const std::wstring& key) const;
     int          GetInt(const std::wstring& section, const std::wstring& key) const;
-    // this can be achieved elegantly with boost/std::any / boost/std::variant in C++17 to let it do the runtime conversion, here its implemented not as flexible
-    // template<typename T>
-    // T         GetSetting(const std::wstring& key) const {}
-    // template<typename T>
-    // T         SetSetting(const std::wstring& key) {}
+    // no boost/std::any / boost/std::variant before C++17
 
 private:
     void RegisterSettings();
     // Search the ini file for settings and find what the user has set them to
-    int  LoadSettingsFromConfig();
-    bool LoadFFBSettings(const std::wstring& filename);
-    void WriteIniFile();
+    int  LoadFFBSettings();
+    bool LoadIniSettings(const std::wstring& filename);
+    void WriteFFBIniFile();
     void LogConfig();
     bool ParseLine(std::wstring& currentSection, const std::wstring& line);
 
@@ -53,33 +49,33 @@ private:
 
         std::wstring mKey;
         std::wstring mDescription;
-        struct SettingValue
+        struct Value
         {
-            SettingValue() :
+            Value() :
                 b(),
                 s(),
                 d(),
                 i(),
                 mType(ST_BOOL) {} // undecided if defaulting to bool is ok
-            explicit SettingValue(bool fromBool) :
+            explicit Value(bool fromBool) :
                 b(fromBool),
                 s(),
                 d(),
                 i(),
                 mType(ST_BOOL) {}
-            explicit SettingValue(const wchar_t* FromString) :
+            explicit Value(const wchar_t* FromString) :
                 b(),
                 s(FromString),
                 d(),
                 i(),
                 mType(ST_STRING) {}
-            explicit SettingValue(double fromDouble) :
+            explicit Value(double fromDouble) :
                 b(),
                 s(),
                 d(fromDouble),
                 i(),
                 mType(ST_DOUBLE) {}
-            explicit SettingValue(int fromInt) :
+            explicit Value(int fromInt) :
                 b(),
                 s(),
                 d(),
@@ -95,7 +91,7 @@ private:
             std::wstring ToString() const;
             bool         FromString(const std::wstring& valueString);
         };
-        SettingValue mValue;
+        Value mValue;
 
         std::wstring ToString() const;
     };
