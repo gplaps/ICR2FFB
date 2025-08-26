@@ -259,7 +259,8 @@ bool FFBConfig::LoadIniSettings(const std::wstring& filename)
     {
         LogMessage(L"[INFO] No ini file found, creating default log.txt");
         WriteFFBIniFile();
-        return false;
+        file.open(filename.c_str());
+        if (!file.is_open()) { return false; }
     }
 
     std::wstring currentSection = L"none";
