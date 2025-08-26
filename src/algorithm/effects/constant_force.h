@@ -11,12 +11,12 @@
 struct ConstantForceEffectResult
 {
     ConstantForceEffectResult() :
-        magnitude01(),
+        magnitude(),
         paused(true) {}
-    ConstantForceEffectResult(double magnitude, bool isPaused) :
-        magnitude01(magnitude),
+    ConstantForceEffectResult(double magnitude01, bool isPaused) :
+        magnitude(magnitude01),
         paused(isPaused) {}
-    double magnitude01; // ideally redo the calculation in [0..1] scale (floating point) and let the directInput part do the scaling
+    double magnitude;
     bool   paused;
 };
 

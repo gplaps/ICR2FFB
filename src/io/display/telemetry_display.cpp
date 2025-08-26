@@ -138,7 +138,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 
     ss.str(L"");
     ss.clear();
-    ss << L"Force Magnitude: " << displayData.constantForce.magnitude01;
+    ss << L"Force Magnitude: " << displayData.constantForce.magnitude;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 

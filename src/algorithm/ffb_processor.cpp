@@ -103,7 +103,7 @@ void FFBProcessor::Update(double deltaTimeMs)
             }
         }
     }
-    ffbOutput.Update(constantForceCalculation.magnitude01, damperStrength, springStrength, constantForceCalculation.paused);
+    ffbOutput.Update(constantForceCalculation.magnitude, damperStrength, springStrength, constantForceCalculation.paused);
     UpdateDisplayData(constantForceCalculation);
     previous = current;
 }
