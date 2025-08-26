@@ -77,7 +77,7 @@ void ThreadTimer::schedule() const
     const bool   notOverTime = waitTimeI > static_cast<int>(thresholdT);
     if (waitTimeI >= 1 && notOverTime)
     {
-        // if (report) // there is little you can do, at least log about and to notice if adjustments are necessary - although logging can slow things done significantly
+        // if (report) // logging can slow things done significantly
         // {
         //     LogMessage(L"FFB thread sleeping at: " + std::to_wstring(currentTime) + L"ms for " + std::to_wstring(waitTime) +  + L"ms threshold: " + std::to_wstring(thresholdT)L"ms - interval " + std::to_wstring(interval) + L"ms");
         // }
