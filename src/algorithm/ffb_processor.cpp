@@ -57,7 +57,7 @@ void FFBProcessor::Init(const FFBConfig& config)
 
 bool FFBProcessor::Valid() const { return mInitialized; }
 
-void FFBProcessor::Update()
+void FFBProcessor::Update(double deltaTimeMs)
 {
     // Check to see if Telemetry is coming in, but if not then wait for it!
     if (!telemetryReader.Update())
@@ -91,7 +91,7 @@ void FFBProcessor::Update()
             damperStrength = damperEffect.Calculate(current.speed_mph);
             springStrength = springEffect.Calculate(); // constant, nothing "dynamic", see comments in SpringEffect
 
-            movementState  = movementDetector.Calculate(current, previous);
+            movementState  = movementDetector.Calculate(current, previous, deltaTimeMs);
             if (movementState == MovementDetector::MS_DRIVING)
             {
                 //This is what will add the "Constant Force" effect if all the calculations work.

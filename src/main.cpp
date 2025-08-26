@@ -51,9 +51,11 @@ static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
     // Loop which kicks stuff off and coordinates everything!
     while (!shouldExit)
     {
+        double lastTime = TimeSinceStartInMs();
         if (timing->ffb.ready())
         {
-            ffbProcessor->Update();
+            const double deltaTimeMs = TimeSinceStartInMs() - lastTime;
+            ffbProcessor->Update(deltaTimeMs);
             timing->ffb.schedule();
         }
     }

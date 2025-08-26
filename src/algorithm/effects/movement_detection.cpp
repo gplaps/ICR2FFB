@@ -1,6 +1,7 @@
 #include "movement_detection.h"
 
 #include "log.h"
+#include <cfloat>
 
 MovementDetector::MovementDetector() :
     lastDlong(0.0),
@@ -11,7 +12,7 @@ MovementDetector::MovementDetector() :
     movementThreshold(10),
     movementThreshold_value(0.001) {}
 
-MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& current, const RawTelemetry& /*previous*/)
+MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& current, const RawTelemetry& /*previous*/, double deltaTimeMs)
 {
     if (isFirstReading)
     {
@@ -21,7 +22,8 @@ MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& 
         return MS_IDLE;
     }
 
-    const bool isStationary = std::abs(current.pos.dlong - lastDlong) < movementThreshold_value; // this is time dependent, so liekly put timestamps into RawTelemetry to properly calculate
+    const double dtInv = deltaTimeMs < 0.001 ? DBL_MAX : 1.0 / deltaTimeMs; // div-by-zero protection
+    const bool isStationary = std::abs(current.pos.dlong - lastDlong) * dtInv < movementThreshold_value; // this is time dependent, so liekly put timestamps into RawTelemetry to properly calculate from input data instead of processing time
 
     if (isStationary)
     {

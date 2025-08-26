@@ -16,7 +16,7 @@ struct FFBProcessor
 {
     explicit FFBProcessor(const FFBConfig& config);
     bool                                          Valid() const;
-    void                                          Update();
+    void                                          Update(double deltaTimeMs);
     const TelemetryDisplay::TelemetryDisplayData& DisplayData() const;
 
 private:

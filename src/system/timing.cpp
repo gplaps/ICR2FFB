@@ -44,7 +44,7 @@ Timing::~Timing()
 #endif
 }
 
-static double timeSinceStartInMs()
+double TimeSinceStartInMs()
 {
     QueryPerformanceCounter(&end);
     return static_cast<double>(end.QuadPart - start.QuadPart) * 1000.0 / static_cast<double>(frequency.QuadPart);
@@ -52,7 +52,7 @@ static double timeSinceStartInMs()
 
 bool ThreadTimer::ready()
 {
-    const double currentTime = timeSinceStartInMs();
+    const double currentTime = TimeSinceStartInMs();
     if (currentTime >= nextTime)
     {
         const double lateMs = currentTime - nextTime;
@@ -70,7 +70,7 @@ bool ThreadTimer::ready()
 void ThreadTimer::schedule() const
 {
 #if defined(PUT_THREADS_TO_SLEEP) // predict when thread needs to wake up - results in less wasteful polling
-    const double currentTime = timeSinceStartInMs();
+    const double currentTime = TimeSinceStartInMs();
     const double waitTime    = nextTime - currentTime - SLACK_TIME_MS;
     const int    waitTimeI   = static_cast<int>(std::floor(waitTime));
     const double thresholdT  = std::floor(interval - static_cast<double>(DesiredTimerResolution) - SLACK_TIME_MS);

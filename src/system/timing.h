@@ -19,7 +19,7 @@ struct ThreadTimer
 
 struct Timing
 {
-    Timing(const FFBConfig& config);
+    explicit Timing(const FFBConfig& config);
     ~Timing();
 
     // Timing buffers
@@ -27,3 +27,5 @@ struct Timing
     ThreadTimer telemetry;
     ThreadTimer render;
 };
+
+double TimeSinceStartInMs();
