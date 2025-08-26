@@ -18,6 +18,9 @@ template <typename T>
 T saturate(T v) { return std::clamp(v, static_cast<T>(0), static_cast<T>(1)); }
 
 template <typename T>
+T saturatePM(T v) { return std::clamp(v, static_cast<T>(-1), static_cast<T>(1)); }
+
+template <typename T>
 T sign(T input)
 {
     if (input > static_cast<T>(0)) { return static_cast<T>(1); }
