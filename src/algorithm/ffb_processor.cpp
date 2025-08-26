@@ -47,7 +47,6 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
 void FFBProcessor::Init(const FFBConfig& config)
 {
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
-    // Would be nice to add a % per effect in the future
     enableRateLimit              = config.GetBool(L"effects", L"limit");
     const bool enableWeightForce = config.GetBool(L"effects", L"weight");
 
