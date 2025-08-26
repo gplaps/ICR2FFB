@@ -53,7 +53,7 @@ private:
     double deadzoneForceScale;
     double brakingForceScale;
     double weightForceScale;
-    bool enableRateLimit;
+    bool   enableRateLimit;
 
     // IO
     TelemetryReader                        telemetryReader;

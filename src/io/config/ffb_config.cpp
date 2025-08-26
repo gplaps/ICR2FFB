@@ -348,7 +348,7 @@ std::wstring FFBConfig::Setting::Value::ToString() const
 #    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // swprintf() unsafe
 #endif
             wchar_t buffer[32] = {};
-            std::swprintf(buffer,32,L"%.2f",d); // NOLINT(*-vararg)
+            std::swprintf(buffer, 32, L"%.2f", d); // NOLINT(*-vararg)
             // format shortening is highly subjective! adjust this if necessary
             // at the time of writing ini values are percentages,
             // but also support scale values with "pecentage steps" resolution.
