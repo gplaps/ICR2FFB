@@ -134,10 +134,6 @@ static void SetConsoleWindowSize()
     {
         LogMessage(L"[WARNING] Failed to set console window size");
     }
-    else
-    {
-        LogMessage(L"[INFO] Console window size set successfully");
-    }
 }
 
 // Prevent lockup if window is clicked
@@ -164,10 +160,6 @@ static void DisableConsoleQuickEdit()
     if (!SetConsoleMode(hInput, mode))
     {
         LogMessage(L"[ERROR] Failed to set console mode");
-    }
-    else
-    {
-        LogMessage(L"[INFO] Console Quick Edit Mode disabled");
     }
 }
 
@@ -205,10 +197,6 @@ static void HideConsoleCursor()
     if (!SetConsoleCursorInfo(hOut, &cursorInfo))
     {
         LogMessage(L"[ERROR] Failed to hide cursor");
-    }
-    else
-    {
-        LogMessage(L"[INFO] Cursor hidden successfully");
     }
 }
 
