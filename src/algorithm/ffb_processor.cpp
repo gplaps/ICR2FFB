@@ -1,7 +1,6 @@
 #include "ffb_processor.h"
 
 #include "constant_force.h"
-#include "constants.h"
 #include "lateral_load.h"
 #include "log.h"
 #include "math_utilities.h"
