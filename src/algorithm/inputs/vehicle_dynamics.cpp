@@ -43,12 +43,12 @@ const double MAX_GAME_FORCE_UNITS = 4000.0;  // Maximum expected force in game u
 } // namespace VehicleConstants
 
 // Helper function to convert raw tire data to usable data
-static double convertTireForceToNewtons(double tire_force_raw)
+static double ConvertTireForceToNewtons(double tire_force_raw)
 {
     return tire_force_raw * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
 }
 
-static int getTurnDirection(double lf, double rf, double lr, double rr)
+static int GetTurnDirection(double lf, double rf, double lr, double rr)
 {
     // Determine if we're turning left or right based on force signs
     // Most of your forces will have the same sign during a turn
@@ -92,15 +92,15 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
-    const double force_lf_N     = convertTireForceToNewtons(force_lf);
-    const double force_rf_N     = convertTireForceToNewtons(force_rf);
-    const double force_lr_N     = convertTireForceToNewtons(force_lr);
-    const double force_rr_N     = convertTireForceToNewtons(force_rr);
+    const double force_lf_N     = ConvertTireForceToNewtons(force_lf);
+    const double force_rf_N     = ConvertTireForceToNewtons(force_rf);
+    const double force_lr_N     = ConvertTireForceToNewtons(force_lr);
+    const double force_rr_N     = ConvertTireForceToNewtons(force_rr);
 
-    const double forceLong_lf_N = convertTireForceToNewtons(forceLong_lf);
-    const double forceLong_rf_N = convertTireForceToNewtons(forceLong_rf);
-    const double forceLong_lr_N = convertTireForceToNewtons(forceLong_lr);
-    const double forceLong_rr_N = convertTireForceToNewtons(forceLong_rr);
+    const double forceLong_lf_N = ConvertTireForceToNewtons(forceLong_lf);
+    const double forceLong_rf_N = ConvertTireForceToNewtons(forceLong_rf);
+    const double forceLong_lr_N = ConvertTireForceToNewtons(forceLong_lr);
+    const double forceLong_rr_N = ConvertTireForceToNewtons(forceLong_rr);
 
     frontLeftForce_N            = force_lf_N;
     frontRightForce_N           = force_rf_N;
@@ -115,7 +115,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     const double total_lateral_force_N = force_lf_N + force_rf_N + force_lr_N + force_rr_N;
 
     // Determine turn direction and apply sign
-    const int turn_direction = getTurnDirection(force_lf, force_rf, force_lr, force_rr);
+    const int turn_direction = GetTurnDirection(force_lf, force_rf, force_lr, force_rr);
 
     // Calculate lateral acceleration: F = ma, so a = F/m
     const double lateral_acceleration = (total_lateral_force_N * turn_direction) / VehicleConstants::VEHICLE_MASS;
@@ -127,14 +127,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     lateralG = lateral_acceleration / VehicleConstants::GRAVITY;
 
     // Calculate direction value
-    if (std::abs(lateralG) < 0.05)
-    {
-        directionVal = 0; // Straight
-    }
-    else
-    {
-        directionVal = static_cast<int>(sign(totalLateralForce));
-    }
+    directionVal = std::abs(lateralG) < 0.05 ? 0 : static_cast<int>(sign(totalLateralForce));
 
     // CALC 2
     //===== SLIP ANGLE ======
@@ -224,7 +217,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     // Apply speed scaling (reduce forces at low speeds like your other calculations)
     const double speedScale = saturate((current.speed_mph - SPEED_THRESHOLD) / SPEED_SCALE_RAMP_RANGE);
 
-    forceMagnitude          = static_cast<int>(gForceScale * speedScale * MAX_FORCE_IN_N);
+    forceMagnitude          = gForceScale * speedScale * MAX_FORCE_IN_N;
 
     // Store basic telemetry for output
     speedMph    = current.speed_mph;
