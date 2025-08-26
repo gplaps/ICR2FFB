@@ -85,16 +85,17 @@ void FFBProcessor::Update(double deltaTimeMs)
     }
     else
     {
+        // === Step1 - raw telemetry to "cleaned up" / "engineering units" data
         if (ProcessTelemetryInput())
         {
-            // Update Effects
+            // === Step 2 - vehicle dynamics to FFB effects ===
             damperStrength = damperEffect.Calculate(current.speed_mph);
             springStrength = springEffect.Calculate(); // constant, nothing "dynamic", see comments in SpringEffect
 
             movementState  = movementDetector.Calculate(current, previous, deltaTimeMs);
             if (movementState == MovementDetector::MS_DRIVING)
             {
-                //This is what will add the "Constant Force" effect if all the calculations work.
+                // This is what will add the "Constant Force" effect if all the calculations work.
                 // Probably could smooth all this out
                 constantForceCalculation = constantForceEffect.Calculate(
                     current, load, slip, vehicleDynamics, // inputs

@@ -33,10 +33,6 @@ private:
     RawTelemetry previous;
     bool         hasFirstReading;
 
-    MovementDetector movementDetector;
-
-    bool enableRateLimit;
-
     // ================================================
     // === Step 2 - vehicle dynamics to FFB effects ===
     // ================================================
@@ -45,6 +41,8 @@ private:
     CalculatedSlip            slip;
     CalculatedVehicleDynamics vehicleDynamics;
     CalculatedLateralLoad     load;
+
+    MovementDetector movementDetector;
 
     // FFB Algo Outputs / calculations
     ConstantForceEffect constantForceEffect;
@@ -55,6 +53,7 @@ private:
     double deadzoneForceScale;
     double brakingForceScale;
     double weightForceScale;
+    bool enableRateLimit;
 
     // IO
     TelemetryReader                        telemetryReader;
