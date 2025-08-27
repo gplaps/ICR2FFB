@@ -58,7 +58,7 @@ install(CODE
      "
      set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini)
      set(DEST_DIR ${CMAKE_INSTALL_PREFIX}/ffb.ini)
-     if(${SRC_DIR} IS_NEWER_THAN ${DEST_DIR})
+     if((NOT EXISTS ${DEST_DIR}) OR (${SRC_DIR} IS_NEWER_THAN ${DEST_DIR}))
          file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/ffb.ini DESTINATION ${CMAKE_INSTALL_PREFIX})
          message(STATUS \"ffb.ini copied\")
      else()
