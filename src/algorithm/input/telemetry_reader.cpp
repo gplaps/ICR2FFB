@@ -28,17 +28,20 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-// Offsets for different version of the game
+// Offsets database for different games/versions
+// THANK YOU ERIC
 
 // BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
 #define ICR2SIG      "license with Bob"
 #define ICR2SIG_REND "Use Rendition" // or search for "-gRN1f" command line switch
+#define NR1SIG       "name of Harry Gant"
+#define NR2SIG       "NASCAR V2.03"
 #define UNINIT_SIG   "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND"
 
 // Rendition EXE
-static const GameOffsets ICR2_Offsets_REND = {
+static const GameOffsets Offsets_ICR2_REND = {
     0xB1C0C, //signature
 
     0xE0EA4, //cars data
@@ -62,7 +65,7 @@ static const GameOffsets ICR2_Offsets_REND = {
 };
 
 // DOS4G Exe, should be 1.02
-static const GameOffsets ICR2_Offsets_DOS = {
+static const GameOffsets Offsets_ICR2_DOS = {
     0xA0D78,
 
     0xD4718,
@@ -82,9 +85,83 @@ static const GameOffsets ICR2_Offsets_DOS = {
     0xC5C14,
     0xC5C16,
 
-    ICR2SIG};
+    ICR2SIG
+};
 
-static const GameOffsets Unspecified_Offsets = {
+// ICR2 Windy
+static const GameOffsets Offsets_ICR2_WINDY = {
+     0x004E2161,
+    
+     0x004E0000, /* ???? */ // missing cars data
+
+     0x004F3854,
+     0x004F3856,
+     0x004F3850,
+     0x004F3852,
+
+     0x00528204,
+     0x00528206,
+     0x00528200,
+     0x00528202,
+
+     0x005281F8,
+     0x005281Fa,
+     0x005281F4,
+     0x005281F6,
+
+     ICR2SIG
+};
+
+//N1 Offsets
+static const GameOffsets Offsets_NASCAR = {
+    0xAEA8C,
+
+    0xEFED4,
+    
+    0xCEF70,
+    0xCEF70,
+    0xCEF70,
+    0xCEF70,
+    
+    0x9F6F8,
+    0x9F6FA,
+    0x9f780,
+    0x9F6F6,
+    
+    0xF0970,
+    0xF0970,
+    0xF0970,
+    0xF0970,
+
+    NR1SIG
+};
+
+//N2 Offsets
+static const GameOffsets Offsets_NASCAR2 = {
+    0xD7125, // "NASCAR V2.03"
+    
+    0xAD440,
+    
+    0xF39FA,
+    0xF39FC,
+    0xF39F6,
+    0xF39F8,
+    
+    0xF3B0E,
+    0xF3B10,
+    0xF3B0A,
+    0xF3B0C,
+    
+    0xF3B02,
+    0xF3B04,
+    0xF3AFE,
+    0xF3B00,
+
+    NR2SIG
+};
+
+// Not found
+static const GameOffsets Offsets_Unspecified = {
     0x0,
 
     0x0,
@@ -104,7 +181,8 @@ static const GameOffsets Unspecified_Offsets = {
     0x0,
     0x0,
 
-    UNINIT_SIG};
+    UNINIT_SIG
+};
 
 void GameOffsets::ApplySignature(uintptr_t sigAddr)
 {
@@ -134,20 +212,87 @@ static GameOffsets GetGameOffsets(GameVersion version)
     switch (version)
     {
         case ICR2_DOS4G_1_02:
-            return ICR2_Offsets_DOS;
+            return Offsets_ICR2_DOS;
         case ICR2_RENDITION:
-            return ICR2_Offsets_REND;
+            return Offsets_ICR2_REND;
+        case ICR2_WINDOWS:
+            return Offsets_ICR2_WINDY;
+        case NASCAR1:
+            return Offsets_NASCAR;
+        case NASCAR2_V2_03:
+            return Offsets_NASCAR2;
         case VERSION_UNINITIALIZED:
         default:
-            return Unspecified_Offsets;
+            return Offsets_Unspecified;
     }
+}
+
+static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeywordsForGame(GameVersion version)
+{
+    std::pair<std::vector<std::wstring>,std::vector<std::wstring>> result; // first == keywords, second == excludedKeywords
+
+    switch(version)
+    {
+        case ICR2_DOS4G_1_02:
+        {
+            result.first.push_back(L"dosbox");
+
+            result.first.push_back(L"indycar");
+            result.first.push_back(L"cart");
+
+            result.second.push_back(L"rendtion");      // ICR2 Rendition version
+            result.second.push_back(L"status window"); // DosBox status window
+
+            break;
+        }
+        case ICR2_RENDITION:
+        {
+            result.first.push_back(L"dosbox");
+
+            result.first.push_back(L"indycar");
+            result.first.push_back(L"cart");
+            
+            result.second.push_back(L"rready");        // Rendition wrapper window
+            result.second.push_back(L"speedy3d");      // Rendition wrapper window
+            result.second.push_back(L"status window"); // DosBox status window
+            break;
+        }
+        case ICR2_WINDOWS:
+        {
+            // not implemented
+            LogMessage(L"[INFO] Game detection of ICR2 Windows version not implemented");
+            break;
+        }
+        case NASCAR1: 
+        {
+            result.first.push_back(L"dosbox");
+
+            result.first.push_back(L"nascar");
+
+            result.second.push_back(L"status window"); // DosBox status window
+            break;
+        }
+        case NASCAR2_V2_03:
+        {
+            result.first.push_back(L"dosbox");
+
+            result.first.push_back(L"nascar");
+
+            result.second.push_back(L"status window"); // DosBox status window
+            break;
+        }
+        case VERSION_UNINITIALIZED:
+        default:
+            break;
+    }
+    return result;
 }
 
 struct FindWindowData
 {
-    FindWindowData(const std::vector<std::wstring>& keyWords, const std::vector<std::wstring>& excludedKeyWords, DWORD processId) :
-        keywords(keyWords),
-        excludedkeyWords(excludedKeyWords),
+    FindWindowData(const std::pair<std::vector<std::wstring>,std::vector<std::wstring>>& keyWordsAndExcluded, DWORD processId) :
+        keywords(keyWordsAndExcluded.first),
+        excludedkeyWords(keyWordsAndExcluded.second),
         pid(processId) {}
     std::vector<std::wstring> keywords;
     std::vector<std::wstring> excludedkeyWords;
@@ -194,9 +339,9 @@ static BOOL
 }
 
 // Gets the process ID of indycar
-static DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords, const std::vector<std::wstring>& excludedKeywords)
+static DWORD FindProcessIdByWindow(GameVersion version)
 {
-    FindWindowData data(keywords, excludedKeywords, 0);
+    FindWindowData data(GetKeywordsForGame(version), 0);
     EnumWindows(EnumerateWindowsCallback, reinterpret_cast<LPARAM>(&data));
     return data.pid;
 }
@@ -282,7 +427,7 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 TelemetryReader::TelemetryReader(const FFBConfig& config) :
     hProcess(NULL),
     mInitialized(false),
-    offs(),
+    offsets(),
     out(),
     rawData(),
     carData()
@@ -293,15 +438,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
         return;
     }
 
-    // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
-    std::vector<std::wstring> keywords;
-    keywords.push_back(L"dosbox");
-    keywords.push_back(config.GetString(L"base", L"game"));
-    std::vector<std::wstring> excludedKeywords;
-    excludedKeywords.push_back(L"rready");        // Rendition wrapper window
-    excludedKeywords.push_back(L"speedy3d");      // Rendition wrapper window
-    excludedKeywords.push_back(L"status window"); // DosBox status window
-    const DWORD pid = FindProcessIdByWindow(keywords, excludedKeywords);
+    // Find process window
+    const DWORD pid = FindProcessIdByWindow(config.version);
     if (!pid)
     {
         LogMessage(L"[ERROR] Game window not found.");
@@ -313,8 +451,8 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
 
     // it should be possible to detect any supported game by searching the memory for known signatures and selecting one of the known offsets for it without the need for the user to specify it
     // if more game offsets have been found this project likely has to undergo a (significant) rewrite
-    offs                    = GetGameOffsets(config.version);
-    const uintptr_t sigAddr = ScanSignature(hProcess, offs);
+    offsets                 = GetGameOffsets(config.version);
+    const uintptr_t sigAddr = ScanSignature(hProcess, offsets);
     if (!sigAddr)
     {
         CloseHandle(hProcess);
@@ -322,10 +460,84 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
         return;
     }
 
-    offs.ApplySignature(sigAddr);
+    offsets.ApplySignature(sigAddr);
 
-    LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offs.signatureOffset) +
-               L" | cars_data @ 0x" + std::to_wstring(offs.cars_data_offset));
+    LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signatureOffset) +
+               L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data_offset) + 
+               L" | rf_mag_lat @ 0x" + std::to_wstring(offsets.tire_maglat_offsetfr));
+
+    /*
+    if (config.version == ICR2_DOS4G_1_02 || config.version == ICR2_RENDITION) {
+
+        LogMessage(L"=== ICR2 MEMORY ANALYSIS ===");
+
+        // Log the found signature address
+        LogMessage(L"[ICR2] Signature found at: 0x" + std::to_wstring(sigAddr));
+
+        // Log the signature offset being used
+        LogMessage(L"[ICR2] Using signature offset: 0x" + std::to_wstring(offsets.signatureOffset));
+
+        // Calculate and log the EXE base
+        uintptr_t calculatedExeBase = sigAddr - offsets.signatureOffset;
+        LogMessage(L"[ICR2] Calculated EXE base: 0x" + std::to_wstring(calculatedExeBase));
+
+        // Known values from your analysis
+        uintptr_t knownFileOffset = 0xF21CC;  // From HxD
+        uintptr_t knownCheatEngineAddr = 0x1054BD98;  // From Cheat Engine
+        uintptr_t knownSignatureOffset = 0xA0D78;  // From working code
+
+        LogMessage(L"[ICR2] Known file offset: 0x" + std::to_wstring(knownFileOffset));
+        LogMessage(L"[ICR2] Known Cheat Engine addr: 0x" + std::to_wstring(knownCheatEngineAddr));
+        LogMessage(L"[ICR2] Known signature offset: 0x" + std::to_wstring(knownSignatureOffset));
+
+        // Calculate various relationships
+        uintptr_t memoryToFileOffset = sigAddr - knownFileOffset;
+        LogMessage(L"[ICR2] Memory to file offset diff: 0x" + std::to_wstring(memoryToFileOffset));
+
+        uintptr_t baseFromFile = knownCheatEngineAddr - knownFileOffset;
+        LogMessage(L"[ICR2] Base calculated from file: 0x" + std::to_wstring(baseFromFile));
+
+        uintptr_t baseFromSignature = knownCheatEngineAddr - knownSignatureOffset;
+        LogMessage(L"[ICR2] Base calculated from signature: 0x" + std::to_wstring(baseFromSignature));
+
+        // Test if our current calculation matches the working method
+        bool calculationMatches = (calculatedExeBase == baseFromSignature);
+        LogMessage(L"[ICR2] Current calculation matches working method: " + std::wstring(calculationMatches ? L"YES" : L"NO"));
+
+        // Show the actual working car data address
+        uintptr_t workingCarDataAddr = calculatedExeBase + offsets.cars_data_offset;
+        LogMessage(L"[ICR2] Working car data address: 0x" + std::to_wstring(workingCarDataAddr));
+
+        // Calculate what the NASCAR signature offset should be using the same relationship
+        uintptr_t nascarFileOffset = 0xF1C69;  // NASCAR's file offset from HxD
+        uintptr_t nascarMemoryAddr = 0x10916635;  // NASCAR's memory address from your search
+
+        // Method 1: Use the same memory-to-file relationship
+        uintptr_t nascarSigOffset1 = nascarMemoryAddr - nascarFileOffset;
+        LogMessage(L"[NASCAR CALC 1] Using memory-file diff: 0x" + std::to_wstring(nascarSigOffset1));
+
+        // Method 2: Use the same base calculation method
+        uintptr_t icr2BaseOffset = baseFromSignature - knownCheatEngineAddr;
+        uintptr_t nascarSigOffset2 = nascarMemoryAddr + icr2BaseOffset;
+        LogMessage(L"[NASCAR CALC 2] Using base offset method: 0x" + std::to_wstring(nascarSigOffset2));
+
+        // Method 3: Direct signature offset calculation
+        uintptr_t nascarSigOffset3 = nascarMemoryAddr - (calculatedExeBase - sigAddr + nascarMemoryAddr);
+        LogMessage(L"[NASCAR CALC 3] Direct calculation: Need to determine correct base");
+
+        LogMessage(L"=== END ICR2 ANALYSIS ===");
+        */
+    //}
+
+    // LogMessage(L"[DEBUG] Selected signatureOffset: 0x" + std::to_wstring(offsets.signatureOffset));
+    // LogMessage(L"[DEBUG] Selected cars_data_offset: 0x" + std::to_wstring(offsets.cars_data_offset));
+    // LogMessage(L"[DEBUG] Raw calculation: 0x" + std::to_wstring(sigAddr) + L" - 0x" + std::to_wstring(offsets.signatureOffset) + L" + 0x" + std::to_wstring(offsets.cars_data_offset));
+
+    //temp debug
+    // LogMessage(L"[DEBUG] Signature found at: 0x" + std::to_wstring(sigAddr));
+    // LogMessage(L"[DEBUG] Calculated EXE base: 0x" + std::to_wstring(exeBase));
+    // LogMessage(L"[DEBUG] Calculated car data addr: 0x" + std::to_wstring(carsDataAddr));
+    // LogMessage(L"[DEBUG] Expected car data addr: 0x1058474C");
 
     mInitialized = true;
 }
@@ -398,7 +610,7 @@ void TelemetryReader::ConvertTireData()
 
 bool TelemetryReader::ReadCarData()
 {
-    if (!ReadRaw(&carData, offs.cars_data_offset, sizeof(CarData)))
+    if (!ReadRaw(&carData, offsets.cars_data_offset, sizeof(CarData)))
     {
         LogMessage(L"[ERROR] Failed to read car0 data. GetLastError(): " + std::to_wstring(GetLastError()));
         CloseHandle(hProcess);
@@ -413,20 +625,20 @@ bool TelemetryReader::ReadCarData()
 bool TelemetryReader::ReadTireData()
 {
     const bool tireOK =
-        ReadValue(rawData.loadLF, offs.tire_data_offsetfl) &&
-        ReadValue(rawData.loadRF, offs.tire_data_offsetfr) &&
-        ReadValue(rawData.loadLR, offs.tire_data_offsetrl) &&
-        ReadValue(rawData.loadRR, offs.tire_data_offsetrr) &&
+        ReadValue(rawData.loadLF, offsets.tire_data_offsetfl) &&
+        ReadValue(rawData.loadRF, offsets.tire_data_offsetfr) &&
+        ReadValue(rawData.loadLR, offsets.tire_data_offsetrl) &&
+        ReadValue(rawData.loadRR, offsets.tire_data_offsetrr) &&
 
-        ReadValue(rawData.magLatLF, offs.tire_maglat_offsetfl) &&
-        ReadValue(rawData.magLatRF, offs.tire_maglat_offsetfr) &&
-        ReadValue(rawData.magLatLR, offs.tire_maglat_offsetrl) &&
-        ReadValue(rawData.magLatRR, offs.tire_maglat_offsetrr) &&
+        ReadValue(rawData.magLatLF, offsets.tire_maglat_offsetfl) &&
+        ReadValue(rawData.magLatRF, offsets.tire_maglat_offsetfr) &&
+        ReadValue(rawData.magLatLR, offsets.tire_maglat_offsetrl) &&
+        ReadValue(rawData.magLatRR, offsets.tire_maglat_offsetrr) &&
 
-        ReadValue(rawData.magLongLF, offs.tire_maglong_offsetfl) &&
-        ReadValue(rawData.magLongRF, offs.tire_maglong_offsetfr) &&
-        ReadValue(rawData.magLongLR, offs.tire_maglong_offsetrl) &&
-        ReadValue(rawData.magLongRR, offs.tire_maglong_offsetrr);
+        ReadValue(rawData.magLongLF, offsets.tire_maglong_offsetfl) &&
+        ReadValue(rawData.magLongRF, offsets.tire_maglong_offsetfr) &&
+        ReadValue(rawData.magLongLR, offsets.tire_maglong_offsetrl) &&
+        ReadValue(rawData.magLongRR, offsets.tire_maglong_offsetrr);
 
     if (!tireOK)
     {

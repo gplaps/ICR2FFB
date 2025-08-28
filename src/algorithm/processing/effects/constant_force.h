@@ -1,8 +1,6 @@
 #pragma once
 
-#include "lateral_load.h"
 #include "rate_limiter.h"
-#include "slip_angle.h"
 #include "telemetry_reader.h"
 #include "vehicle_dynamics.h"
 
@@ -30,8 +28,6 @@ public:
     int                       SmoothSpikes(int signedMagnitude);
     ConstantForceEffectResult Calculate(
         const RawTelemetry&              current,
-        const CalculatedLateralLoad&     load,
-        const CalculatedSlip&            slip,
         const CalculatedVehicleDynamics& vehicleDynamics,
         bool                             enableRateLimit,
         double                           deadzoneForceScale,

@@ -53,7 +53,7 @@ void PrintToLogFile()
         logger->lines.pop_front();
     }
 
-    const unsigned int        maxDisplayLines = 1; //how many lines to display
+    const size_t        maxDisplayLines = 1; //how many lines to display
     std::vector<std::wstring> recentUniqueLines;
     std::set<std::wstring>    seen;
 

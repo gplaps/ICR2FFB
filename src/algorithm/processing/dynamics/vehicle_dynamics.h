@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "game_version.h"
 #include "telemetry_reader.h"
 
 struct CalculatedVehicleDynamics
@@ -36,5 +37,5 @@ struct CalculatedVehicleDynamics
     double frontLeftLong_N;
     double frontRightLong_N;
 
-    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/);
+    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, GameVersion version);
 };

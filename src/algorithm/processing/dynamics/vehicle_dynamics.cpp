@@ -2,6 +2,7 @@
 
 #include "constants.h"
 #include "math_utilities.h"
+#include "string_utilities.h"
 
 #include <cmath>
 #if !defined(IS_CPP11_COMPLIANT)
@@ -23,29 +24,102 @@
 // Vehicle Constants
 // Most of this is estimates/guesses
 // May or may not be used
-namespace VehicleConstants
-{
-const double VEHICLE_MASS = 700.0 + 60.0 + 76.0; // kg (car + fuel + driver) - Can add real fuel later
-// const double FRONT_TRACK = 1.753; // m
-// const double REAR_TRACK = 1.638; // m
+namespace VehicleConstants {
+    const double GRAVITY = 9.81; // m/s² (same for all)
+
+    // IndyCar constants
+    namespace IndyCar {
+        const double VEHICLE_MASS = 700.0 + 60.0 + 76.0; // kg (car + fuel + driver)
+        const double FRONT_TRACK = 1.753; // m
+        const double REAR_TRACK = 1.638; // m  
 const double WHEELBASE = 3.048; // m
-// const double YAW_INERTIA = 1100.0; // kg⋅m² (estimated for IndyCar)
-// const double CG_FROM_FRONT = 1.3; // m (43% of wheelbase, typical for IndyCar)
-// const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
-const double GRAVITY = 9.81; // m/s²
+        const double YAW_INERTIA = 1100.0; // kg⋅m² (estimated for IndyCar)
+        const double CG_FROM_FRONT = 1.3; // m (43% of wheelbase, typical for IndyCar)
+        const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
+        
+        const double TIRE_FORCE_SCALE = 13000.0; // Newtons per game unit (estimate)
+        const double MAX_GAME_FORCE_UNITS = 4000.0; // Maximum expected force in game units
+    }
 
-// Tire guesswork since we do not know precise load in Newtons
-// Will calibrate against Indianapolis
-// ~220mph turn should be about 4G
-const double TIRE_FORCE_SCALE     = 13000.0; // Newtons per game unit (adjust based on testing)
-const double MAX_GAME_FORCE_UNITS = 4000.0;  // Maximum expected force in game units
+    // NASCAR constants
+    namespace NASCAR {
+        const double VEHICLE_MASS = 1400.0 + 80.0 + 76.0; // kg (heavier stock car + fuel + driver)
+        const double FRONT_TRACK = 1.524; // m (60 inches, typical NASCAR)
+        const double REAR_TRACK = 1.524; // m (same as front for NASCAR)
+        const double WHEELBASE = 2.794; // m (110 inches, typical NASCAR)
+        const double YAW_INERTIA = 2000.0; // kg⋅m² (higher for heavier NASCAR car)
+        const double CG_FROM_FRONT = 1.47; // m (52.5% of wheelbase, NASCAR is more rear-biased)
+        const double CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT; // m
+        
+        const double TIRE_FORCE_SCALE = 13000.0; // Newtons per game unit (estimate)
+        const double MAX_GAME_FORCE_UNITS = 4000.0; // Maximum expected force in game units
+    }
+}
 
-} // namespace VehicleConstants
+struct GameConstants {
+    double VEHICLE_MASS;
+    double FRONT_TRACK;
+    double REAR_TRACK;
+    double WHEELBASE;
+    double YAW_INERTIA;
+    double CG_FROM_FRONT;
+    double CG_FROM_REAR;
+    double TIRE_FORCE_SCALE;
+    double MAX_GAME_FORCE_UNITS;
+};
+
+// Select constants based on game
+
+static GameConstants GetGameConstants(GameVersion version) {
+    if (version == ICR2_DOS4G_1_02 || version == ICR2_RENDITION || version == ICR2_WINDOWS) {
+        // Use IndyCar constants
+        return {
+            VehicleConstants::IndyCar::VEHICLE_MASS,
+            VehicleConstants::IndyCar::FRONT_TRACK,
+            VehicleConstants::IndyCar::REAR_TRACK,
+            VehicleConstants::IndyCar::WHEELBASE,
+            VehicleConstants::IndyCar::YAW_INERTIA,
+            VehicleConstants::IndyCar::CG_FROM_FRONT,
+            VehicleConstants::IndyCar::CG_FROM_REAR,
+            VehicleConstants::IndyCar::TIRE_FORCE_SCALE,
+            VehicleConstants::IndyCar::MAX_GAME_FORCE_UNITS
+        };
+    }
+    else if (version == NASCAR1 || version == NASCAR2_V2_03) {
+        // Use NASCAR constants
+        return {
+            VehicleConstants::NASCAR::VEHICLE_MASS,
+            VehicleConstants::NASCAR::FRONT_TRACK,
+            VehicleConstants::NASCAR::REAR_TRACK,
+            VehicleConstants::NASCAR::WHEELBASE,
+            VehicleConstants::NASCAR::YAW_INERTIA,
+            VehicleConstants::NASCAR::CG_FROM_FRONT,
+            VehicleConstants::NASCAR::CG_FROM_REAR,
+            VehicleConstants::NASCAR::TIRE_FORCE_SCALE,
+            VehicleConstants::NASCAR::MAX_GAME_FORCE_UNITS
+        };
+    }
+    else {
+        // Default to IndyCar if unknown
+        return {
+            VehicleConstants::IndyCar::VEHICLE_MASS,
+            VehicleConstants::IndyCar::FRONT_TRACK,
+            VehicleConstants::IndyCar::REAR_TRACK,
+            VehicleConstants::IndyCar::WHEELBASE,
+            VehicleConstants::IndyCar::YAW_INERTIA,
+            VehicleConstants::IndyCar::CG_FROM_FRONT,
+            VehicleConstants::IndyCar::CG_FROM_REAR,
+            VehicleConstants::IndyCar::TIRE_FORCE_SCALE,
+            VehicleConstants::IndyCar::MAX_GAME_FORCE_UNITS
+        };
+    }
+}
 
 // Helper function to convert raw tire data to usable data
-static double ConvertTireForceToNewtons(double tire_force_raw)
+static double ConvertTireForceToNewtons(double tire_force_raw, const GameConstants& constants)
 {
-    return tire_force_raw * VehicleConstants::TIRE_FORCE_SCALE / VehicleConstants::MAX_GAME_FORCE_UNITS;
+    // DON'T remove the sign - preserve it!
+    return tire_force_raw * constants.TIRE_FORCE_SCALE / constants.MAX_GAME_FORCE_UNITS;
 }
 
 static int GetTurnDirection(double lf, double rf, double lr, double rr)
@@ -68,8 +142,9 @@ static int GetTurnDirection(double lf, double rf, double lr, double rr)
     }
 }
 
-bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/)
-{
+bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, GameVersion version) {
+    GameConstants constants = GetGameConstants(version);
+
     // Convert units
     const double speed_ms = current.speed_mph * MPH_TO_MS;
 
@@ -92,15 +167,15 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
 
     // Convert tire forces to "actual" Newtons
     // In the future if we find real forces we can replace this
-    const double force_lf_N     = ConvertTireForceToNewtons(force_lf);
-    const double force_rf_N     = ConvertTireForceToNewtons(force_rf);
-    const double force_lr_N     = ConvertTireForceToNewtons(force_lr);
-    const double force_rr_N     = ConvertTireForceToNewtons(force_rr);
+    const double force_lf_N     = ConvertTireForceToNewtons(force_lf, constants);
+    const double force_rf_N     = ConvertTireForceToNewtons(force_rf, constants);
+    const double force_lr_N     = ConvertTireForceToNewtons(force_lr, constants);
+    const double force_rr_N     = ConvertTireForceToNewtons(force_rr, constants);
 
-    const double forceLong_lf_N = ConvertTireForceToNewtons(forceLong_lf);
-    const double forceLong_rf_N = ConvertTireForceToNewtons(forceLong_rf);
-    const double forceLong_lr_N = ConvertTireForceToNewtons(forceLong_lr);
-    const double forceLong_rr_N = ConvertTireForceToNewtons(forceLong_rr);
+    const double forceLong_lf_N = ConvertTireForceToNewtons(forceLong_lf, constants);
+    const double forceLong_rf_N = ConvertTireForceToNewtons(forceLong_rf, constants);
+    const double forceLong_lr_N = ConvertTireForceToNewtons(forceLong_lr, constants);
+    const double forceLong_rr_N = ConvertTireForceToNewtons(forceLong_rr, constants);
 
     frontLeftForce_N            = force_lf_N;
     frontRightForce_N           = force_rf_N;
@@ -118,7 +193,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     const int turn_direction = GetTurnDirection(force_lf, force_rf, force_lr, force_rr);
 
     // Calculate lateral acceleration: F = ma, so a = F/m
-    const double lateral_acceleration = (total_lateral_force_N * turn_direction) / VehicleConstants::VEHICLE_MASS;
+    const double lateral_acceleration = (total_lateral_force_N * turn_direction) / constants.VEHICLE_MASS;
 
     // Calculate total lateral force (maybe unneeded)
     totalLateralForce = force_lf + force_rf + force_lr + force_rr;
@@ -127,6 +202,8 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     lateralG = lateral_acceleration / VehicleConstants::GRAVITY;
 
     // Calculate direction value
+    // Left  (positive totalLateralForce)
+    // Right (negative totalLateralForce)
     directionVal = std::abs(lateralG) < 0.05 ? 0 : static_cast<int>(sign(totalLateralForce));
 
     // CALC 2
@@ -145,7 +222,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
         if (std::abs(wheel_angle_rad) > 0.001)
         {
             // Expected lateral acceleration from steering input
-            expected_lateral_accel = (speed_ms * speed_ms * std::tan(std::abs(wheel_angle_rad))) / VehicleConstants::WHEELBASE;
+            expected_lateral_accel = (speed_ms * speed_ms * std::tan(std::abs(wheel_angle_rad))) / constants.WHEELBASE;
         }
 
         const double actual_lateral_accel = std::abs(lateralG) * VehicleConstants::GRAVITY;
@@ -217,7 +294,7 @@ bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTeleme
     // Apply speed scaling (reduce forces at low speeds like your other calculations)
     const double speedScale = saturate((current.speed_mph - SPEED_THRESHOLD) / SPEED_SCALE_RAMP_RANGE);
 
-    forceMagnitude          = gForceScale * speedScale * MAX_FORCE_IN_N;
+    forceMagnitude          = gForceScale * speedScale * DEFAULT_DINPUT_GAIN;
 
     // Store basic telemetry for output
     speedMph    = current.speed_mph;

@@ -42,8 +42,7 @@ void FFBConfig::RegisterSettings()
     settings[L"none"].push_back(Setting(L"none", false, L"not found"));
 
     settings[L"base"].push_back(Setting(L"device", L"FFB Wheel", L"list your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
-    settings[L"base"].push_back(Setting(L"game", L"indycar", L"list the exe name you use ie. 'indycar' or 'cart'"));
-    settings[L"base"].push_back(Setting(L"version", L"DOS4G", L"which version of the game you are trying to run 'REND32A' or 'DOS4G'"));
+    settings[L"base"].push_back(Setting(L"game", L"ICR2DOS", L"List the game you are using ie:\n'ICR2DOS', 'ICR2REND', 'ICR2WINDY', 'NASCAR1' or 'NASCAR2'"));
     settings[L"base"].push_back(Setting(L"verbose", false, L"Verbose logging - e.g. used config and FFB thread timing"));
 
     settings[L"effects"].push_back(Setting(L"force", 25.0, L"Master toggle for what % of force do you want? [0-100]"));
@@ -52,7 +51,7 @@ void FFBConfig::RegisterSettings()
     settings[L"effects"].push_back(Setting(L"limit", false, L"this limits the effect refresh rate to be more compatible with older or Belt-drive wheels\ngive it a try if you get really abrupt forces or no force at all"));
     settings[L"effects"].push_back(Setting(L"constant", true, L"Constant enabled - General main effect which will add force to the wheel to simulate G load, this is the main force"));
     settings[L"effects"].push_back(Setting(L"constant scale", 100.0, L"Constant effect strength in % [0-100]"));
-    settings[L"effects"].push_back(Setting(L"braking scale", 100.0, L"How much Braking/Accelerating effects forces. Tune this if you want to feel the brake pedal more or less (can go above 100%)."));
+    settings[L"effects"].push_back(Setting(L"braking scale", 50.0, L"How much Braking/Accelerating effects forces. Tune this if you want to feel the brake pedal more or less (can go above 100%)."));
     settings[L"effects"].push_back(Setting(L"damper", true, L"Damper enabled - adds friction to the wheel at slow speed (under 50mph) to help simulate non-powered steering"));
     settings[L"effects"].push_back(Setting(L"damper scale", 50.0, L"Damper strength in % [0-100]"));
     settings[L"effects"].push_back(Setting(L"damper speed", 40.0, L"Damper upper speed threshold (mph) where effect strength is zero"));

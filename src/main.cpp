@@ -1,4 +1,4 @@
-// FFB for ICR2
+// FFB for Papy Sims
 // I don't know what I am doing!
 
 

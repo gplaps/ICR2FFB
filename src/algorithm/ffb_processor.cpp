@@ -1,7 +1,6 @@
 #include "ffb_processor.h"
 
 #include "constant_force.h"
-#include "lateral_load.h"
 #include "log.h"
 #include "math_utilities.h"
 #include "movement_detection.h"
@@ -12,9 +11,7 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     current(),
     previous(),
     hasFirstReading(false),
-    slip(),
     vehicleDynamics(),
-    load(),
     movementDetector(),
     constantForceEffect(),
     damperEffect(config),
@@ -53,6 +50,8 @@ void FFBProcessor::Init(const FFBConfig& config)
     deadzoneForceScale           = saturate(config.GetDouble(L"effects", L"deadzone") / 100.0);
     weightForceScale             = enableWeightForce ? saturate(config.GetDouble(L"effects", L"weight scale") / 100.0) : 0.0;
     brakingForceScale            = std::clamp(config.GetDouble(L"effects", L"braking scale") / 100.0, 0.0, 10.0 /* upper limit subject to change - this restricts user*/);
+
+    version = config.version;
 }
 
 bool FFBProcessor::Valid() const { return mInitialized; }
@@ -98,8 +97,8 @@ void FFBProcessor::Update(double deltaTimeMs)
                 // This is what will add the "Constant Force" effect if all the calculations work.
                 // Probably could smooth all this out
                 constantForceCalculation = constantForceEffect.Calculate(
-                    current, load, slip, vehicleDynamics, // inputs
-                    enableRateLimit,                      // settings
+                    current, vehicleDynamics, // inputs
+                    enableRateLimit,          // settings
                     deadzoneForceScale, brakingForceScale, weightForceScale);
             }
         }
@@ -111,16 +110,8 @@ void FFBProcessor::Update(double deltaTimeMs)
 
 bool FFBProcessor::ProcessTelemetryInput()
 {
-    // Do Force calculations based on raw data
-    // Right now its "Slip", "Lateral Load" and "Vehicle Dynamics"
-    slip = CalculatedSlip();
-    slip.Calculate(current, previous);
-
     vehicleDynamics = CalculatedVehicleDynamics();
-    vehicleDynamics.Calculate(current, previous);
-
-    load = CalculatedLateralLoad();
-    return load.Calculate(current, previous, slip);
+    return vehicleDynamics.Calculate(current, previous, version);
 }
 
 void FFBProcessor::UpdateDisplayData(const ConstantForceEffectResult& constantResult)
@@ -129,7 +120,6 @@ void FFBProcessor::UpdateDisplayData(const ConstantForceEffectResult& constantRe
 
     // Update telemetry for display
     displayData.raw              = current;
-    displayData.slip             = slip;
     displayData.vehicleDynamics  = vehicleDynamics;
 
     displayData.masterForceScale = ffbOutput.masterForceScale;

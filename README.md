@@ -58,6 +58,13 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**1.0.1 (2025-08-27)** 
+- Some large structural changes to begin adding support (hopefully) for additional games in the future
+- Changed Game definition in the ffb.ini. It now uses a simplified 'Game:' setting which can be set to 'ICR2DOS' for the Dos version or 'ICR2REND' for the rendition version. 
+- Redid FFB curve to give better center feeling
+- Output display will include game version now
+- Removed some Legacy code for calculations (slip/lateral load)
+
 **0.9.1 (2025-08-20)**
 - Code structure improved
 - Log file is opened and closed only once

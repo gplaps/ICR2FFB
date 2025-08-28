@@ -122,7 +122,7 @@ private:
 
     HANDLE       hProcess;
     bool         mInitialized;
-    GameOffsets  offs;
+    GameOffsets  offsets;
     RawTelemetry out;
     RawData      rawData;
     CarData      carData;

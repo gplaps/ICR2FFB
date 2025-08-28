@@ -4,9 +4,7 @@
 #include "damper_effect.h"
 #include "ffb_config.h"
 #include "ffb_output.h"
-#include "lateral_load.h"
 #include "movement_detection.h"
-#include "slip_angle.h"
 #include "spring_effect.h"
 #include "telemetry_display.h"
 #include "telemetry_reader.h"
@@ -38,9 +36,7 @@ private:
     // ================================================
 
     // FFB Algo Inputs - telemetry derived data
-    CalculatedSlip            slip;
     CalculatedVehicleDynamics vehicleDynamics;
-    CalculatedLateralLoad     load;
 
     MovementDetector movementDetector;
 
@@ -60,5 +56,6 @@ private:
     FFBOutput                              ffbOutput;
     TelemetryDisplay::TelemetryDisplayData displayData;
 
+    GameVersion version;
     bool mInitialized;
 };

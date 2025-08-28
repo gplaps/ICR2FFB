@@ -41,7 +41,9 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << padLine(VERSION_STRING) << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + config.GetString(L"base", L"device")) << L"\n";
+    std::wcout << padLine(L"Game: " + config.GetString(L"base", L"game")) << L"\n";
 
+    
     std::wostringstream ss;
     ss << std::fixed << std::setprecision(2); // Set formatting for stringstream too
     ss << L"Master Force Scale: " << displayData.masterForceScale * 100.0 << L"%";
@@ -54,7 +56,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
 
     ss.str(L"");
     ss.clear();
-    ss << L"dLat: " << std::setw(10) << displayData.raw.pos.dlat << L"   dLong: " << std::setw(10) << displayData.raw.pos.dlong;
+    ss << L"Latitude: " << std::setw(10) << displayData.raw.pos.dlat << L"   Longitude: " << std::setw(10) << displayData.raw.pos.dlong;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L"");
@@ -81,7 +83,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     // Tire loads section
     std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
     std::wcout << padLine(L"") << L"\n";
-    std::wcout << padLine(L"Front Left      Front Right") << L"\n";
+    std::wcout << padLine(L"      Left Front      Right Front") << L"\n";
 
     ss.str(L"");
     ss.clear();
@@ -95,9 +97,15 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
-    std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
+    //ss.str(L"");
+    //ss.clear();
+    //ss << std::setw(10) << L"latN: " << static_cast<int16_t>(displayData.vehicleDynamics.frontLeftForce_N) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.vehicleDynamics.frontRightForce_N);
+    //std::wcout << padLine(ss.str()) << L"\n";
+    //std::wcout << padLine(L"") << L"\n";
+
+    std::wcout << padLine(L"      Left Rear      Right Rear") << L"\n";
     //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << displayData.raw.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
+    //ss << std::setw(10) << displayData.raw.tireload_lr << L"           " << std::setw(10) << displayData.raw.tireload_rr;
     //std::wcout << padLine(ss.str()) << L"\n";
     //std::wcout << padLine(L"") << L"\n";
 
