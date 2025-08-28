@@ -20,8 +20,8 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
     brakingForceScale(),
     weightForceScale(),
     enableRateLimit(false),
-    telemetryReader(config),
     ffbOutput(config),
+    telemetryReader(config),
     displayData(),
     mInitialized(false)
 {

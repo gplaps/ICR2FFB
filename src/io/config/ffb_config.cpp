@@ -295,8 +295,8 @@ int FFBConfig::LoadFFBSettings()
     LogMessage(L"[INFO] Successfully loaded FFB settings");
     LogMessage(L"[INFO] Target device: " + GetString(L"base", L"device"));
 
-    version = ReadGameVersion(GetString(L"base", L"version"));
-    LogMessage(L"[INFO] Game version: " + PrintGameVersion(version));
+    version = ReadGameVersion(GetString(L"base", L"game"));
+    LogMessage(L"[INFO] Configured game: " + PrintGameVersion(version));
 #if !defined(NDEBUG)
 // just in case there is a difference in the threading API
 #    if defined(HAS_STL_THREAD_MUTEX)

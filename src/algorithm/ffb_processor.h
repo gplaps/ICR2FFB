@@ -52,8 +52,8 @@ private:
     bool   enableRateLimit;
 
     // IO
-    TelemetryReader                        telemetryReader;
     FFBOutput                              ffbOutput;
+    TelemetryReader                        telemetryReader;
     TelemetryDisplay::TelemetryDisplayData displayData;
 
     GameVersion version;

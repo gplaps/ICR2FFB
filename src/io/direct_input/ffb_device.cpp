@@ -105,13 +105,10 @@ bool FFBDevice::InitDevice(const std::wstring& productNameOrIndex)
     diDevice = DirectInput::Instance()->InitializeDevice(productNameOrIndex);
     if (!diDevice)
     {
-        if (!productNameOrIndex.empty())
+        if (!productNameOrIndex.empty() && !DirectInput::Instance()->AvailableDevices().empty())
         {
             LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
-            // // SHOW ERROR ON CONSOLE immediately
             std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
-            // std::wcout << L"Press any key to exit..." << L'\n';
-            // std::cin.get();
         }
         return false;
     }
