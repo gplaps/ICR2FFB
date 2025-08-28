@@ -22,7 +22,6 @@ extern IDirectInputEffect* constantForceEffect;
 //settings from the ffb.ini
 std::wstring targetDeviceName;
 std::wstring targetGameVersion;
-std::wstring targetGameWindowName;
 std::wstring targetForceSetting;
 std::wstring targetDeadzoneSetting;
 std::wstring targetInvertFFB;
@@ -144,9 +143,7 @@ bool LoadFFBSettings(const std::wstring& filename) {
         if (line.rfind(L"Device: ", 0) == 0)
             targetDeviceName = line.substr(8);
         else if (line.rfind(L"Game: ", 0) == 0)
-            targetGameWindowName = line.substr(6);
-        else if (line.rfind(L"Version: ", 0) == 0)
-            targetGameVersion = line.substr(9);
+            targetGameVersion = line.substr(6);
         else if (line.rfind(L"Force: ", 0) == 0)
             targetForceSetting = line.substr(7);
         else if (line.rfind(L"Deadzone: ", 0) == 0)

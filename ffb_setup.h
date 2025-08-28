@@ -10,7 +10,6 @@
 // === Forward Declarations ===
 extern std::wstring targetDeviceName;
 extern std::wstring targetGameVersion;
-extern std::wstring targetGameWindowName;
 
 extern std::wstring targetForceSetting;
 extern std::wstring targetDeadzoneSetting;

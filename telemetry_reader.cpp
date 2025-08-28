@@ -49,7 +49,8 @@ struct GameOffsets {
     DWORD tire_maglong_offsetrr;
 };
 
-// Offsets for different version of the game
+// Offsets database for different games/versions
+// THANK YOU ERIC
 
 // Rendition EXE
 constexpr GameOffsets Offsets_REND = {
@@ -79,7 +80,7 @@ constexpr GameOffsets Offsets_DOS = {
     0xA85B6, 
     0xC5C48, 
     0xC5C4A, 
-    0xC5C44, 
+    0xC5C44,
     0xC5C46, 
     0xC5C18,
     0xC5C1A,
@@ -87,10 +88,63 @@ constexpr GameOffsets Offsets_DOS = {
     0xC5C16
 };
 
-// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
+// ICR2 Windy
+constexpr GameOffsets Offsets_WINDY = {
+     0x004E2161,
+     /* ???? */ // missing cars data
+     0x004F3854,
+     0x004F3856,
+     0x004F3850,
+     0x004F3852,
+     0x00528204,
+     0x00528206,
+     0x00528200,
+     0x00528202,
+     0x005281F8,
+     0x005281Fa,
+     0x005281F4,
+     0x005281F6,
+};
+
+//N1 Offsets
+constexpr GameOffsets Offsets_NASCAR = {
+    0xAEA8C,
+    0xEFED4,
+    0xCEF70,
+    0xCEF70,
+    0xCEF70,
+    0xCEF70,
+    0x9F6F8,
+    0x9F6FA,
+    0x9f780,
+    0x9F6F6,
+    0xF0970,
+    0xF0970,
+    0xF0970,
+    0xF0970
+};
+
+//N2 Offsets
+constexpr GameOffsets Offsets_NASCAR2 = {
+    0xD7125, // "NASCAR V2.03"
+    0xAD440,
+    0xF39FA,
+    0xF39FC,
+    0xF39F6,
+    0xF39F8,
+    0xF3B0E,
+    0xF3B10,
+    0xF3B0A,
+    0xF3B0C,
+    0xF3B02,
+    0xF3B04,
+    0xF3AFE,
+    0xF3B00
+};
+
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-const char* signatureStr = "license with Bob";
+//const char* signatureStr = "license with Bob";
 
 // === Helpers ===
 
@@ -100,8 +154,58 @@ std::wstring ToLower(const std::wstring& str) {
     return result;
 }
 
+const char* GetSignatureString() {
+    std::wstring gameName = ToLower(targetGameVersion);
 
-// Gets the process ID of indycar
+    if (gameName == L"icr2dos" || gameName == L"icr2rend") {
+        return "license with Bob";
+    }
+    else if (gameName == L"nascar1") {
+        return "name of Harry Gant";
+    }
+    else if (gameName == L"nascar2") {
+        return "NASCAR V2.03";
+    }
+    else {
+        // Default fallback
+        LogMessage(L"[DEBUG] Invalid Game Version " + targetGameVersion);
+        return nullptr;
+    }
+}
+
+// Helper function to check if a specific process window contains a keyword
+bool CheckWindowForKeyword(DWORD pid, const std::wstring& keyword) {
+    struct CheckWindowData {
+        DWORD targetPid;
+        std::wstring keyword;
+        bool found = false;
+    } data{ pid, ToLower(keyword), false };
+
+    EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL {
+        auto* data = reinterpret_cast<CheckWindowData*>(lParam);
+
+        DWORD windowPid;
+        GetWindowThreadProcessId(hwnd, &windowPid);
+
+        if (windowPid == data->targetPid) {
+            wchar_t title[256];
+            GetWindowTextW(hwnd, title, sizeof(title) / sizeof(wchar_t));
+            std::wstring titleStr = ToLower(std::wstring(title));
+
+            if (titleStr.find(data->keyword) != std::wstring::npos) {
+                data->found = true;
+                return FALSE; // Stop enumeration
+            }
+        }
+
+        return TRUE; // Continue enumeration
+        }, reinterpret_cast<LPARAM>(&data));
+
+    return data.found;
+}
+
+
+// Gets the process ID of the window
 DWORD FindProcessIdByWindow(const std::vector<std::wstring>& keywords) {
     struct FindWindowData {
         std::vector<std::wstring> keywords;
@@ -138,6 +242,14 @@ uintptr_t ScanSignature(HANDLE hProcess) {
     uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
+
+    // Get the signature string based on game version
+    const char* signatureStr = GetSignatureString();
+    if (!signatureStr) {
+        LogMessage(L"[ERROR] Could not get signature string for game version");
+        return 0;
+    }
+
     const size_t targetLen = strlen(signatureStr);
 
     while (addr < maxAddr) {
@@ -164,10 +276,77 @@ uintptr_t ScanSignature(HANDLE hProcess) {
         }
     }
 
+
+
     LogMessage(L"[ERROR] Signature not found in game.");
     return 0;
 }
 
+/*
+void SearchForMaxwellHouseCoffee(HANDLE hProcess) {
+    SYSTEM_INFO sysInfo;
+    GetSystemInfo(&sysInfo);
+
+    const char* searchStr = "Maxwell House Coffee";
+    const size_t searchLen = strlen(searchStr);
+
+    LogMessage(L"[SEARCH] Starting memory search for 'Maxwell House Coffee'");
+    LogMessage(L"[SEARCH] Process min addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMinimumApplicationAddress));
+    LogMessage(L"[SEARCH] Process max addr: 0x" + std::to_wstring((uintptr_t)sysInfo.lpMaximumApplicationAddress));
+
+    uintptr_t addr = (uintptr_t)sysInfo.lpMinimumApplicationAddress;
+    uintptr_t maxAddr = 0x7FFFFFFF;
+    int foundCount = 0;
+
+    while (addr < maxAddr) {
+        MEMORY_BASIC_INFORMATION mbi;
+        if (VirtualQueryEx(hProcess, (LPCVOID)addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+            // Only search readable memory
+            if ((mbi.State == MEM_COMMIT) && !(mbi.Protect & PAGE_NOACCESS) &&
+                (mbi.Protect & (PAGE_READONLY | PAGE_READWRITE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE))) {
+
+                std::vector<BYTE> buffer(mbi.RegionSize);
+                SIZE_T bytesRead = 0;
+
+                if (ReadProcessMemory(hProcess, (LPCVOID)addr, buffer.data(), mbi.RegionSize, &bytesRead)) {
+                    // Search for the string in this memory block
+                    for (SIZE_T i = 0; i <= bytesRead - searchLen; ++i) {
+                        if (memcmp(buffer.data() + i, searchStr, searchLen) == 0) {
+                            uintptr_t foundAddr = addr + i;
+                            foundCount++;
+
+                            std::wstringstream ss;
+                            ss << L"[FOUND #" << foundCount << L"] Maxwell House Coffee at: 0x" << std::hex << foundAddr;
+                            LogMessage(ss.str());
+
+                            // Show surrounding context (32 bytes before and after)
+                            if (i >= 32 && (i + searchLen + 32) <= bytesRead) {
+                                std::wstring context = L"[CONTEXT] ";
+                                for (int j = -32; j <= 32; j++) {
+                                    BYTE byte = buffer[i + searchLen / 2 + j];
+                                    if (byte >= 32 && byte <= 126) {  // Printable ASCII
+                                        context += (wchar_t)byte;
+                                    }
+                                    else {
+                                        context += L'.';
+                                    }
+                                }
+                                LogMessage(context);
+                            }
+                        }
+                    }
+                }
+            }
+            addr += mbi.RegionSize;
+        }
+        else {
+            addr += 0x1000;  // Skip to next page
+        }
+    }
+
+    LogMessage(L"[SEARCH] Search complete. Found " + std::to_wstring(foundCount) + L" instances.");
+}
+*/
 // === Main ===
 
 bool ReadTelemetryData(RawTelemetry& out) {
@@ -191,22 +370,122 @@ bool ReadTelemetryData(RawTelemetry& out) {
     int16_t magLatLF = 0, magLatFR = 0, magLatLR = 0, magLatRR = 0;
     int16_t magLongLF = 0, magLongFR = 0, magLongLR = 0, magLongRR = 0;
 
-    // Select between Dos and Rendition version. Rendition is default
-    const GameOffsets& offsets = (ToLower(targetGameVersion) == L"dos4g") ? Offsets_DOS : Offsets_REND;
+    // Select game version
+    std::wstring gameVersionLower = ToLower(targetGameVersion);
+    const GameOffsets* offsets = nullptr;
+
+    if (gameVersionLower == L"icr2dos") {
+        offsets = &Offsets_DOS;
+    }
+    else if (gameVersionLower == L"icr2rend") {
+        offsets = &Offsets_REND;
+    }
+    else if (gameVersionLower == L"nascar1") {
+        offsets = &Offsets_NASCAR;
+    }
+    else if (gameVersionLower == L"nascar2") {
+        offsets = &Offsets_NASCAR2;
+    }
+    else {
+        LogMessage(L"[ERROR] Unknown game version: " + targetGameVersion);
+        return false;
+    }
+
+    //LogMessage(L"[DEBUG] Offsets pointer: " + std::to_wstring((uintptr_t)offsets));
+    //LogMessage(L"[DEBUG] Direct offset read: sig=0x" + std::to_wstring(offsets->signatureOffset) + L" car=0x" + std::to_wstring(offsets->cars_data_offset));
 
     if (!hProcess) {
-        if (targetGameWindowName.empty()) {
-            LogMessage(L"[ERROR] targetGameWindowName is not set.");
+        if (targetGameVersion.empty()) {
+            LogMessage(L"[ERROR] Game Version is not set.");
             return false;
         }
 
-        // Keywords to find game. "dosbox" + whatever is in the ini as "Game:"
-        std::vector<std::wstring> keywords = { L"dosbox", targetGameWindowName };
-        DWORD pid = FindProcessIdByWindow(keywords);
-        if (!pid) return false;
+        // Keywords to find game based on game version
+        std::vector<std::wstring> keywords;
+        DWORD pid = 0;
+
+        //game versions for icr2
+        if (gameVersionLower == L"icr2dos" || gameVersionLower == L"icr2rend") {
+            // Try indycar first
+            keywords = { L"dosbox", L"indycar" };
+            pid = FindProcessIdByWindow(keywords);
+
+            if (!pid) {
+                // Fallback to cart keywords
+                keywords = { L"dosbox", L"cart" };
+                pid = FindProcessIdByWindow(keywords);
+
+                if (!pid) {
+                    LogMessage(L"[ERROR] Game window not found!");
+                    LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND ('indycar' OR 'cart')");
+                    LogMessage(L"[ERROR] Make sure " + targetGameVersion + L" is running in DOSBox");
+                    return false;
+                }
+                else {
+                    LogMessage(L"[INFO] Found game window with 'cart' keywords");
+                }
+            }
+            else {
+                LogMessage(L"[INFO] Found game window with 'indycar' keywords");
+            }
+
+            // Version verification code (your existing logic)
+            bool windowHasRendition = CheckWindowForKeyword(pid, L"rendition");
+
+            if (gameVersionLower == L"icr2dos" && windowHasRendition) {
+                LogMessage(L"[ERROR] Wrong game version detected!");
+                LogMessage(L"[ERROR] Found Rendition version but config is set to 'ICR2DOS'");
+                LogMessage(L"[ERROR] Please change your INI file to use 'ICR2REND' instead");
+                return false;
+            }
+            else if (gameVersionLower == L"icr2rend" && !windowHasRendition) {
+                LogMessage(L"[ERROR] Wrong game version detected!");
+                LogMessage(L"[ERROR] Found DOS version but config is set to 'ICR2REND'");
+                LogMessage(L"[ERROR] Please change your INI file to use 'ICR2DOS' instead");
+                return false;
+            }
+            else {
+                LogMessage(L"[INFO] Correct game version detected and verified");
+            }
+        }
+
+        //game versions for N1
+        else if (gameVersionLower == L"nascar1") {
+            keywords = { L"dosbox", L"nascar" };
+            pid = FindProcessIdByWindow(keywords);
+            if (!pid) {
+                LogMessage(L"[ERROR] NASCAR game window not found!");
+                LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND 'nascar'");
+                LogMessage(L"[ERROR] Make sure NASCAR Racing is running in DOSBox");
+                return false;
+            }
+            else {
+                LogMessage(L"[INFO] Found NASCAR game window");
+            }
+        }
+
+        //game versions for N2
+        else if (gameVersionLower == L"nascar2") {
+            keywords = { L"dosbox", L"nascar2" };
+            pid = FindProcessIdByWindow(keywords);
+            if (!pid) {
+                LogMessage(L"[ERROR] NASCAR 2 game window not found!");
+                LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND 'nascar2'");
+                LogMessage(L"[ERROR] Make sure NASCAR Racing 2 is running in DOSBox");
+                return false;
+            }
+            else {
+                LogMessage(L"[INFO] Found NASCAR 2 game window");
+            }
+        }
+
+        //LogMessage(L"[DEBUG] Raw targetGameVersion: '" + targetGameVersion + L"'");
+        //LogMessage(L"[DEBUG] gameVersionLower: '" + gameVersionLower + L"'");
 
         hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
         if (!hProcess) return false;
+
+        //SearchForMaxwellHouseCoffee(hProcess);
 
         uintptr_t sigAddr = ScanSignature(hProcess);
         if (!sigAddr) {
@@ -215,24 +494,99 @@ bool ReadTelemetryData(RawTelemetry& out) {
             return false;
         }
 
-        uintptr_t exeBase = sigAddr - offsets.signatureOffset;
-        carsDataAddr = exeBase + offsets.cars_data_offset;
-        tireLoadAddrLF = exeBase + offsets.tire_data_offsetfl;
-        tireLoadAddrFR = exeBase + offsets.tire_data_offsetfr;
-        tireLoadAddrLR = exeBase + offsets.tire_data_offsetrl;
-        tireLoadAddrRR = exeBase + offsets.tire_data_offsetrr;
-        tireMagLatAddrLF = exeBase + offsets.tire_maglat_offsetfl;
-        tireMagLatAddrFR = exeBase + offsets.tire_maglat_offsetfr;
-        tireMagLatAddrLR = exeBase + offsets.tire_maglat_offsetrl;
-        tireMagLatAddrRR = exeBase + offsets.tire_maglat_offsetrr;
-        tireMagLongAddrLF = exeBase + offsets.tire_maglong_offsetfl;
-        tireMagLongAddrFR = exeBase + offsets.tire_maglong_offsetfr;
-        tireMagLongAddrLR = exeBase + offsets.tire_maglong_offsetrl;
-        tireMagLongAddrRR = exeBase + offsets.tire_maglong_offsetrr;
+        uintptr_t exeBase = sigAddr - offsets->signatureOffset;
+        carsDataAddr = exeBase + offsets->cars_data_offset;
+        tireLoadAddrLF = exeBase + offsets->tire_data_offsetfl;
+        tireLoadAddrFR = exeBase + offsets->tire_data_offsetfr;
+        tireLoadAddrLR = exeBase + offsets->tire_data_offsetrl;
+        tireLoadAddrRR = exeBase + offsets->tire_data_offsetrr;
+        tireMagLatAddrLF = exeBase + offsets->tire_maglat_offsetfl;
+        tireMagLatAddrFR = exeBase + offsets->tire_maglat_offsetfr;
+        tireMagLatAddrLR = exeBase + offsets->tire_maglat_offsetrl;
+        tireMagLatAddrRR = exeBase + offsets->tire_maglat_offsetrr;
+        tireMagLongAddrLF = exeBase + offsets->tire_maglong_offsetfl;
+        tireMagLongAddrFR = exeBase + offsets->tire_maglong_offsetfr;
+        tireMagLongAddrLR = exeBase + offsets->tire_maglong_offsetrl;
+        tireMagLongAddrRR = exeBase + offsets->tire_maglong_offsetrr;
+
+        /*
+        if (gameVersionLower == L"icr2dos" || gameVersionLower == L"icr2rend") {
+
+            LogMessage(L"=== ICR2 MEMORY ANALYSIS ===");
+
+            // Log the found signature address
+            LogMessage(L"[ICR2] Signature found at: 0x" + std::to_wstring(sigAddr));
+
+            // Log the signature offset being used
+            LogMessage(L"[ICR2] Using signature offset: 0x" + std::to_wstring(offsets->signatureOffset));
+
+            // Calculate and log the EXE base
+            uintptr_t calculatedExeBase = sigAddr - offsets->signatureOffset;
+            LogMessage(L"[ICR2] Calculated EXE base: 0x" + std::to_wstring(calculatedExeBase));
+
+            // Known values from your analysis
+            uintptr_t knownFileOffset = 0xF21CC;  // From HxD
+            uintptr_t knownCheatEngineAddr = 0x1054BD98;  // From Cheat Engine
+            uintptr_t knownSignatureOffset = 0xA0D78;  // From working code
+
+            LogMessage(L"[ICR2] Known file offset: 0x" + std::to_wstring(knownFileOffset));
+            LogMessage(L"[ICR2] Known Cheat Engine addr: 0x" + std::to_wstring(knownCheatEngineAddr));
+            LogMessage(L"[ICR2] Known signature offset: 0x" + std::to_wstring(knownSignatureOffset));
+
+            // Calculate various relationships
+            uintptr_t memoryToFileOffset = sigAddr - knownFileOffset;
+            LogMessage(L"[ICR2] Memory to file offset diff: 0x" + std::to_wstring(memoryToFileOffset));
+
+            uintptr_t baseFromFile = knownCheatEngineAddr - knownFileOffset;
+            LogMessage(L"[ICR2] Base calculated from file: 0x" + std::to_wstring(baseFromFile));
+
+            uintptr_t baseFromSignature = knownCheatEngineAddr - knownSignatureOffset;
+            LogMessage(L"[ICR2] Base calculated from signature: 0x" + std::to_wstring(baseFromSignature));
+
+            // Test if our current calculation matches the working method
+            bool calculationMatches = (calculatedExeBase == baseFromSignature);
+            LogMessage(L"[ICR2] Current calculation matches working method: " + std::wstring(calculationMatches ? L"YES" : L"NO"));
+
+            // Show the actual working car data address
+            uintptr_t workingCarDataAddr = calculatedExeBase + offsets->cars_data_offset;
+            LogMessage(L"[ICR2] Working car data address: 0x" + std::to_wstring(workingCarDataAddr));
+
+            // Calculate what the NASCAR signature offset should be using the same relationship
+            uintptr_t nascarFileOffset = 0xF1C69;  // NASCAR's file offset from HxD
+            uintptr_t nascarMemoryAddr = 0x10916635;  // NASCAR's memory address from your search
+
+            // Method 1: Use the same memory-to-file relationship
+            uintptr_t nascarSigOffset1 = nascarMemoryAddr - nascarFileOffset;
+            LogMessage(L"[NASCAR CALC 1] Using memory-file diff: 0x" + std::to_wstring(nascarSigOffset1));
+
+            // Method 2: Use the same base calculation method
+            uintptr_t icr2BaseOffset = baseFromSignature - knownCheatEngineAddr;
+            uintptr_t nascarSigOffset2 = nascarMemoryAddr + icr2BaseOffset;
+            LogMessage(L"[NASCAR CALC 2] Using base offset method: 0x" + std::to_wstring(nascarSigOffset2));
+
+            // Method 3: Direct signature offset calculation
+            uintptr_t nascarSigOffset3 = nascarMemoryAddr - (calculatedExeBase - sigAddr + nascarMemoryAddr);
+            LogMessage(L"[NASCAR CALC 3] Direct calculation: Need to determine correct base");
+
+            LogMessage(L"=== END ICR2 ANALYSIS ===");
+          */
+          //}
+
+         // LogMessage(L"[DEBUG] Selected signatureOffset: 0x" + std::to_wstring(offsets->signatureOffset));
+         // LogMessage(L"[DEBUG] Selected cars_data_offset: 0x" + std::to_wstring(offsets->cars_data_offset));
+         // LogMessage(L"[DEBUG] Raw calculation: 0x" + std::to_wstring(sigAddr) + L" - 0x" + std::to_wstring(offsets->signatureOffset) + L" + 0x" + std::to_wstring(offsets->cars_data_offset));
+
+          //temp debug
+         // LogMessage(L"[DEBUG] Signature found at: 0x" + std::to_wstring(sigAddr));
+         // LogMessage(L"[DEBUG] Calculated EXE base: 0x" + std::to_wstring(exeBase));
+         // LogMessage(L"[DEBUG] Calculated car data addr: 0x" + std::to_wstring(carsDataAddr));
+         // LogMessage(L"[DEBUG] Expected car data addr: 0x1058474C");
 
         LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
-            L" | cars_data @ 0x" + std::to_wstring(carsDataAddr));
+            L" | cars_data @ 0x" + std::to_wstring(carsDataAddr) + 
+            L" | rf_mag_lat @ 0x" + std::to_wstring(tireMagLatAddrFR));
     }
+
 
     int32_t car0_data[12] = { 0 };
     if (!ReadProcessMemory(hProcess, (LPCVOID)carsDataAddr, &car0_data, sizeof(car0_data), &bytesRead)) {
@@ -251,6 +605,9 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.steering_deg = static_cast<double>(car0_data[10]) / 11600000.0;
     out.steering_raw = static_cast<double>(car0_data[10]);
 
+    //LogMessage(L"[DEBUG] car0_data address: 0x" + std::to_wstring(carsDataAddr));
+
+ 
     bool tireOK =
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrLF, &loadLF, sizeof(loadLF), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireLoadAddrFR, &loadFR, sizeof(loadFR), &bytesRead) &&
@@ -264,6 +621,8 @@ bool ReadTelemetryData(RawTelemetry& out) {
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrFR, &magLongFR, sizeof(magLongFR), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrLR, &magLongLR, sizeof(magLongLR), &bytesRead) &&
         ReadProcessMemory(hProcess, (LPCVOID)tireMagLongAddrRR, &magLongRR, sizeof(magLongRR), &bytesRead);
+  
+    //bool tireOK = true;
 
     if (!tireOK) {
         LogMessage(L"[ERROR] Failed to read one or more tire loads.");

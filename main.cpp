@@ -1,6 +1,6 @@
-// FFB for ICR2
+// FFB for Papy Sims
 // I don't know what I am doing!
-// Beta 0.9.0 Don't forget to update this down below
+// Beta 1.0.1 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -41,8 +41,6 @@
 // === Project Includes ===
 #include "ffb_setup.h"
 #include "telemetry_reader.h"
-//#include "calculations/slip_angle.h"
-//#include "calculations/lateral_load.h"
 #include "calculations/vehicle_dynamics.h"
 #include "forces/constant_force.h"
 #include "forces/damper_effect.h"
@@ -116,12 +114,6 @@ struct TelemetryDisplayData {
     double tiremaglong_rf = 0.0;
     double tiremaglong_lr = 0.0;
     double tiremaglong_rr = 0.0;
-
-    // Legacy calculated data
-    int directionVal = 0;
-    double slipAngleDeg = 0.0;
-    double lateralG = 0.0;
-    int forceMagnitude = 0;
 
     // Vehicle Dynamics calculated data
     double vd_lateralG = 0.0;
@@ -295,7 +287,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << std::fixed << std::setprecision(2);  // Also set for wide cout
 
     // Define console width
-    const int CONSOLE_WIDTH = 80;
+    const size_t CONSOLE_WIDTH = 80;
 
     // Helper lambda to pad lines
     auto padLine = [CONSOLE_WIDTH](const std::wstring& text) {
@@ -310,9 +302,10 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"ICR2 FFB Program Version 0.9.0 BETA") << L"\n";
-    std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
+    std::wcout << padLine(L"PAPY FFB Program Version 1.0.1 BETA") << L"\n";
+    std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
+    std::wcout << padLine(L"Game: " + targetGameVersion) << L"\n";
 
     std::wostringstream ss;
     ss << std::fixed << std::setprecision(2);  // Set formatting for stringstream too
@@ -325,7 +318,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(L"") << L"\n";
 
     ss.str(L""); ss.clear();
-    ss << L"dLat: " << std::setw(10) << displayData.dlat << L"   dLong: " << std::setw(10) << displayData.dlong;
+    ss << L"Latitude: " << std::setw(10) << displayData.dlat << L"   Longitude: " << std::setw(10) << displayData.dlong;
     std::wcout << padLine(ss.str()) << L"\n";
 
     ss.str(L""); ss.clear();
@@ -348,7 +341,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     // Tire loads section
     std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
     std::wcout << padLine(L"") << L"\n";
-    std::wcout << padLine(L"Front Left      Front Right") << L"\n";
+    std::wcout << padLine(L"      Left Front      Right Front") << L"\n";
 
     ss.str(L""); ss.clear();
     ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rf);
@@ -360,7 +353,12 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
-    std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
+    //ss.str(L""); ss.clear();
+    //ss << std::setw(10) << L"latN: " << static_cast<int16_t>(displayData.vd_frontLeftForce_N) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.vd_frontRightForce_N);
+    //std::wcout << padLine(ss.str()) << L"\n";
+    //std::wcout << padLine(L"") << L"\n";
+
+    std::wcout << padLine(L"      Left Rear      Right Rear") << L"\n";
     //ss.str(L""); ss.clear();
     //ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
     //std::wcout << padLine(ss.str()) << L"\n";
@@ -581,11 +579,7 @@ void ProcessLoop() {
    
     //Get some data from RawTelemetry -> not 100% sure what this does
     RawTelemetry current{};
-    RawTelemetry previousLat{};
-    RawTelemetry previousSlip{};
     RawTelemetry previousVD{};
-    bool firstReadingLat = true;
-    bool firstReadingSlip = true;
     bool firstReadingVD = true;
 
     double previousDlong = 0.0;
@@ -651,20 +645,13 @@ void ProcessLoop() {
             if (springEffect && enableSpringEffect)
                 UpdateSpringEffect(springEffect, masterForceScale);
 
-            // Do Force calculations based on raw data
-            // Right now its "Slip" and "Lateral Load"
-            CalculatedSlip slip{};
-            if (CalculateSlipAngle(current, previousSlip, firstReadingSlip, slip)) {
-                displayData.slipAngleDeg = slip.slipAngle;
-            }
 
             CalculatedVehicleDynamics vehicleDynamics{};
             bool vehicleDynamicsValid = CalculateVehicleDynamics(current, previousVD, firstReadingVD, vehicleDynamics);
 
-            CalculatedLateralLoad load{};
-            if (CalculateLateralLoad(current, previousLat, firstReadingLat, slip, load)) {
-                // Poll input state
-                if (FAILED(matchedDevice->Poll())) {
+
+        if (vehicleDynamicsValid) {
+            if (FAILED(matchedDevice->Poll())) {
                     matchedDevice->Acquire();
                     matchedDevice->Poll();
                 }
@@ -680,7 +667,7 @@ void ProcessLoop() {
 
                     //This is what will add the "Constant Force" effect if all the calculations work. 
                     // Probably could smooth all this out
-                    ApplyConstantForceEffect(current, load, slip,
+                    ApplyConstantForceEffect(current,
                         vehicleDynamics, current.speed_mph, current.steering_deg, constantForceEffect, enableWeightForce, enableRateLimit,
                         masterForceScale, deadzoneForceScale,
                         constantForceScale, brakingForceScale, weightForceScale);
@@ -688,43 +675,6 @@ void ProcessLoop() {
 
                 }
 
-
-                /*
-                            // Auto-pause force if not moving
-                            // I think this is broken or I could detect pause in a better way
-                            // Maybe DLONG not moving?
-                            bool isStationary = std::abs(current.dlong - previousDlong) < 0.01;
-                            if (isStationary) {
-                                noMovementFrames++;
-                                if (noMovementFrames >= movementThreshold && !effectPaused) {
-                                    //add damper and spring?
-                                    constantForceEffect->Stop();
-                                    effectPaused = true;
-                                    LogMessage(L"[INFO] FFB paused due to no movement");
-                                }
-                            }
-                            else {
-                                noMovementFrames = 0;
-                              //  if (effectPaused) {
-                                    //add damper and spring?
-                              //      constantForceEffect->Start(1, 0);
-                              //      effectPaused = false;
-                              //      std::wcout << L"FFB resumed\n";
-                              //  }
-                              // Added Alpha v0.6 to prevent issues with Moza?
-                                if (effectPaused) {
-                                    HRESULT startHr = constantForceEffect->Start(1, 0);
-                                    if (FAILED(startHr)) {
-                                        LogMessage(L"[ERROR] Failed to restart constant force: 0x" + std::to_wstring(startHr));
-                                    }
-                                    else {
-                                        effectPaused = false;
-                                        LogMessage(L"[INFO] FFB resumed");
-                                    }
-                                }
-                            }
-
-                */
 
                 //Setting variables for next update
                 previousDlong = current.dlong;
@@ -760,11 +710,6 @@ void ProcessLoop() {
                     displayData.tiremaglong_lr = current.tiremaglong_lr;
                     displayData.tiremaglong_rr = current.tiremaglong_rr;
 
-                    // Legacy calculated data
-                    displayData.directionVal = slip.directionVal;
-                    displayData.slipAngleDeg = slip.slipAngle;
-                    displayData.lateralG = load.lateralG;
-                    displayData.forceMagnitude = load.forceMagnitude;
 
                     // NEW: Vehicle dynamics data (only update if calculation was successful)
                     if (vehicleDynamicsValid) {
@@ -963,7 +908,7 @@ int main() {
             //Print log data
             {
                 std::lock_guard<std::mutex> lock(logMutex);
-                int maxDisplayLines = 1; //how many lines to display
+                size_t maxDisplayLines = 1; //how many lines to display
                 std::vector<std::wstring> recentUniqueLines;
                 std::unordered_set<std::wstring> seen;
 

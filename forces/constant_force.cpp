@@ -26,7 +26,6 @@ extern std::wstring targetInvertFFB;
 extern int g_currentFFBForce;
 
 void ApplyConstantForceEffect(const RawTelemetry& current,
-    const CalculatedLateralLoad& load, const CalculatedSlip& slip,
     const CalculatedVehicleDynamics& vehicleDynamics,
     double speed_mph, double steering_deg, IDirectInputEffect* constantForceEffect,
     bool enableWeightForce,
@@ -227,6 +226,7 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     // Keep frontTireLoad for logging compatibility
     double frontTireLoad = frontTireLoadMagnitude;
 
+/*
     // Physics constants from your engineer friend
     const double CURVE_STEEPNESS = 1.0e-4;
     const double MAX_THEORETICAL = 8500;
@@ -261,7 +261,47 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
             // Restore original sign
             force = (physicsForce >= 0) ? scaledMagnitude : -scaledMagnitude;
         }
+      }
+   */ 
+
+    double physicsForceMagnitude;
+
+    // Curve Parameters
+    // Added step for greater center feel
+    const double STEEP_THRESHOLD = 1500.0;     // Switch point: 1500N
+    const double STEEP_FORCE_TARGET = 2500.0;  // Force at switch point: 2000
+    const double GENTLE_LOAD_TARGET = 16000.0; // High load point: 14000N  
+    const double GENTLE_FORCE_TARGET = 9500.0; // Force at high load: 8500
+
+    if (frontTireLoadMagnitude <= STEEP_THRESHOLD) {
+        // Steep linear ramp: 0N→0 force, 1500N→2000 force
+        double steepSlope = STEEP_FORCE_TARGET / STEEP_THRESHOLD; // 2000/1500 = 1.333
+        physicsForceMagnitude = frontTireLoadMagnitude * steepSlope;
     }
+    else {
+        // Gentler slope: 1500N→2000 force, 14000N→8500 force
+        double remainingLoad = frontTireLoadMagnitude - STEEP_THRESHOLD;        // Load above 1500N
+        double remainingLoadRange = GENTLE_LOAD_TARGET - STEEP_THRESHOLD;       // 14000-1500 = 12500N
+        double remainingForceRange = GENTLE_FORCE_TARGET - STEEP_FORCE_TARGET;  // 8500-2000 = 6500 force
+
+        double gentleSlope = remainingForceRange / remainingLoadRange;          // 6500/12500 = 0.52
+        double gentleSlopeForce = remainingLoad * gentleSlope;
+
+        physicsForceMagnitude = STEEP_FORCE_TARGET + gentleSlopeForce;
+    }
+
+    // Cap at maximum to prevent going over target
+    if (physicsForceMagnitude > GENTLE_FORCE_TARGET) {
+        physicsForceMagnitude = GENTLE_FORCE_TARGET;
+    }
+
+    // Apply the original sign from frontTireLoadSum
+    double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
+
+
+    double force = physicsForce;
+
+
 
     // Cap maximum force magnitude while preserving sign
     if (std::abs(force) > 10000.0) {
@@ -275,12 +315,17 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     }
 
     // Convert to signed magnitude
+ 
     double smoothed = force;
     int magnitude = static_cast<int>(std::abs(smoothed) * masterForceScale * constantForceScale);
-    int signedMagnitude = static_cast<int>(magnitude);
-    if (smoothed < 0.0) {
-        signedMagnitude = -signedMagnitude;
-    }
+    //int signedMagnitude = static_cast<int>(magnitude);
+    //if (smoothed < 0.0) {
+    //    signedMagnitude = -signedMagnitude;
+   // }
+    
+
+    double scaledForce = force * masterForceScale * constantForceScale;
+    int signedMagnitude = static_cast<int>(scaledForce);
 
 
 
