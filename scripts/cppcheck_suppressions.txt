@@ -1,0 +1,5 @@
+missingInclude
+missingIncludeSystem
+missingOverride
+functionStatic
+useStlAlgorithm
