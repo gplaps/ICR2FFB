@@ -2,8 +2,9 @@
 
 #include "ffb_config.h"
 #include "game_detect.h"
+#include "game_version.h"
 #include "log.h"
-#include "string_utilities.h"
+#include "string_utilities.h" // IWYU pragma: keep
 
 #include <psapi.h>
 #if !defined(IS_CPP11_COMPLIANT)
@@ -12,8 +13,6 @@
 #include <tlhelp32.h>
 
 #include <cwctype>
-#include <sstream>
-#include <vector>
 
 /*
  * Copyright 2025 gplaps
@@ -29,7 +28,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
  */
 
-TelemetryReader::TelemetryReader(const FFBConfig& config) :
+TelemetryReader::TelemetryReader(FFBConfig& config) :
     hProcess(NULL),
     mInitialized(false),
     offsets(),
@@ -53,18 +52,12 @@ TelemetryReader::~TelemetryReader()
     }
 }
 
-bool TelemetryReader::Initialize(const FFBConfig& config)
+bool TelemetryReader::Initialize(FFBConfig& config)
 {
     if (mInitialized) { return true; }
 
-    if (config.GetString(L"base", L"game").empty())
-    {
-        LogMessage(L"[ERROR] \"Game\" is not set.");
-        return false;
-    }
-
     // Find process window
-    const DWORD pid = FindProcessIdByWindow(config.game.version);
+    const DWORD pid = FindProcessIdByWindow();
     if (!pid)
     {
         LogMessage(L"[ERROR] Game window not found.");
@@ -74,18 +67,16 @@ bool TelemetryReader::Initialize(const FFBConfig& config)
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) { return false; }
 
-    // scan for game or auto detect
-    const std::pair<uintptr_t, GameVersion> result           = ScanSignature(hProcess, config.game.version);
-    const uintptr_t                         signatureAddress = result.first;
-    if (!signatureAddress)
+    // scan for supported games
+    config.game = ScanSignature(hProcess);
+    if (!config.game.Valid())
     {
         CloseHandle(hProcess);
         hProcess = NULL;
         return false;
     }
 
-    offsets = GetGameOffsets(result.second);
-    offsets.ApplySignature(signatureAddress);
+    offsets = config.game.Offsets();
 
     LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signature) +
                L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data) +

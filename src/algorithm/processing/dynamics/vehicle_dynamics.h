@@ -37,5 +37,5 @@ struct CalculatedVehicleDynamics
     double frontLeftLong_N;
     double frontRightLong_N;
 
-    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, GameVersion version);
+    bool Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, SupportedGame detectedGame);
 };

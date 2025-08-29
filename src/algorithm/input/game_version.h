@@ -2,25 +2,14 @@
 
 #include "project_dependencies.h" // IWYU pragma: keep
 
-#include "log.h"
-#include "string_utilities.h"
-
-enum GameVersion
 #if defined(IS_CPP11_COMPLIANT)
-    : unsigned char
+#include <cstdint>
+#else
+#include <stdint.h>
 #endif
-{
-    VERSION_UNINITIALIZED,
-    ICR2_DOS,
-    ICR2_RENDITION,
-    ICR2_WINDOWS,
-    NASCAR1,
-    NASCAR2,
-
-    // detect any supported game - if this does not work, try explicitly requesting a specific game,
-    // as the mechanism to detect the games is rudimentary and for example cannot handle multiple Papy games in a DosBox process
-    AUTO_DETECT
-};
+#include <map>
+#include <string>
+#include <vector>
 
 // Things to look for in the Memory to make it tick
 struct GameOffsets
@@ -44,19 +33,85 @@ struct GameOffsets
     uintptr_t tire_maglong_lr;
     uintptr_t tire_maglong_rr;
 
-    const char* signatureStr;
-
     void ApplySignature(uintptr_t signatureAddress);
 };
 
-GameOffsets GetGameOffsets(GameVersion version);
-
-struct RequestedGame
+enum BaseGame
+#if defined(IS_CPP11_COMPLIANT)
+    : unsigned char
+#endif
 {
-    RequestedGame() {}
-    RequestedGame(const std::wstring& versionText);
+    UNDETECTED_GAME,
+    INDYCAR_RACING_2,
+    NASCAR_RACING_1,
+    NASCAR_RACING_2
+};
 
-    std::wstring ToString() const;
-    GameVersion  version;
-    GameOffsets  offsets;
+enum Renderer
+#if defined(IS_CPP11_COMPLIANT)
+    : unsigned char
+#endif
+{
+    UNDETECTED_RENDERER,
+    SOFTWARE,
+    RENDITION
+};
+
+enum BinaryOptions
+#if defined(IS_CPP11_COMPLIANT)
+    : unsigned char
+#endif
+{
+    UNDETECTED_BINARY_OPTIONS,
+    DOS4GW,
+    DOS32A,
+    WIN32_APPLICATION
+};
+
+enum VersionInfo
+#if defined(IS_CPP11_COMPLIANT)
+    : unsigned char
+#endif
+{
+    UNDETECTED_VERSION,
+    V1_0_0, // ICR2
+    V1_0_2, // ICR2
+    V1_2_1, // NR1
+    V2_0_2, // NR2
+    V2_0_3  // NR2
+};
+
+struct SupportedGame
+{
+    SupportedGame();
+    SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions, GameOffsets offsets);
+
+    bool               Valid() const;
+    std::wstring       ToString() const;
+    const GameOffsets& Offsets() const;
+    void               ApplySignature(uintptr_t signatureAddress);
+    bool               IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions) const; // don't like to express with operator== as GameOffsets are not known when looking up entries in the list of known games
+    BaseGame           Game() const;
+
+private:
+    BaseGame      mGame;
+    Renderer      mRenderer;
+    VersionInfo   mVersion;
+    BinaryOptions mBinaryInfo;
+
+    GameOffsets mOffsets;
+};
+
+void InitGameDetection();
+struct SupportedGames
+{
+    // Lists of text to look for in the binary
+    static std::map<std::string, BaseGame>      baseGameStrings;
+    static std::map<std::string, Renderer>      rendererStrings;
+    static std::map<std::string, BinaryOptions> binaryStrings;
+    static std::map<std::string, VersionInfo>   versionStrings;
+
+    // Game list
+    static SupportedGame              FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions);
+    static std::vector<SupportedGame> gameList;
 };

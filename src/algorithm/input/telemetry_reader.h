@@ -46,7 +46,7 @@ struct RawTelemetry
 struct TelemetryReader
 {
 public:
-    explicit TelemetryReader(const FFBConfig& config);
+    explicit TelemetryReader(FFBConfig& config);
     ~TelemetryReader();
 
     bool                Update();
@@ -55,7 +55,7 @@ public:
     const RawTelemetry& Data() const;
 
 private:
-    bool Initialize(const FFBConfig& config);
+    bool Initialize(FFBConfig& config);
     void ConvertCarData();
     void ConvertTireData();
     bool ReadCarData();

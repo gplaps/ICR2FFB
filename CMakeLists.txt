@@ -32,6 +32,8 @@ else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${PROJECT_NAME} PRIVATE -Weverything
             -Wno-padded
+            -Wno-global-constructors
+            -Wno-exit-time-destructors
             -Wno-covered-switch-default
             -Wno-zero-as-null-pointer-constant # C++98 has no nullptr, therefore NULL style
             -Wno-c++98-compat # "solved" but still emitted

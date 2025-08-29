@@ -1,39 +1,29 @@
 #include "game_detect.h"
 
 #include "game_version.h"
+#include "log.h"
+#include "string_utilities.h"
 
-#include <algorithm>
 #include <cwchar>
 #include <string>
+#include <utility>
 #include <vector>
 
 // Game detection and offsets are a work in progress and only very specific versions are detected in this version
-// This has to undergo a rewrite if more versions are added
+
+std::vector<SupportedGame>           SupportedGames::gameList;
+std::map<std::string, BaseGame>      SupportedGames::baseGameStrings;
+std::map<std::string, Renderer>      SupportedGames::rendererStrings;
+std::map<std::string, BinaryOptions> SupportedGames::binaryStrings;
+std::map<std::string, VersionInfo>   SupportedGames::versionStrings;
+
+// Provides standardized 'point' to reference for memory
 
 // Offsets database for different games/versions
 // THANK YOU ERIC
 
-// Provides standardized 'point' to reference for memory
-static const char* DOS_EXTENDER_DOS32A   = "DOS/32A";
-static const char* DOS_EXTENDER_DOS4G    = "DOS/4G";
-
-static const char* ICR2_SIG_ALL_VERSIONS = "license with Bob";
-static const char* ICR2_V1_00            = "Version 1.0.0"; // exists, offsets unknown
-static const char* ICR2_V1_02            = "Version 1.0.2"; // offsets valid for this version
-static const char* ICR2_SIG_REND         = "-RN1 Build";
-static const char* ICR2_SIG_WINDY        = "<Insert text that only is found in the Windows version of ICR2";
-
-static const char* NR1_SIG               = "name of Harry Gant";
-static const char* NR1_V1_21             = "Version 1.21";
-
-static const char* NR2_SIG               = "NASCAR V2.03"; // too specific - this and some of the game detection mechanism has to be changed if more binaries and their offsets are known
-static const char* NR2_V1_005            = "Version 1.00(5)";
-static const char* NR2_RENDITION         = "Rendition communication timeout";
-
-static const char* UNINIT_SIG            = "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND";
-
 // Rendition EXE
-static const GameOffsets Offsets_ICR2_REND = {
+static const GameOffsets Offsets_ICR2_REND_DOS32A_102 = {
     0xB1C0C, //signature
 
     0xE0EA4, //cars data
@@ -52,12 +42,10 @@ static const GameOffsets Offsets_ICR2_REND = {
     0xEAB06, //rf tire long load
     0xEAB00, //lr tire long load
     0xEAB02, //rr tire long load
-
-    ICR2_SIG_ALL_VERSIONS //offset base
 };
 
 // DOS4G Exe, should be 1.02
-static const GameOffsets Offsets_ICR2_DOS = {
+static const GameOffsets Offsets_ICR2_DOS4G_102 = {
     0xA0D78,
 
     0xD4718,
@@ -76,15 +64,14 @@ static const GameOffsets Offsets_ICR2_DOS = {
     0xC5C1A,
     0xC5C14,
     0xC5C16,
-
-    ICR2_SIG_ALL_VERSIONS //offset base
 };
 
 // ICR2 Windy
 static const GameOffsets Offsets_ICR2_WINDY = {
     0x004E2161,
 
-    0x004E0000, /* ???? */ // missing cars data
+    0x004E0000,
+    /* ???? */ // missing cars data
 
     0x004F3854,
     0x004F3856,
@@ -100,12 +87,10 @@ static const GameOffsets Offsets_ICR2_WINDY = {
     0x005281Fa,
     0x005281F4,
     0x005281F6,
-
-    ICR2_SIG_ALL_VERSIONS //offset base
 };
 
 // N1 Offsets
-static const GameOffsets Offsets_NASCAR = {
+static const GameOffsets Offsets_NASCAR1 = {
     0xAEA8C,
 
     0xEFED4,
@@ -124,8 +109,6 @@ static const GameOffsets Offsets_NASCAR = {
     0xF0970,
     0xF0970,
     0xF0970,
-
-    NR1_SIG //offset base
 };
 
 // N2 Offsets
@@ -148,76 +131,31 @@ static const GameOffsets Offsets_NASCAR2_V2_03 = {
     0xF3B04,
     0xF3AFE,
     0xF3B00,
-
-    NR2_SIG //offset base
 };
 
-// Not found
-static const GameOffsets Offsets_Unspecified = {
-    0x0,
-
-    0x0,
-
-    0x0,
-    0x0,
-    0x0,
-    0x0,
-
-    0x0,
-    0x0,
-    0x0,
-    0x0,
-
-    0x0,
-    0x0,
-    0x0,
-    0x0,
-
-    UNINIT_SIG //offset base
-};
-
-GameOffsets GetGameOffsets(GameVersion version)
+void InitGameDetection()
 {
-    switch (version)
-    {
-        case ICR2_DOS:
-            return Offsets_ICR2_DOS;
-        case ICR2_RENDITION:
-            return Offsets_ICR2_REND;
-        case ICR2_WINDOWS:
-            return Offsets_ICR2_WINDY;
-        case NASCAR1:
-            return Offsets_NASCAR;
-        case NASCAR2:
-            return Offsets_NASCAR2_V2_03;
-        case AUTO_DETECT:
-        case VERSION_UNINITIALIZED:
-        default:
-            return Offsets_Unspecified;
-    }
-}
+    SupportedGames::baseGameStrings["license with Bob"]                = INDYCAR_RACING_2;
+    SupportedGames::baseGameStrings["name of Harry Gant"]              = NASCAR_RACING_1;
+    SupportedGames::baseGameStrings["NASCAR V2.0"]                     = NASCAR_RACING_2;
 
-void GameOffsets::ApplySignature(uintptr_t signatureAddress)
-{
-    const uintptr_t exeBase = signatureAddress - signature;
-    signature               = exeBase;
+    SupportedGames::rendererStrings["-RN1 Build"]                      = RENDITION; // ICR2
+    SupportedGames::rendererStrings["Rendition communication timeout"] = RENDITION; // NR2
 
-    cars_data += exeBase;
+    SupportedGames::binaryStrings["DOS/32A"]                           = DOS32A;
+    SupportedGames::binaryStrings["DOS/4G"]                            = DOS4GW;
 
-    tire_data_fl += exeBase;
-    tire_data_fr += exeBase;
-    tire_data_lr += exeBase;
-    tire_data_rr += exeBase;
+    SupportedGames::versionStrings["Version 1.0.0"]                    = V1_0_0; // ICR2
+    SupportedGames::versionStrings["Version 1.0.2"]                    = V1_0_2; // ICR2
+    SupportedGames::versionStrings["Version 1.21"]                     = V1_2_1; // NR1
+    SupportedGames::versionStrings["Version 2.0.2"]                    = V2_0_2; // NR2
+    SupportedGames::versionStrings["Version 2.0.3"]                    = V2_0_3; // NR2
 
-    tire_maglat_fl += exeBase;
-    tire_maglat_fr += exeBase;
-    tire_maglat_lr += exeBase;
-    tire_maglat_rr += exeBase;
-
-    tire_maglong_fl += exeBase;
-    tire_maglong_fr += exeBase;
-    tire_maglong_lr += exeBase;
-    tire_maglong_rr += exeBase;
+    SupportedGames::gameList.push_back(SupportedGame(INDYCAR_RACING_2, SOFTWARE, V1_0_2, DOS4GW, Offsets_ICR2_DOS4G_102));
+    SupportedGames::gameList.push_back(SupportedGame(INDYCAR_RACING_2, RENDITION, V1_0_2, DOS32A, Offsets_ICR2_REND_DOS32A_102));
+    SupportedGames::gameList.push_back(SupportedGame(INDYCAR_RACING_2, SOFTWARE, V1_0_2, WIN32_APPLICATION, Offsets_ICR2_WINDY));
+    SupportedGames::gameList.push_back(SupportedGame(NASCAR_RACING_1, SOFTWARE, V1_2_1, DOS4GW, Offsets_NASCAR1));
+    SupportedGames::gameList.push_back(SupportedGame(NASCAR_RACING_2, SOFTWARE, V2_0_3, DOS4GW, Offsets_NASCAR2_V2_03));
 }
 
 // ----------------------------------
@@ -274,84 +212,27 @@ static BOOL
     return TRUE;
 }
 
-static std::pair<std::vector<std::wstring>, std::vector<std::wstring> > GetKeywordsForGameWindow(GameVersion version)
+static std::pair<std::vector<std::wstring>, std::vector<std::wstring> > GetKeywordsForGameWindow()
 {
     std::pair<std::vector<std::wstring>, std::vector<std::wstring> > result; // first == keywords, second == excludedKeywords
 
-    switch (version)
-    {
-        case ICR2_DOS:
-        {
-            result.first.push_back(L"dosbox");
+    result.first.push_back(L"dosbox");
 
-            result.first.push_back(L"indycar");
-            result.first.push_back(L"cart");
+    result.first.push_back(L"indycar");
+    result.first.push_back(L"cart");
+    result.first.push_back(L"nascar");
 
-            result.second.push_back(L"rendtion");      // ICR2 Rendition version
-            result.second.push_back(L"rready");        // Rendition wrapper window
-            result.second.push_back(L"speedy3d");      // Rendition wrapper window
-            result.second.push_back(L"status window"); // DosBox status window
+    result.second.push_back(L"rready");        // Rendition wrapper window
+    result.second.push_back(L"speedy3d");      // Rendition wrapper window
+    result.second.push_back(L"status window"); // DosBox status window
 
-            break;
-        }
-        case ICR2_RENDITION:
-        {
-            result.first.push_back(L"dosbox");
-
-            result.first.push_back(L"indycar");
-            result.first.push_back(L"cart");
-
-            result.second.push_back(L"rready");        // Rendition wrapper window
-            result.second.push_back(L"speedy3d");      // Rendition wrapper window
-            result.second.push_back(L"status window"); // DosBox status window
-            break;
-        }
-        case ICR2_WINDOWS:
-        {
-            // not implemented
-
-            result.first.push_back(L"indycar");
-            result.first.push_back(L"cart");
-
-            LogMessage(L"[WARNING] Game window detection of ICR2 Windows version untested");
-            break;
-        }
-        case NASCAR1:
-        {
-            result.first.push_back(L"dosbox");
-
-            result.first.push_back(L"nascar");
-
-            result.second.push_back(L"status window"); // DosBox status window
-            break;
-        }
-        case NASCAR2:
-        {
-            result.first.push_back(L"dosbox");
-
-            result.first.push_back(L"nascar");
-
-            result.second.push_back(L"status window"); // DosBox status window
-            break;
-        }
-        case AUTO_DETECT:
-        {
-            result.first.push_back(L"dosbox");
-
-            result.second.push_back(L"status window"); // DosBox status window
-            break;
-        }
-        case VERSION_UNINITIALIZED:
-        default:
-            break;
-    }
     return result;
 }
 
 // Gets the process ID of supported games
-DWORD FindProcessIdByWindow(GameVersion version)
+DWORD FindProcessIdByWindow()
 {
-    FindWindowData data(GetKeywordsForGameWindow(version), 0);
+    FindWindowData data(GetKeywordsForGameWindow(), 0);
     EnumWindows(EnumerateWindowsCallback, reinterpret_cast<LPARAM>(&data));
     return data.pid;
 }
@@ -360,173 +241,122 @@ DWORD FindProcessIdByWindow(GameVersion version)
 // Detect game and its offsets
 // ----------------------------------
 
-static std::pair<std::vector<std::string>, std::vector<std::string> > GetKeywordsForGameDetection(GameVersion version)
-{
-    std::pair<std::vector<std::string>, std::vector<std::string> > result; // first == keywords, second == excludedKeywords
-
-    switch (version)
-    {
-        case ICR2_DOS:
-        {
-            result.first.push_back(ICR2_SIG_ALL_VERSIONS);
-
-            result.second.push_back(ICR2_SIG_REND);
-            break;
-        }
-        case ICR2_RENDITION:
-        {
-            result.first.push_back(ICR2_SIG_ALL_VERSIONS);
-            result.first.push_back(ICR2_SIG_REND);
-            break;
-        }
-        case ICR2_WINDOWS:
-        {
-            // not implemented
-            result.first.push_back(ICR2_SIG_ALL_VERSIONS);
-
-            result.second.push_back(ICR2_SIG_REND);
-            LogMessage(L"[WARNING] Game detection of ICR2 Windows version not implemented");
-            break;
-        }
-        case NASCAR1:
-        {
-            result.first.push_back(NR1_SIG);
-            break;
-        }
-        case NASCAR2:
-        {
-            result.first.push_back(NR2_SIG);
-            break;
-        }
-        case AUTO_DETECT:
-        case VERSION_UNINITIALIZED:
-        default:
-            break;
-    }
-    return result;
-}
-
-static std::vector<std::string> GetKnownSignatures(GameVersion version)
+static std::vector<std::string> SignaturesToScan()
 {
     std::vector<std::string> result;
-    switch (version)
+
+    // put all known signature strings into a unordered list for scanning
+    for (std::map<std::string, BaseGame>::const_iterator it = SupportedGames::baseGameStrings.begin(); it != SupportedGames::baseGameStrings.end(); ++it)
     {
-        case ICR2_DOS:
-        {
-            result.push_back(ICR2_SIG_ALL_VERSIONS);
-            break;
-        }
-        case ICR2_RENDITION:
-        {
-            result.push_back(ICR2_SIG_ALL_VERSIONS);
-            result.push_back(ICR2_SIG_REND);
-            break;
-        }
-        case ICR2_WINDOWS:
-        {
-            result.push_back(ICR2_SIG_ALL_VERSIONS);
-            result.push_back(ICR2_SIG_WINDY);
-            break;
-        }
-        case NASCAR1:
-        {
-            result.push_back(NR1_SIG);
-            break;
-        }
-        case NASCAR2:
-        {
-            result.push_back(NR2_SIG);
-            break;
-        }
-        case AUTO_DETECT:
-        {
-            result.push_back(ICR2_SIG_ALL_VERSIONS);
-            result.push_back(ICR2_SIG_REND);
-            result.push_back(ICR2_SIG_WINDY);
-            result.push_back(NR1_SIG);
-            result.push_back(NR2_SIG);
-            break;
-        }
-        case VERSION_UNINITIALIZED:
-        default:
-            break;
+        result.push_back(it->first);
+    }
+    for (std::map<std::string, Renderer>::const_iterator it = SupportedGames::rendererStrings.begin(); it != SupportedGames::rendererStrings.end(); ++it)
+    {
+        result.push_back(it->first);
+    }
+    for (std::map<std::string, BinaryOptions>::const_iterator it = SupportedGames::binaryStrings.begin(); it != SupportedGames::binaryStrings.end(); ++it)
+    {
+        result.push_back(it->first);
+    }
+    for (std::map<std::string, VersionInfo>::const_iterator it = SupportedGames::versionStrings.begin(); it != SupportedGames::versionStrings.end(); ++it)
+    {
+        result.push_back(it->first);
     }
     return result;
 }
 
-// search predicates
-static bool IsIcr2(const std::pair<uintptr_t, std::string>& elem)
+// find string and return the corresponding enum and the offset, all other Detect* methods just return the enum
+static std::pair<uintptr_t, BaseGame> DetectGame(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
 {
-    return elem.second == ICR2_SIG_ALL_VERSIONS;
-}
-
-static bool IsIcr2Rend(const std::pair<uintptr_t, std::string>& elem)
-{
-    return elem.second == ICR2_SIG_REND;
-}
-
-static bool IsIcr2Windy(const std::pair<uintptr_t, std::string>& elem)
-{
-    return elem.second == ICR2_SIG_WINDY;
-}
-
-static bool IsNR1(const std::pair<uintptr_t, std::string>& elem)
-{
-    return elem.second == NR1_SIG;
-}
-
-static bool IsNR2(const std::pair<uintptr_t, std::string>& elem)
-{
-    return elem.second == NR2_SIG;
-}
-
-static std::pair<uintptr_t, GameVersion> DetectGame(const std::vector<std::pair<uintptr_t, std::string> >& scanResult, GameVersion version)
-{
-    // select from detected keywords
-    // GetKeywordsForGameDetection(version);
-    std::vector<std::pair<uintptr_t, std::string> >::const_iterator it = scanResult.end();
-
-    std::pair<uintptr_t, GameVersion> detectedVersion(0, VERSION_UNINITIALIZED);
-    if (!scanResult.empty())
+    for (size_t i = 0; i < scanResult.size(); ++i)
     {
-        it = std::find_if(scanResult.begin(), scanResult.end(), IsIcr2);
-        if (it != scanResult.end())
+        for (std::map<std::string, BaseGame>::const_iterator it = SupportedGames::baseGameStrings.begin(); it != SupportedGames::baseGameStrings.end(); ++it)
         {
-            it = std::find_if(scanResult.begin(), scanResult.end(), IsIcr2Rend);
-            if (it != scanResult.end() && (version == ICR2_RENDITION || version == AUTO_DETECT))
+            if (it->first == scanResult[i].second)
             {
-                return std::pair<uintptr_t, GameVersion>(it->first, ICR2_RENDITION);
+                return std::pair<uintptr_t, BaseGame>(scanResult[i].first, it->second);
             }
-            it = std::find_if(scanResult.begin(), scanResult.end(), IsIcr2Windy);
-            if (it != scanResult.end() && (version == ICR2_WINDOWS || version == AUTO_DETECT))
-            {
-                return std::pair<uintptr_t, GameVersion>(it->first, ICR2_WINDOWS);
-            }
-            if (version == ICR2_DOS || version == AUTO_DETECT)
-            {
-                return std::pair<uintptr_t, GameVersion>(it->first, ICR2_DOS);
-            }
-        }
-        it = std::find_if(scanResult.begin(), scanResult.end(), IsNR1);
-        if (it != scanResult.end() && (version == NASCAR1 || version == AUTO_DETECT))
-        {
-            return std::pair<uintptr_t, GameVersion>(it->first, NASCAR1);
-        }
-        it = std::find_if(scanResult.begin(), scanResult.end(), IsNR2);
-        if (it != scanResult.end() && (version == NASCAR2 || version == AUTO_DETECT))
-        {
-            return std::pair<uintptr_t, GameVersion>(it->first, NASCAR2);
         }
     }
-    LogMessage(L"[ERROR] Signature not found in game.");
-    return std::pair<uintptr_t, GameVersion>(0x0, VERSION_UNINITIALIZED);
+    return std::pair<uintptr_t, BaseGame>(0U, UNDETECTED_GAME);
+}
+
+static Renderer DetectRenderer(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
+{
+    for (size_t i = 0; i < scanResult.size(); ++i)
+    {
+        for (std::map<std::string, Renderer>::const_iterator it = SupportedGames::rendererStrings.begin(); it != SupportedGames::rendererStrings.end(); ++it)
+        {
+            if (it->first == scanResult[i].second)
+            {
+                return it->second;
+            }
+        }
+    }
+    return SOFTWARE;
+}
+
+static BinaryOptions DetectBinaryOptions(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
+{
+    for (size_t i = 0; i < scanResult.size(); ++i)
+    {
+        for (std::map<std::string, BinaryOptions>::const_iterator it = SupportedGames::binaryStrings.begin(); it != SupportedGames::binaryStrings.end(); ++it)
+        {
+            if (it->first == scanResult[i].second)
+            {
+                return it->second;
+            }
+        }
+    }
+    return UNDETECTED_BINARY_OPTIONS;
+}
+
+static VersionInfo DetectVersion(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
+{
+    for (size_t i = 0; i < scanResult.size(); ++i)
+    {
+        for (std::map<std::string, VersionInfo>::const_iterator it = SupportedGames::versionStrings.begin(); it != SupportedGames::versionStrings.end(); ++it)
+        {
+            if (it->first == scanResult[i].second)
+            {
+                return it->second;
+            }
+        }
+    }
+    return UNDETECTED_VERSION;
+}
+
+static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
+{
+    // translate scan results into a SupportedGame and lookup if this matches any supported version
+    if (!scanResult.empty())
+    {
+        std::pair<uintptr_t, BaseGame> game     = DetectGame(scanResult);
+        Renderer                       renderer = DetectRenderer(scanResult);
+        BinaryOptions                  options  = DetectBinaryOptions(scanResult);
+        VersionInfo                    version  = DetectVersion(scanResult);
+
+        SupportedGame detectedGame              = SupportedGames::FindGame(game.second, renderer, version, options);
+        if (detectedGame.Valid())
+        {
+            detectedGame.ApplySignature(game.first);
+            LogMessage(L"Detected game: " + detectedGame.ToString());
+            return detectedGame;
+        }
+        else
+        {
+            LogMessage(L"[ERROR] Game detected failed. Result: " + detectedGame.ToString());
+            return SupportedGame();
+        }
+    }
+    LogMessage(L"[ERROR] No signatures found in game.");
+    return SupportedGame();
 }
 
 // Really don't understand this, but here is where we scan the memory for the data needed
 // scanning dosbox memory may not work as expected as once a process was started and is closed it still resides in dosbox processes memory, so maybe the wrong instance / closed instance of a supported game is found and not the most recent / active. it worked if opening and closing the same exe inside dosbox multiple times but its not robust
 
-// ScanSignature scans for known signatures for either a specific version or and tries to even auto detect between different versions if requested (version == AUTO_DETECT)
-std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersion version)
+SupportedGame ScanSignature(HANDLE processHandle)
 {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
@@ -540,7 +370,7 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
 
     MEMORY_BASIC_INFORMATION mbi;
 
-    const std::vector<std::string>                  signaturesToScan = GetKnownSignatures(version);
+    const std::vector<std::string>                  signaturesToScan = SignaturesToScan();
     std::vector<BYTE>                               bufferPreviousPage(0);
     std::vector<std::pair<uintptr_t, std::string> > result;
 
@@ -612,5 +442,5 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
 #    pragma clang diagnostic pop
 #endif
 
-    return DetectGame(result, version);
+    return ToSupportedGame(result);
 }

@@ -41,7 +41,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << padLine(VERSION_STRING) << L"\n";
     std::wcout << padLine(L"USE AT YOUR OWN RISK") << L"\n";
     std::wcout << padLine(L"Connected Device: " + config.GetString(L"base", L"device")) << L"\n";
-    std::wcout << padLine(L"Game: " + config.GetString(L"base", L"game")) << L"\n";
+    std::wcout << padLine(L"Game: " + config.game.ToString()) << L"\n";
 
 
     std::wostringstream ss;

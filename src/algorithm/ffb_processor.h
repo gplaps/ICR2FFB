@@ -4,6 +4,7 @@
 #include "damper_effect.h"
 #include "ffb_config.h"
 #include "ffb_output.h"
+#include "game_version.h"
 #include "movement_detection.h"
 #include "spring_effect.h"
 #include "telemetry_display.h"
@@ -12,7 +13,7 @@
 
 struct FFBProcessor
 {
-    explicit FFBProcessor(const FFBConfig& config);
+    explicit FFBProcessor(FFBConfig& config);
     bool                                          Valid() const;
     void                                          Update(double deltaTimeMs);
     const TelemetryDisplay::TelemetryDisplayData& DisplayData() const;
@@ -56,6 +57,6 @@ private:
     TelemetryReader                        telemetryReader;
     TelemetryDisplay::TelemetryDisplayData displayData;
 
-    GameVersion version;
-    bool        mInitialized;
+    SupportedGame detectedGame;
+    bool          mInitialized;
 };

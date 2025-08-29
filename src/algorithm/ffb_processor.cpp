@@ -7,7 +7,7 @@
 #include "telemetry_display.h"
 #include "vehicle_dynamics.h"
 
-FFBProcessor::FFBProcessor(const FFBConfig& config) :
+FFBProcessor::FFBProcessor(FFBConfig& config) :
     current(),
     previous(),
     hasFirstReading(false),
@@ -50,7 +50,7 @@ void FFBProcessor::Init(const FFBConfig& config)
     weightForceScale             = enableWeightForce ? saturate(config.GetDouble(L"effects", L"weight scale") / 100.0) : 0.0;
     brakingForceScale            = std::clamp(config.GetDouble(L"effects", L"braking scale") / 100.0, 0.0, 10.0 /* upper limit subject to change - this restricts user*/);
 
-    version                      = config.game.version;
+    detectedGame                 = config.game;
 }
 
 bool FFBProcessor::Valid() const { return mInitialized; }
@@ -110,7 +110,7 @@ void FFBProcessor::Update(double deltaTimeMs)
 bool FFBProcessor::ProcessTelemetryInput()
 {
     vehicleDynamics = CalculatedVehicleDynamics();
-    return vehicleDynamics.Calculate(current, previous, version);
+    return vehicleDynamics.Calculate(current, previous, detectedGame);
 }
 
 void FFBProcessor::UpdateDisplayData(const ConstantForceEffectResult& constantResult)

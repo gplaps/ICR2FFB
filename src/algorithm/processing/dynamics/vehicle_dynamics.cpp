@@ -1,6 +1,7 @@
 #include "vehicle_dynamics.h"
 
 #include "constants.h"
+#include "game_version.h"
 #include "math_utilities.h"
 #include "string_utilities.h"
 
@@ -90,23 +91,18 @@ static GameConstants NASCAR(
 
 // Select constants based on game
 
-static GameConstants GetGameConstants(GameVersion version)
+static GameConstants GetGameConstants(SupportedGame detectedGame)
 {
-    if (version == ICR2_DOS || version == ICR2_RENDITION || version == ICR2_WINDOWS)
+    if (detectedGame.Game() == INDYCAR_RACING_2)
     {
-        // Use IndyCar constants
         return VehicleConstants::IndyCar;
     }
-    else if (version == NASCAR1 || version == NASCAR2)
+    else if (detectedGame.Game() == NASCAR_RACING_1 || detectedGame.Game() == NASCAR_RACING_2)
     {
-        // Use NASCAR constants
         return VehicleConstants::NASCAR;
     }
-    else
-    {
-        // Default to IndyCar if unknown
-        return VehicleConstants::IndyCar;
-    }
+    // Default to IndyCar if unknown
+    return VehicleConstants::IndyCar;
 }
 
 // Helper function to convert raw tire data to usable data
@@ -136,9 +132,9 @@ static int GetTurnDirection(double lf, double rf, double lr, double rr)
     }
 }
 
-bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, GameVersion version)
+bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, SupportedGame detectedGame)
 {
-    GameConstants constants = GetGameConstants(version);
+    GameConstants constants = GetGameConstants(detectedGame);
 
     // Convert units
     const double speed_ms = current.speed_mph * MPH_TO_MS;
