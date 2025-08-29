@@ -331,12 +331,12 @@ static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std:
     // translate scan results into a SupportedGame and lookup if this matches any supported version
     if (!scanResult.empty())
     {
-        std::pair<uintptr_t, BaseGame> game     = DetectGame(scanResult);
-        Renderer                       renderer = DetectRenderer(scanResult);
-        BinaryOptions                  options  = DetectBinaryOptions(scanResult);
-        VersionInfo                    version  = DetectVersion(scanResult);
+        const std::pair<uintptr_t, BaseGame> game     = DetectGame(scanResult);
+        const Renderer                       renderer = DetectRenderer(scanResult);
+        const BinaryOptions                  options  = DetectBinaryOptions(scanResult);
+        const VersionInfo                    version  = DetectVersion(scanResult);
 
-        SupportedGame detectedGame              = SupportedGames::FindGame(game.second, renderer, version, options);
+        SupportedGame detectedGame                    = SupportedGames::FindGame(game.second, renderer, version, options);
         if (detectedGame.Valid())
         {
             detectedGame.ApplySignature(game.first);

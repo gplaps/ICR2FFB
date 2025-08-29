@@ -2,7 +2,7 @@
 
 #include "constants.h"
 #include "log.h"
-#include "math_utilities.h"
+#include "math_utilities.h"   // IWYU pragma: keep
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <cmath>
@@ -158,7 +158,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry&    
     double force = ApplyDeadzone(physicsForce, deadzoneForceScale);
 */
 
-    double physicsForceMagnitude;
+    double physicsForceMagnitude = 0.0;
 
     // Curve Parameters
     // Added step for greater center feel

@@ -3,9 +3,9 @@
 #include "project_dependencies.h" // IWYU pragma: keep
 
 #if defined(IS_CPP11_COMPLIANT)
-#include <cstdint>
+#    include <cstdint>
 #else
-#include <stdint.h>
+#    include <stdint.h>
 #endif
 #include <map>
 #include <string>
@@ -84,7 +84,7 @@ enum VersionInfo
 struct SupportedGame
 {
     SupportedGame();
-    SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions, GameOffsets offsets);
+    SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions, const GameOffsets& offsets);
 
     bool               Valid() const;
     std::wstring       ToString() const;

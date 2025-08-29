@@ -40,7 +40,7 @@ void PrintToLogFile()
         {
             logger->file << queuedLines[i] << L'\n';
         }
-        if (queuedLines.size())
+        if (!queuedLines.empty())
         {
             logger->file.flush(); // optional, performance penalty but maybe helpful as otherwise a few log lines could be lost if the app crashes
         }

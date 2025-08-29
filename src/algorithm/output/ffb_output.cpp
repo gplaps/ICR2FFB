@@ -1,10 +1,9 @@
 #include "ffb_output.h"
 
-#include "log.h"
 #include "math_utilities.h"
 #include "safety_check.h"
 
-#include <cmath>
+#include <cmath> // IWYU pragma: keep
 
 FFBOutput::FFBOutput(const FFBConfig& config) :
     steeringDevice(config),

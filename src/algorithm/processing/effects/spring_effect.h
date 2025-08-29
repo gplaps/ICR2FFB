@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ffb_config.h"
-
 struct SpringEffect
 {
     explicit SpringEffect();

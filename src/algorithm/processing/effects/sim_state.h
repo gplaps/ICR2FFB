@@ -1,5 +1,4 @@
 #pragma once
-#include "project_dependencies.h"
 
 // unused, but can maybe be derived or read directly
 enum SimState

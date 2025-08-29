@@ -25,7 +25,7 @@ void GameOffsets::ApplySignature(uintptr_t signatureAddress)
     tire_maglong_rr += exeBase;
 }
 
-SupportedGame::SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions, GameOffsets offsets) :
+SupportedGame::SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions, const GameOffsets& offsets) :
     mGame(game),
     mRenderer(renderer),
     mVersion(version),
