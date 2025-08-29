@@ -57,5 +57,5 @@ private:
     TelemetryDisplay::TelemetryDisplayData displayData;
 
     GameVersion version;
-    bool mInitialized;
+    bool        mInitialized;
 };

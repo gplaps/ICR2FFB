@@ -63,11 +63,11 @@ int ConstantForceEffect::SmoothSpikes(int signedMagnitude)
     return signedMagnitude;
 }
 
-ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& current,
+ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry&              current,
                                                          const CalculatedVehicleDynamics& vehicleDynamics,
                                                          bool                             enableRateLimit,
-                                                         double                           /*deadzoneForceScale*/,
-                                                         double                           brakingForceScale,
+                                                         double /*deadzoneForceScale*/,
+                                                         double brakingForceScale,
                                                          double /*weightForceScale*/)
 {
     const double speed_mph = current.speed_mph;
@@ -147,7 +147,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     // Keep frontTireLoad for logging compatibility
     const double frontTireLoad = frontTireLoadMagnitude;
 
-/*
+    /*
     // Calculate magnitude using physics formula
     const double physicsForceMagnitude = atan(frontTireLoadMagnitude * CURVE_STEEPNESS) * MAX_FORCE_IN_N;
 
@@ -162,36 +162,38 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
 
     // Curve Parameters
     // Added step for greater center feel
-    const double STEEP_THRESHOLD = 1500.0;     // Switch point: 1500N
-    const double STEEP_FORCE_TARGET = 2500.0;  // Force at switch point: 2000
-    const double GENTLE_LOAD_TARGET = 16000.0; // High load point: 14000N  
-    const double GENTLE_FORCE_TARGET = 9500.0; // Force at high load: 8500
+    const double STEEP_THRESHOLD     = 1500.0;  // Switch point: 1500N
+    const double STEEP_FORCE_TARGET  = 2500.0;  // Force at switch point: 2000
+    const double GENTLE_LOAD_TARGET  = 16000.0; // High load point: 14000N
+    const double GENTLE_FORCE_TARGET = 9500.0;  // Force at high load: 8500
 
-    if (frontTireLoadMagnitude <= STEEP_THRESHOLD) {
+    if (frontTireLoadMagnitude <= STEEP_THRESHOLD)
+    {
         // Steep linear ramp: 0N→0 force, 1500N→2000 force
         const double steepSlope = STEEP_FORCE_TARGET / STEEP_THRESHOLD; // 2000/1500 = 1.333
-        physicsForceMagnitude = frontTireLoadMagnitude * steepSlope;
+        physicsForceMagnitude   = frontTireLoadMagnitude * steepSlope;
     }
-    else {
+    else
+    {
         // Gentler slope: 1500N→2000 force, 14000N→8500 force
-        const double remainingLoad = frontTireLoadMagnitude - STEEP_THRESHOLD;        // Load above 1500N
-        const double remainingLoadRange = GENTLE_LOAD_TARGET - STEEP_THRESHOLD;       // 14000-1500 = 12500N
-        const double remainingForceRange = GENTLE_FORCE_TARGET - STEEP_FORCE_TARGET;  // 8500-2000 = 6500 force
+        const double remainingLoad       = frontTireLoadMagnitude - STEEP_THRESHOLD; // Load above 1500N
+        const double remainingLoadRange  = GENTLE_LOAD_TARGET - STEEP_THRESHOLD;     // 14000-1500 = 12500N
+        const double remainingForceRange = GENTLE_FORCE_TARGET - STEEP_FORCE_TARGET; // 8500-2000 = 6500 force
 
-        const double gentleSlope = remainingForceRange / remainingLoadRange;          // 6500/12500 = 0.52
-        const double gentleSlopeForce = remainingLoad * gentleSlope;
+        const double gentleSlope         = remainingForceRange / remainingLoadRange; // 6500/12500 = 0.52
+        const double gentleSlopeForce    = remainingLoad * gentleSlope;
 
-        physicsForceMagnitude = STEEP_FORCE_TARGET + gentleSlopeForce;
+        physicsForceMagnitude            = STEEP_FORCE_TARGET + gentleSlopeForce;
     }
 
     // Cap at maximum to prevent going over target
-    physicsForceMagnitude = std::min(physicsForceMagnitude,GENTLE_FORCE_TARGET);
+    physicsForceMagnitude = std::min(physicsForceMagnitude, GENTLE_FORCE_TARGET);
 
     // Apply the original sign from frontTireLoadSum
     const double physicsForce = (frontTireLoadSum >= 0) ? physicsForceMagnitude : -physicsForceMagnitude;
 
 
-    double force = physicsForce;
+    double force              = physicsForce;
 
 
 
@@ -199,7 +201,7 @@ ConstantForceEffectResult ConstantForceEffect::Calculate(const RawTelemetry& cur
     force = std::clamp(force, -MAX_FORCE_IN_N, MAX_FORCE_IN_N); // MAX_FORCE_IN_N or DEFAULT_DINPUT_GAIN - both related, but likely drop MAX_FORCE_IN_N as its only adjusting to the DINPUT GAIN range and likely has nothing to do with N ?
 
     // Convert to signed magnitude
-    int          signedMagnitude = static_cast<int>(force);
+    int signedMagnitude = static_cast<int>(force);
 
 
     // === Self-Aligning Torque ===

@@ -10,7 +10,7 @@
 struct FFBConfig
 {
     FFBConfig();
-    bool        Valid() const;
+    bool          Valid() const;
     RequestedGame game;
 
     //settings from the ffb.ini

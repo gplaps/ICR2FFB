@@ -37,7 +37,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     rawData(),
     carData()
 {
-    if(!Initialize(config))
+    if (!Initialize(config))
     {
         LogMessage(L"[ERROR] TelemetryReader failed to initialize.");
         return;
@@ -55,7 +55,7 @@ TelemetryReader::~TelemetryReader()
 
 bool TelemetryReader::Initialize(const FFBConfig& config)
 {
-    if(mInitialized) { return true; }
+    if (mInitialized) { return true; }
 
     if (config.GetString(L"base", L"game").empty())
     {
@@ -75,8 +75,8 @@ bool TelemetryReader::Initialize(const FFBConfig& config)
     if (!hProcess) { return false; }
 
     // scan for game or auto detect
-    const std::pair<uintptr_t, GameVersion> result = ScanSignature(hProcess, config.game.version);
-    const uintptr_t signatureAddress = result.first;
+    const std::pair<uintptr_t, GameVersion> result           = ScanSignature(hProcess, config.game.version);
+    const uintptr_t                         signatureAddress = result.first;
     if (!signatureAddress)
     {
         CloseHandle(hProcess);
@@ -88,7 +88,7 @@ bool TelemetryReader::Initialize(const FFBConfig& config)
     offsets.ApplySignature(signatureAddress);
 
     LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signature) +
-               L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data) + 
+               L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data) +
                L" | rf_mag_lat @ 0x" + std::to_wstring(offsets.tire_maglat_fr));
 
     /*

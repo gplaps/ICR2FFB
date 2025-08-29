@@ -13,7 +13,7 @@
 
 struct FindWindowData
 {
-    FindWindowData(const std::pair<std::vector<std::wstring>,std::vector<std::wstring>>& keyWordsAndExcluded, DWORD processId) :
+    FindWindowData(const std::pair<std::vector<std::wstring>, std::vector<std::wstring> >& keyWordsAndExcluded, DWORD processId) :
         keywords(keyWordsAndExcluded.first),
         excludedkeyWords(keyWordsAndExcluded.second),
         pid(processId) {}
@@ -61,11 +61,11 @@ static BOOL
     return TRUE;
 }
 
-static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeywordsForGameWindow(GameVersion version)
+static std::pair<std::vector<std::wstring>, std::vector<std::wstring> > GetKeywordsForGameWindow(GameVersion version)
 {
-    std::pair<std::vector<std::wstring>,std::vector<std::wstring>> result; // first == keywords, second == excludedKeywords
+    std::pair<std::vector<std::wstring>, std::vector<std::wstring> > result; // first == keywords, second == excludedKeywords
 
-    switch(version)
+    switch (version)
     {
         case ICR2_DOS:
         {
@@ -87,7 +87,7 @@ static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeyword
 
             result.first.push_back(L"indycar");
             result.first.push_back(L"cart");
-            
+
             result.second.push_back(L"rready");        // Rendition wrapper window
             result.second.push_back(L"speedy3d");      // Rendition wrapper window
             result.second.push_back(L"status window"); // DosBox status window
@@ -99,11 +99,11 @@ static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeyword
 
             result.first.push_back(L"indycar");
             result.first.push_back(L"cart");
-            
+
             LogMessage(L"[WARNING] Game window detection of ICR2 Windows version untested");
             break;
         }
-        case NASCAR1: 
+        case NASCAR1:
         {
             result.first.push_back(L"dosbox");
 
@@ -147,11 +147,11 @@ DWORD FindProcessIdByWindow(GameVersion version)
 // Detect game and its offsets
 // ----------------------------------
 
-static std::pair<std::vector<std::string>,std::vector<std::string>> GetKeywordsForGameDetection(GameVersion version)
+static std::pair<std::vector<std::string>, std::vector<std::string> > GetKeywordsForGameDetection(GameVersion version)
 {
-    std::pair<std::vector<std::string>,std::vector<std::string>> result; // first == keywords, second == excludedKeywords
+    std::pair<std::vector<std::string>, std::vector<std::string> > result; // first == keywords, second == excludedKeywords
 
-    switch(version)
+    switch (version)
     {
         case ICR2_DOS:
         {
@@ -175,7 +175,7 @@ static std::pair<std::vector<std::string>,std::vector<std::string>> GetKeywordsF
             LogMessage(L"[WARNING] Game detection of ICR2 Windows version not implemented");
             break;
         }
-        case NASCAR1: 
+        case NASCAR1:
         {
             result.first.push_back(NR1SIG);
             break;
@@ -196,7 +196,7 @@ static std::pair<std::vector<std::string>,std::vector<std::string>> GetKeywordsF
 static std::vector<std::string> GetKnownSignatures(GameVersion version)
 {
     std::vector<std::string> result;
-    switch(version)
+    switch (version)
     {
         case ICR2_DOS:
         {
@@ -271,36 +271,36 @@ static std::pair<uintptr_t, GameVersion> DetectGame(const std::vector<std::pair<
 {
     // select from detected keywords
     // GetKeywordsForGameDetection(version);
-    std::vector<std::pair<uintptr_t,std::string>>::const_iterator it = scanResult.end();
+    std::vector<std::pair<uintptr_t, std::string> >::const_iterator it = scanResult.end();
 
-    std::pair<uintptr_t, GameVersion> detectedVersion(0,VERSION_UNINITIALIZED);
-    if(!scanResult.empty())
+    std::pair<uintptr_t, GameVersion> detectedVersion(0, VERSION_UNINITIALIZED);
+    if (!scanResult.empty())
     {
-        it = std::find_if(scanResult.begin(),scanResult.end(), IsIcr2);
-        if(it != scanResult.end())
+        it = std::find_if(scanResult.begin(), scanResult.end(), IsIcr2);
+        if (it != scanResult.end())
         {
-            it = std::find_if(scanResult.begin(),scanResult.end(), IsIcr2Rend);
-            if(it != scanResult.end() && (version == ICR2_RENDITION || version == AUTO_DETECT))
+            it = std::find_if(scanResult.begin(), scanResult.end(), IsIcr2Rend);
+            if (it != scanResult.end() && (version == ICR2_RENDITION || version == AUTO_DETECT))
             {
                 return std::pair<uintptr_t, GameVersion>(it->first, ICR2_RENDITION);
             }
-            it = std::find_if(scanResult.begin(),scanResult.end(), IsIcr2Windy);
-            if(it != scanResult.end() && (version == ICR2_WINDOWS || version == AUTO_DETECT))
+            it = std::find_if(scanResult.begin(), scanResult.end(), IsIcr2Windy);
+            if (it != scanResult.end() && (version == ICR2_WINDOWS || version == AUTO_DETECT))
             {
                 return std::pair<uintptr_t, GameVersion>(it->first, ICR2_WINDOWS);
             }
-            if(version == ICR2_DOS || version == AUTO_DETECT)
+            if (version == ICR2_DOS || version == AUTO_DETECT)
             {
                 return std::pair<uintptr_t, GameVersion>(it->first, ICR2_DOS);
             }
         }
-        it = std::find_if(scanResult.begin(),scanResult.end(), IsNR1);
-        if(it != scanResult.end() && (version == NASCAR1 || version == AUTO_DETECT))
+        it = std::find_if(scanResult.begin(), scanResult.end(), IsNR1);
+        if (it != scanResult.end() && (version == NASCAR1 || version == AUTO_DETECT))
         {
             return std::pair<uintptr_t, GameVersion>(it->first, NASCAR1);
         }
-        it = std::find_if(scanResult.begin(),scanResult.end(), IsNR2);
-        if(it != scanResult.end() && (version == NASCAR2 || version == AUTO_DETECT))
+        it = std::find_if(scanResult.begin(), scanResult.end(), IsNR2);
+        if (it != scanResult.end() && (version == NASCAR2 || version == AUTO_DETECT))
         {
             return std::pair<uintptr_t, GameVersion>(it->first, NASCAR2);
         }
@@ -322,13 +322,13 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
     LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress)));
     LogMessage(L"[DEBUG] Process max addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress)));
 
-    uintptr_t       addr     = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
+    uintptr_t       addr    = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
 
-    const std::vector<std::string> signaturesToScan = GetKnownSignatures(version);
-    std::vector<BYTE> bufferPreviousPage(0);
+    const std::vector<std::string>                  signaturesToScan = GetKnownSignatures(version);
+    std::vector<BYTE>                               bufferPreviousPage(0);
     std::vector<std::pair<uintptr_t, std::string> > result = {};
 
 #if defined(__clang__)
@@ -347,23 +347,23 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
-                    for(size_t gi = 0; gi < signaturesToScan.size(); ++gi)
+                    for (size_t gi = 0; gi < signaturesToScan.size(); ++gi)
                     {
-                        const std::string& signature = signaturesToScan[gi];
-                        const size_t signatureLen          = signature.size();
-                        
+                        const std::string& signature    = signaturesToScan[gi];
+                        const size_t       signatureLen = signature.size();
+
                         // overlap region
                         std::vector<BYTE> overlapRegion = {};
-                        if(!bufferPreviousPage.empty())
+                        if (!bufferPreviousPage.empty())
                         {
-                            overlapRegion = std::vector<BYTE>(bufferPreviousPage.end()-static_cast<ptrdiff_t>(signatureLen),bufferPreviousPage.end());
-                            overlapRegion.insert(overlapRegion.end(),buffer.begin(),buffer.begin()+static_cast<ptrdiff_t>(signatureLen));
+                            overlapRegion = std::vector<BYTE>(bufferPreviousPage.end() - static_cast<ptrdiff_t>(signatureLen), bufferPreviousPage.end());
+                            overlapRegion.insert(overlapRegion.end(), buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(signatureLen));
 
                             for (SIZE_T i = 0; i < overlapRegion.size(); ++i)
                             {
                                 if (memcmp(overlapRegion.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                                 {
-                                    result.push_back(std::pair<uintptr_t,std::string>(addr + i - signatureLen, signature));
+                                    result.push_back(std::pair<uintptr_t, std::string>(addr + i - signatureLen, signature));
                                     break;
                                 }
                             }
@@ -373,7 +373,7 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
                         {
                             if (memcmp(buffer.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                             {
-                                result.push_back(std::pair<uintptr_t,std::string>(addr + i, signature));
+                                result.push_back(std::pair<uintptr_t, std::string>(addr + i, signature));
                                 break;
                             }
                         }

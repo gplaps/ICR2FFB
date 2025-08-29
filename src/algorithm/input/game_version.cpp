@@ -45,80 +45,76 @@ static const GameOffsets Offsets_ICR2_DOS = {
     0xC5C14,
     0xC5C16,
 
-    ICR2SIG_ALL_VERSIONS
-};
+    ICR2SIG_ALL_VERSIONS};
 
 // ICR2 Windy
 static const GameOffsets Offsets_ICR2_WINDY = {
-     0x004E2161,
-    
-     0x004E0000, /* ???? */ // missing cars data
+    0x004E2161,
 
-     0x004F3854,
-     0x004F3856,
-     0x004F3850,
-     0x004F3852,
+    0x004E0000, /* ???? */ // missing cars data
 
-     0x00528204,
-     0x00528206,
-     0x00528200,
-     0x00528202,
+    0x004F3854,
+    0x004F3856,
+    0x004F3850,
+    0x004F3852,
 
-     0x005281F8,
-     0x005281Fa,
-     0x005281F4,
-     0x005281F6,
+    0x00528204,
+    0x00528206,
+    0x00528200,
+    0x00528202,
 
-     ICR2SIG_ALL_VERSIONS
-};
+    0x005281F8,
+    0x005281Fa,
+    0x005281F4,
+    0x005281F6,
+
+    ICR2SIG_ALL_VERSIONS};
 
 // N1 Offsets
 static const GameOffsets Offsets_NASCAR = {
     0xAEA8C,
 
     0xEFED4,
-    
+
     0xCEF70,
     0xCEF70,
     0xCEF70,
     0xCEF70,
-    
+
     0x9F6F8,
     0x9F6FA,
     0x9f780,
     0x9F6F6,
-    
+
     0xF0970,
     0xF0970,
     0xF0970,
     0xF0970,
 
-    NR1SIG
-};
+    NR1SIG};
 
 // N2 Offsets
 static const GameOffsets Offsets_NASCAR2 = {
     0xD7125, // "NASCAR V2.03"
-    
+
     0xAD440,
-    
+
     0xF39FA,
     0xF39FC,
     0xF39F6,
     0xF39F8,
-    
+
     0xF3B0E,
     0xF3B10,
     0xF3B0A,
     0xF3B0C,
-    
+
     0xF3B02,
     0xF3B04,
     0xF3AFE,
     0xF3B00,
 
-    NR2SIG
-};
+    NR2SIG};
 
 // Not found
 static const GameOffsets Offsets_Unspecified = {
@@ -141,8 +137,7 @@ static const GameOffsets Offsets_Unspecified = {
     0x0,
     0x0,
 
-    UNINIT_SIG
-};
+    UNINIT_SIG};
 
 // static std::vector<GameVersion,GameOffsets> GetKnownGameOffsets()
 // {
@@ -181,7 +176,7 @@ GameOffsets GetGameOffsets(GameVersion version)
 void GameOffsets::ApplySignature(uintptr_t signatureAddress)
 {
     const uintptr_t exeBase = signatureAddress - signature;
-    signature         = exeBase;
+    signature               = exeBase;
 
     cars_data += exeBase;
 
@@ -206,25 +201,32 @@ RequestedGame::RequestedGame(const std::wstring& versionText)
     // Select game version
     std::wstring gameVersion = ToLower(versionText);
 
-    if (gameVersion == L"icr2dos") {
+    if (gameVersion == L"icr2dos")
+    {
         version = ICR2_DOS;
     }
-    else if (gameVersion == L"icr2rend") {
+    else if (gameVersion == L"icr2rend")
+    {
         version = ICR2_RENDITION;
     }
-    else if (gameVersion == L"icr2windy") {
+    else if (gameVersion == L"icr2windy")
+    {
         version = ICR2_WINDOWS;
     }
-    else if (gameVersion == L"nascar1") {
+    else if (gameVersion == L"nascar1")
+    {
         version = NASCAR1;
     }
-    else if (gameVersion == L"nascar2") {
+    else if (gameVersion == L"nascar2")
+    {
         version = NASCAR2;
     }
-    else if (gameVersion.empty() || gameVersion.find(L"auto") != std::wstring::npos) {
+    else if (gameVersion.empty() || gameVersion.find(L"auto") != std::wstring::npos)
+    {
         version = AUTO_DETECT;
     }
-    else {
+    else
+    {
         LogMessage(L"[ERROR] Invalid game version: " + versionText);
         version = VERSION_UNINITIALIZED;
     }

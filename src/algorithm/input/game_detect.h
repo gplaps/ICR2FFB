@@ -6,5 +6,5 @@
 
 #include <utility>
 
-DWORD FindProcessIdByWindow(GameVersion version);
+DWORD                             FindProcessIdByWindow(GameVersion version);
 std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersion version);

@@ -50,7 +50,7 @@ void FFBProcessor::Init(const FFBConfig& config)
     weightForceScale             = enableWeightForce ? saturate(config.GetDouble(L"effects", L"weight scale") / 100.0) : 0.0;
     brakingForceScale            = std::clamp(config.GetDouble(L"effects", L"braking scale") / 100.0, 0.0, 10.0 /* upper limit subject to change - this restricts user*/);
 
-    version = config.game.version;
+    version                      = config.game.version;
 }
 
 bool FFBProcessor::Valid() const { return mInitialized; }

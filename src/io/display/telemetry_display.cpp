@@ -43,7 +43,7 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << padLine(L"Connected Device: " + config.GetString(L"base", L"device")) << L"\n";
     std::wcout << padLine(L"Game: " + config.GetString(L"base", L"game")) << L"\n";
 
-    
+
     std::wostringstream ss;
     ss << std::fixed << std::setprecision(2); // Set formatting for stringstream too
     ss << L"Master Force Scale: " << displayData.masterForceScale * 100.0 << L"%";
