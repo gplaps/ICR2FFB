@@ -92,7 +92,7 @@ bool TelemetryReader::Initialize(const FFBConfig& config)
                L" | rf_mag_lat @ 0x" + std::to_wstring(offsets.tire_maglat_fr));
 
     /*
-    if (config.version == ICR2_DOS4G_1_02 || config.version == ICR2_RENDITION) {
+    if (config.version == ICR2_DOS || config.version == ICR2_RENDITION) {
 
         LogMessage(L"=== ICR2 MEMORY ANALYSIS ===");
 

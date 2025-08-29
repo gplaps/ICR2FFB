@@ -21,7 +21,7 @@ static const GameOffsets Offsets_ICR2_REND = {
     0xEAB00, //lr tire long load
     0xEAB02, //rr tire long load
 
-    ICR2SIG //offset base
+    ICR2SIG_ALL_VERSIONS //offset base
 };
 
 // DOS4G Exe, should be 1.02
@@ -45,7 +45,7 @@ static const GameOffsets Offsets_ICR2_DOS = {
     0xC5C14,
     0xC5C16,
 
-    ICR2SIG
+    ICR2SIG_ALL_VERSIONS
 };
 
 // ICR2 Windy
@@ -69,7 +69,7 @@ static const GameOffsets Offsets_ICR2_WINDY = {
      0x005281F4,
      0x005281F6,
 
-     ICR2SIG
+     ICR2SIG_ALL_VERSIONS
 };
 
 // N1 Offsets
@@ -147,7 +147,7 @@ static const GameOffsets Offsets_Unspecified = {
 // static std::vector<GameVersion,GameOffsets> GetKnownGameOffsets()
 // {
 //     std::vector<std::pair<GameVersion,GameOffsets>> result;
-//     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_DOS4G_1_02, Offsets_ICR2_DOS));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_DOS, Offsets_ICR2_DOS));
 //     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_RENDITION, Offsets_ICR2_REND));
 //     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_WINDOWS, Offsets_ICR2_WINDY));
 //     result.push_back(std::pair<GameVersion,GameOffsets>(NASCAR1, Offsets_NASCAR));
@@ -161,7 +161,7 @@ GameOffsets GetGameOffsets(GameVersion version)
 {
     switch (version)
     {
-        case ICR2_DOS4G_1_02:
+        case ICR2_DOS:
             return Offsets_ICR2_DOS;
         case ICR2_RENDITION:
             return Offsets_ICR2_REND;
@@ -169,7 +169,7 @@ GameOffsets GetGameOffsets(GameVersion version)
             return Offsets_ICR2_WINDY;
         case NASCAR1:
             return Offsets_NASCAR;
-        case NASCAR2_V2_03:
+        case NASCAR2:
             return Offsets_NASCAR2;
         case AUTO_DETECT:
         case VERSION_UNINITIALIZED:
@@ -201,13 +201,13 @@ void GameOffsets::ApplySignature(uintptr_t signatureAddress)
     tire_maglong_rr += exeBase;
 }
 
-DetectedGame::DetectedGame(const std::wstring& versionText)
+RequestedGame::RequestedGame(const std::wstring& versionText)
 {
     // Select game version
     std::wstring gameVersion = ToLower(versionText);
 
     if (gameVersion == L"icr2dos") {
-        version = ICR2_DOS4G_1_02;
+        version = ICR2_DOS;
     }
     else if (gameVersion == L"icr2rend") {
         version = ICR2_RENDITION;
@@ -219,7 +219,7 @@ DetectedGame::DetectedGame(const std::wstring& versionText)
         version = NASCAR1;
     }
     else if (gameVersion == L"nascar2") {
-        version = NASCAR2_V2_03;
+        version = NASCAR2;
     }
     else if (gameVersion.empty() || gameVersion.find(L"auto") != std::wstring::npos) {
         version = AUTO_DETECT;
@@ -230,16 +230,16 @@ DetectedGame::DetectedGame(const std::wstring& versionText)
     }
 }
 
-std::wstring DetectedGame::ToString() const
+std::wstring RequestedGame::ToString() const
 {
     switch (version)
     {
-        case ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
-        case ICR2_RENDITION:  return L"ICR2 - Rendition";
-        case ICR2_WINDOWS:    return L"ICR2 - Windows";
-        case NASCAR1:         return L"NASCAR1";
-        case NASCAR2_V2_03:   return L"NASCAR2 - V2.03";
-        case AUTO_DETECT:     return L"Auto detect";
+        case ICR2_DOS:       return L"ICR2 - Dos4G 1.02";
+        case ICR2_RENDITION: return L"ICR2 - Rendition";
+        case ICR2_WINDOWS:   return L"ICR2 - Windows";
+        case NASCAR1:        return L"NASCAR1";
+        case NASCAR2:        return L"NASCAR2 - V2.03";
+        case AUTO_DETECT:    return L"Auto detect";
         case VERSION_UNINITIALIZED:
         default:
             break;

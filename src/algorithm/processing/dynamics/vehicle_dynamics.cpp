@@ -71,7 +71,7 @@ struct GameConstants {
 // Select constants based on game
 
 static GameConstants GetGameConstants(GameVersion version) {
-    if (version == ICR2_DOS4G_1_02 || version == ICR2_RENDITION || version == ICR2_WINDOWS) {
+    if (version == ICR2_DOS || version == ICR2_RENDITION || version == ICR2_WINDOWS) {
         // Use IndyCar constants
         return {
             VehicleConstants::IndyCar::VEHICLE_MASS,
@@ -85,7 +85,7 @@ static GameConstants GetGameConstants(GameVersion version) {
             VehicleConstants::IndyCar::MAX_GAME_FORCE_UNITS
         };
     }
-    else if (version == NASCAR1 || version == NASCAR2_V2_03) {
+    else if (version == NASCAR1 || version == NASCAR2) {
         // Use NASCAR constants
         return {
             VehicleConstants::NASCAR::VEHICLE_MASS,

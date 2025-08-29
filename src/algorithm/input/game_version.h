@@ -8,14 +8,13 @@
 // Offsets database for different games/versions
 // THANK YOU ERIC
 
-// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-inline const char* ICR2SIG =      "license with Bob";
+inline const char* ICR2SIG_ALL_VERSIONS = "license with Bob";
 inline const char* ICR2SIG_REND = "Use Rendition"; // or search for "-gRN1f" command line switch
 inline const char* ICR2SIG_WINDY = "<Insert text that only is found in the Windows version of ICR2";
 inline const char* NR1SIG =       "name of Harry Gant";
-inline const char* NR2SIG =       "NASCAR V2.03";
+inline const char* NR2SIG =       "NASCAR V2.03"; // too specific - this and some of the game detection mechanism has to be changed if more binaries and their offsets are known 
 inline const char* UNINIT_SIG =   "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND";
 
 enum GameVersion
@@ -24,11 +23,11 @@ enum GameVersion
 #endif
 {
     VERSION_UNINITIALIZED,
-    ICR2_DOS4G_1_02,
+    ICR2_DOS,
     ICR2_RENDITION,
     ICR2_WINDOWS,
     NASCAR1,
-    NASCAR2_V2_03,
+    NASCAR2,
 
     // detect any supported game - if this does not work, try explicitly requesting a specific game,
     // as the mechanism to detect the games is rudimentary and for example cannot handle multiple Papy games in a DosBox process
@@ -64,10 +63,10 @@ struct GameOffsets
 
 GameOffsets GetGameOffsets(GameVersion version);
 
-struct DetectedGame
+struct RequestedGame
 {
-    DetectedGame() {}
-    DetectedGame(const std::wstring& versionText);
+    RequestedGame() {}
+    RequestedGame(const std::wstring& versionText);
 
     std::wstring ToString() const;
     GameVersion version;

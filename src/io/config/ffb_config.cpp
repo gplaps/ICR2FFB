@@ -295,7 +295,7 @@ int FFBConfig::LoadFFBSettings()
     LogMessage(L"[INFO] Successfully loaded FFB settings");
     LogMessage(L"[INFO] Target device: " + GetString(L"base", L"device"));
 
-    game = DetectedGame(GetString(L"base", L"game"));
+    game = RequestedGame(GetString(L"base", L"game"));
     LogMessage(L"[INFO] Configured game: " + game.ToString());
     return 0;
 }
