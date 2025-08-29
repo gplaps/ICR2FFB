@@ -21,46 +21,27 @@
 // Understeer Slip -> Negative
 
 
-// Vehicle Constants
-// Most of this is estimates/guesses
-// May or may not be used
-namespace VehicleConstants
-{
-const double GRAVITY = 9.81; // m/s² (same for all)
-
-// IndyCar constants
-namespace IndyCar
-{
-const double VEHICLE_MASS         = 700.0 + 60.0 + 76.0;       // kg (car + fuel + driver)
-const double FRONT_TRACK          = 1.753;                     // m
-const double REAR_TRACK           = 1.638;                     // m
-const double WHEELBASE            = 3.048;                     // m
-const double YAW_INERTIA          = 1100.0;                    // kg⋅m² (estimated for IndyCar)
-const double CG_FROM_FRONT        = 1.3;                       // m (43% of wheelbase, typical for IndyCar)
-const double CG_FROM_REAR         = WHEELBASE - CG_FROM_FRONT; // m
-
-const double TIRE_FORCE_SCALE     = 13000.0; // Newtons per game unit (estimate)
-const double MAX_GAME_FORCE_UNITS = 4000.0;  // Maximum expected force in game units
-} // namespace IndyCar
-
-// NASCAR constants
-namespace NASCAR
-{
-const double VEHICLE_MASS         = 1400.0 + 80.0 + 76.0;      // kg (heavier stock car + fuel + driver)
-const double FRONT_TRACK          = 1.524;                     // m (60 inches, typical NASCAR)
-const double REAR_TRACK           = 1.524;                     // m (same as front for NASCAR)
-const double WHEELBASE            = 2.794;                     // m (110 inches, typical NASCAR)
-const double YAW_INERTIA          = 2000.0;                    // kg⋅m² (higher for heavier NASCAR car)
-const double CG_FROM_FRONT        = 1.47;                      // m (52.5% of wheelbase, NASCAR is more rear-biased)
-const double CG_FROM_REAR         = WHEELBASE - CG_FROM_FRONT; // m
-
-const double TIRE_FORCE_SCALE     = 13000.0; // Newtons per game unit (estimate)
-const double MAX_GAME_FORCE_UNITS = 4000.0;  // Maximum expected force in game units
-} // namespace NASCAR
-} // namespace VehicleConstants
-
 struct GameConstants
 {
+    GameConstants(double VEHICLE_MASS_IN,
+                  double FRONT_TRACK_IN,
+                  double REAR_TRACK_IN,
+                  double WHEELBASE_IN,
+                  double YAW_INERTIA_IN,
+                  double CG_FROM_FRONT_IN,
+                  double CG_FROM_REAR_IN,
+                  double TIRE_FORCE_SCALE_IN,
+                  double MAX_GAME_FORCE_UNITS_IN) :
+        VEHICLE_MASS(VEHICLE_MASS_IN),
+        FRONT_TRACK(FRONT_TRACK_IN),
+        REAR_TRACK(REAR_TRACK_IN),
+        WHEELBASE(WHEELBASE_IN),
+        YAW_INERTIA(YAW_INERTIA_IN),
+        CG_FROM_FRONT(CG_FROM_FRONT_IN),
+        CG_FROM_REAR(CG_FROM_REAR_IN),
+        TIRE_FORCE_SCALE(TIRE_FORCE_SCALE_IN),
+        MAX_GAME_FORCE_UNITS(MAX_GAME_FORCE_UNITS_IN) {}
+
     double VEHICLE_MASS;
     double FRONT_TRACK;
     double REAR_TRACK;
@@ -72,6 +53,41 @@ struct GameConstants
     double MAX_GAME_FORCE_UNITS;
 };
 
+// Vehicle Constants
+// Most of this is estimates/guesses
+// May or may not be used
+
+namespace VehicleConstants
+{
+const double GRAVITY = 9.81; // m/s² (same for all)
+
+static GameConstants IndyCar(
+    /*VEHICLE_MASS =                           */ 700.0 + 60.0 + 76.0, // kg (car + fuel + driver)
+    /*FRONT_TRACK =                            */ 1.753,               // m
+    /*REAR_TRACK =                             */ 1.638,               // m
+    /*WHEELBASE =                              */ 3.048,               // m
+    /*YAW_INERTIA =                            */ 1100.0,              // kg⋅m² (estimated for IndyCar)
+    /*CG_FROM_FRONT =                          */ 1.3,                 // m (43% of wheelbase, typical for IndyCar)
+    /*CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT */ 3.048 - 1.3,         // m
+
+    /*TIRE_FORCE_SCALE*/ 13000.0,   // Newtons per game unit (estimate)
+    /*MAX_GAME_FORCE_UNITS*/ 4000.0 // Maximum expected force in game units
+);
+
+static GameConstants NASCAR(
+    /*VEHICLE_MASS =                           */ 1400.0 + 80.0 + 76.0, // kg (heavier stock car + fuel + driver)
+    /*FRONT_TRACK =                            */ 1.524,                // m (60 inches, typical NASCAR)
+    /*REAR_TRACK =                             */ 1.524,                // m (same as front for NASCAR)
+    /*WHEELBASE =                              */ 2.794,                // m (110 inches, typical NASCAR)
+    /*YAW_INERTIA =                            */ 2000.0,               // kg⋅m² (higher for heavier NASCAR car)
+    /*CG_FROM_FRONT =                          */ 1.47,                 // m (52.5% of wheelbase, NASCAR is more rear-biased)
+    /*CG_FROM_REAR = WHEELBASE - CG_FROM_FRONT */ 2.794 - 1.47,         // m
+
+    /*TIRE_FORCE_SCALE*/ 13000.0,   // Newtons per game unit (estimate)
+    /*MAX_GAME_FORCE_UNITS*/ 4000.0 // Maximum expected force in game units
+);
+} // namespace VehicleConstants
+
 // Select constants based on game
 
 static GameConstants GetGameConstants(GameVersion version)
@@ -79,44 +95,17 @@ static GameConstants GetGameConstants(GameVersion version)
     if (version == ICR2_DOS || version == ICR2_RENDITION || version == ICR2_WINDOWS)
     {
         // Use IndyCar constants
-        return {
-            VehicleConstants::IndyCar::VEHICLE_MASS,
-            VehicleConstants::IndyCar::FRONT_TRACK,
-            VehicleConstants::IndyCar::REAR_TRACK,
-            VehicleConstants::IndyCar::WHEELBASE,
-            VehicleConstants::IndyCar::YAW_INERTIA,
-            VehicleConstants::IndyCar::CG_FROM_FRONT,
-            VehicleConstants::IndyCar::CG_FROM_REAR,
-            VehicleConstants::IndyCar::TIRE_FORCE_SCALE,
-            VehicleConstants::IndyCar::MAX_GAME_FORCE_UNITS};
+        return VehicleConstants::IndyCar;
     }
     else if (version == NASCAR1 || version == NASCAR2)
     {
         // Use NASCAR constants
-        return {
-            VehicleConstants::NASCAR::VEHICLE_MASS,
-            VehicleConstants::NASCAR::FRONT_TRACK,
-            VehicleConstants::NASCAR::REAR_TRACK,
-            VehicleConstants::NASCAR::WHEELBASE,
-            VehicleConstants::NASCAR::YAW_INERTIA,
-            VehicleConstants::NASCAR::CG_FROM_FRONT,
-            VehicleConstants::NASCAR::CG_FROM_REAR,
-            VehicleConstants::NASCAR::TIRE_FORCE_SCALE,
-            VehicleConstants::NASCAR::MAX_GAME_FORCE_UNITS};
+        return VehicleConstants::NASCAR;
     }
     else
     {
         // Default to IndyCar if unknown
-        return {
-            VehicleConstants::IndyCar::VEHICLE_MASS,
-            VehicleConstants::IndyCar::FRONT_TRACK,
-            VehicleConstants::IndyCar::REAR_TRACK,
-            VehicleConstants::IndyCar::WHEELBASE,
-            VehicleConstants::IndyCar::YAW_INERTIA,
-            VehicleConstants::IndyCar::CG_FROM_FRONT,
-            VehicleConstants::IndyCar::CG_FROM_REAR,
-            VehicleConstants::IndyCar::TIRE_FORCE_SCALE,
-            VehicleConstants::IndyCar::MAX_GAME_FORCE_UNITS};
+        return VehicleConstants::IndyCar;
     }
 }
 
