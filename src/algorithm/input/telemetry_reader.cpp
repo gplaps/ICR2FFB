@@ -184,27 +184,27 @@ static const GameOffsets Offsets_Unspecified = {
     UNINIT_SIG
 };
 
-void GameOffsets::ApplySignature(uintptr_t sigAddr)
+void GameOffsets::ApplySignature(uintptr_t signatureAddress)
 {
-    const uintptr_t exeBase = sigAddr - signatureOffset;
-    signatureOffset         = exeBase;
+    const uintptr_t exeBase = signatureAddress - signature;
+    signature         = exeBase;
 
-    cars_data_offset += exeBase;
+    cars_data += exeBase;
 
-    tire_data_offsetfl += exeBase;
-    tire_data_offsetfr += exeBase;
-    tire_data_offsetrl += exeBase;
-    tire_data_offsetrr += exeBase;
+    tire_data_fl += exeBase;
+    tire_data_fr += exeBase;
+    tire_data_lr += exeBase;
+    tire_data_rr += exeBase;
 
-    tire_maglat_offsetfl += exeBase;
-    tire_maglat_offsetfr += exeBase;
-    tire_maglat_offsetrl += exeBase;
-    tire_maglat_offsetrr += exeBase;
+    tire_maglat_fl += exeBase;
+    tire_maglat_fr += exeBase;
+    tire_maglat_lr += exeBase;
+    tire_maglat_rr += exeBase;
 
-    tire_maglong_offsetfl += exeBase;
-    tire_maglong_offsetfr += exeBase;
-    tire_maglong_offsetrl += exeBase;
-    tire_maglong_offsetrr += exeBase;
+    tire_maglong_fl += exeBase;
+    tire_maglong_fr += exeBase;
+    tire_maglong_lr += exeBase;
+    tire_maglong_rr += exeBase;
 }
 
 static GameOffsets GetGameOffsets(GameVersion version)
@@ -452,19 +452,19 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     // it should be possible to detect any supported game by searching the memory for known signatures and selecting one of the known offsets for it without the need for the user to specify it
     // if more game offsets have been found this project likely has to undergo a (significant) rewrite
     offsets                 = GetGameOffsets(config.version);
-    const uintptr_t sigAddr = ScanSignature(hProcess, offsets);
-    if (!sigAddr)
+    const uintptr_t signatureAddress = ScanSignature(hProcess, offsets);
+    if (!signatureAddress)
     {
         CloseHandle(hProcess);
         hProcess = NULL;
         return;
     }
 
-    offsets.ApplySignature(sigAddr);
+    offsets.ApplySignature(signatureAddress);
 
-    LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signatureOffset) +
-               L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data_offset) + 
-               L" | rf_mag_lat @ 0x" + std::to_wstring(offsets.tire_maglat_offsetfr));
+    LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signature) +
+               L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data) + 
+               L" | rf_mag_lat @ 0x" + std::to_wstring(offsets.tire_maglat_fr));
 
     /*
     if (config.version == ICR2_DOS4G_1_02 || config.version == ICR2_RENDITION) {
@@ -472,32 +472,32 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
         LogMessage(L"=== ICR2 MEMORY ANALYSIS ===");
 
         // Log the found signature address
-        LogMessage(L"[ICR2] Signature found at: 0x" + std::to_wstring(sigAddr));
+        LogMessage(L"[ICR2] Signature found at: 0x" + std::to_wstring(signatureAddress));
 
         // Log the signature offset being used
-        LogMessage(L"[ICR2] Using signature offset: 0x" + std::to_wstring(offsets.signatureOffset));
+        LogMessage(L"[ICR2] Using signature offset: 0x" + std::to_wstring(offsets.signature));
 
         // Calculate and log the EXE base
-        uintptr_t calculatedExeBase = sigAddr - offsets.signatureOffset;
+        uintptr_t calculatedExeBase = signatureAddress - offsets.signature;
         LogMessage(L"[ICR2] Calculated EXE base: 0x" + std::to_wstring(calculatedExeBase));
 
         // Known values from your analysis
         uintptr_t knownFileOffset = 0xF21CC;  // From HxD
         uintptr_t knownCheatEngineAddr = 0x1054BD98;  // From Cheat Engine
-        uintptr_t knownSignatureOffset = 0xA0D78;  // From working code
+        uintptr_t knownsignature = 0xA0D78;  // From working code
 
         LogMessage(L"[ICR2] Known file offset: 0x" + std::to_wstring(knownFileOffset));
         LogMessage(L"[ICR2] Known Cheat Engine addr: 0x" + std::to_wstring(knownCheatEngineAddr));
-        LogMessage(L"[ICR2] Known signature offset: 0x" + std::to_wstring(knownSignatureOffset));
+        LogMessage(L"[ICR2] Known signature offset: 0x" + std::to_wstring(knownsignature));
 
         // Calculate various relationships
-        uintptr_t memoryToFileOffset = sigAddr - knownFileOffset;
+        uintptr_t memoryToFileOffset = signatureAddress - knownFileOffset;
         LogMessage(L"[ICR2] Memory to file offset diff: 0x" + std::to_wstring(memoryToFileOffset));
 
         uintptr_t baseFromFile = knownCheatEngineAddr - knownFileOffset;
         LogMessage(L"[ICR2] Base calculated from file: 0x" + std::to_wstring(baseFromFile));
 
-        uintptr_t baseFromSignature = knownCheatEngineAddr - knownSignatureOffset;
+        uintptr_t baseFromSignature = knownCheatEngineAddr - knownsignature;
         LogMessage(L"[ICR2] Base calculated from signature: 0x" + std::to_wstring(baseFromSignature));
 
         // Test if our current calculation matches the working method
@@ -505,7 +505,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
         LogMessage(L"[ICR2] Current calculation matches working method: " + std::wstring(calculationMatches ? L"YES" : L"NO"));
 
         // Show the actual working car data address
-        uintptr_t workingCarDataAddr = calculatedExeBase + offsets.cars_data_offset;
+        uintptr_t workingCarDataAddr = calculatedExeBase + offsets.cars_data;
         LogMessage(L"[ICR2] Working car data address: 0x" + std::to_wstring(workingCarDataAddr));
 
         // Calculate what the NASCAR signature offset should be using the same relationship
@@ -522,19 +522,19 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
         LogMessage(L"[NASCAR CALC 2] Using base offset method: 0x" + std::to_wstring(nascarSigOffset2));
 
         // Method 3: Direct signature offset calculation
-        uintptr_t nascarSigOffset3 = nascarMemoryAddr - (calculatedExeBase - sigAddr + nascarMemoryAddr);
+        uintptr_t nascarSigOffset3 = nascarMemoryAddr - (calculatedExeBase - signatureAddress + nascarMemoryAddr);
         LogMessage(L"[NASCAR CALC 3] Direct calculation: Need to determine correct base");
 
         LogMessage(L"=== END ICR2 ANALYSIS ===");
         */
     //}
 
-    // LogMessage(L"[DEBUG] Selected signatureOffset: 0x" + std::to_wstring(offsets.signatureOffset));
-    // LogMessage(L"[DEBUG] Selected cars_data_offset: 0x" + std::to_wstring(offsets.cars_data_offset));
-    // LogMessage(L"[DEBUG] Raw calculation: 0x" + std::to_wstring(sigAddr) + L" - 0x" + std::to_wstring(offsets.signatureOffset) + L" + 0x" + std::to_wstring(offsets.cars_data_offset));
+    // LogMessage(L"[DEBUG] Selected signature: 0x" + std::to_wstring(offsets.signature));
+    // LogMessage(L"[DEBUG] Selected cars_data: 0x" + std::to_wstring(offsets.cars_data));
+    // LogMessage(L"[DEBUG] Raw calculation: 0x" + std::to_wstring(signatureAddress) + L" - 0x" + std::to_wstring(offsets.signature) + L" + 0x" + std::to_wstring(offsets.cars_data));
 
     //temp debug
-    // LogMessage(L"[DEBUG] Signature found at: 0x" + std::to_wstring(sigAddr));
+    // LogMessage(L"[DEBUG] Signature found at: 0x" + std::to_wstring(signatureAddress));
     // LogMessage(L"[DEBUG] Calculated EXE base: 0x" + std::to_wstring(exeBase));
     // LogMessage(L"[DEBUG] Calculated car data addr: 0x" + std::to_wstring(carsDataAddr));
     // LogMessage(L"[DEBUG] Expected car data addr: 0x1058474C");
@@ -610,7 +610,7 @@ void TelemetryReader::ConvertTireData()
 
 bool TelemetryReader::ReadCarData()
 {
-    if (!ReadRaw(&carData, offsets.cars_data_offset, sizeof(CarData)))
+    if (!ReadRaw(&carData, offsets.cars_data, sizeof(CarData)))
     {
         LogMessage(L"[ERROR] Failed to read car0 data. GetLastError(): " + std::to_wstring(GetLastError()));
         CloseHandle(hProcess);
@@ -625,20 +625,20 @@ bool TelemetryReader::ReadCarData()
 bool TelemetryReader::ReadTireData()
 {
     const bool tireOK =
-        ReadValue(rawData.loadLF, offsets.tire_data_offsetfl) &&
-        ReadValue(rawData.loadRF, offsets.tire_data_offsetfr) &&
-        ReadValue(rawData.loadLR, offsets.tire_data_offsetrl) &&
-        ReadValue(rawData.loadRR, offsets.tire_data_offsetrr) &&
+        ReadValue(rawData.loadLF, offsets.tire_data_fl) &&
+        ReadValue(rawData.loadRF, offsets.tire_data_fr) &&
+        ReadValue(rawData.loadLR, offsets.tire_data_lr) &&
+        ReadValue(rawData.loadRR, offsets.tire_data_rr) &&
 
-        ReadValue(rawData.magLatLF, offsets.tire_maglat_offsetfl) &&
-        ReadValue(rawData.magLatRF, offsets.tire_maglat_offsetfr) &&
-        ReadValue(rawData.magLatLR, offsets.tire_maglat_offsetrl) &&
-        ReadValue(rawData.magLatRR, offsets.tire_maglat_offsetrr) &&
+        ReadValue(rawData.magLatLF, offsets.tire_maglat_fl) &&
+        ReadValue(rawData.magLatRF, offsets.tire_maglat_fr) &&
+        ReadValue(rawData.magLatLR, offsets.tire_maglat_lr) &&
+        ReadValue(rawData.magLatRR, offsets.tire_maglat_rr) &&
 
-        ReadValue(rawData.magLongLF, offsets.tire_maglong_offsetfl) &&
-        ReadValue(rawData.magLongRF, offsets.tire_maglong_offsetfr) &&
-        ReadValue(rawData.magLongLR, offsets.tire_maglong_offsetrl) &&
-        ReadValue(rawData.magLongRR, offsets.tire_maglong_offsetrr);
+        ReadValue(rawData.magLongLF, offsets.tire_maglong_fl) &&
+        ReadValue(rawData.magLongRF, offsets.tire_maglong_fr) &&
+        ReadValue(rawData.magLongLR, offsets.tire_maglong_lr) &&
+        ReadValue(rawData.magLongRR, offsets.tire_maglong_rr);
 
     if (!tireOK)
     {

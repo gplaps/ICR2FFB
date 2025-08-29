@@ -45,28 +45,28 @@ struct RawTelemetry
 // Things to look for in the Memory to make it tick
 struct GameOffsets
 {
-    uintptr_t signatureOffset;
+    uintptr_t signature;
 
-    uintptr_t cars_data_offset;
+    uintptr_t cars_data;
 
-    uintptr_t tire_data_offsetfl;
-    uintptr_t tire_data_offsetfr;
-    uintptr_t tire_data_offsetrl;
-    uintptr_t tire_data_offsetrr;
+    uintptr_t tire_data_fl;
+    uintptr_t tire_data_fr;
+    uintptr_t tire_data_lr;
+    uintptr_t tire_data_rr;
 
-    uintptr_t tire_maglat_offsetfl;
-    uintptr_t tire_maglat_offsetfr;
-    uintptr_t tire_maglat_offsetrl;
-    uintptr_t tire_maglat_offsetrr;
+    uintptr_t tire_maglat_fl;
+    uintptr_t tire_maglat_fr;
+    uintptr_t tire_maglat_lr;
+    uintptr_t tire_maglat_rr;
 
-    uintptr_t tire_maglong_offsetfl;
-    uintptr_t tire_maglong_offsetfr;
-    uintptr_t tire_maglong_offsetrl;
-    uintptr_t tire_maglong_offsetrr;
+    uintptr_t tire_maglong_fl;
+    uintptr_t tire_maglong_fr;
+    uintptr_t tire_maglong_lr;
+    uintptr_t tire_maglong_rr;
 
     const char* signatureStr;
 
-    void ApplySignature(uintptr_t sigAddr);
+    void ApplySignature(uintptr_t signatureAddress);
 };
 
 struct TelemetryReader
