@@ -10,12 +10,12 @@
 
 // Provides standardized 'point' to reference for memory
 // Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-inline const char* ICR2SIG_ALL_VERSIONS = "license with Bob";
-inline const char* ICR2SIG_REND         = "Use Rendition"; // or search for "-gRN1f" command line switch
-inline const char* ICR2SIG_WINDY        = "<Insert text that only is found in the Windows version of ICR2";
-inline const char* NR1SIG               = "name of Harry Gant";
-inline const char* NR2SIG               = "NASCAR V2.03"; // too specific - this and some of the game detection mechanism has to be changed if more binaries and their offsets are known
-inline const char* UNINIT_SIG           = "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND";
+static const char* ICR2SIG_ALL_VERSIONS = "license with Bob";
+static const char* ICR2SIG_REND         = "Use Rendition"; // or search for "-gRN1f" command line switch
+static const char* ICR2SIG_WINDY        = "<Insert text that only is found in the Windows version of ICR2";
+static const char* NR1SIG               = "name of Harry Gant";
+static const char* NR2SIG               = "NASCAR V2.03"; // too specific - this and some of the game detection mechanism has to be changed if more binaries and their offsets are known
+static const char* UNINIT_SIG           = "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND";
 
 enum GameVersion
 #if defined(IS_CPP11_COMPLIANT)

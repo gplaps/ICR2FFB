@@ -329,7 +329,7 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
 
     const std::vector<std::string>                  signaturesToScan = GetKnownSignatures(version);
     std::vector<BYTE>                               bufferPreviousPage(0);
-    std::vector<std::pair<uintptr_t, std::string> > result = {};
+    std::vector<std::pair<uintptr_t, std::string> > result;
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -353,7 +353,7 @@ std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersio
                         const size_t       signatureLen = signature.size();
 
                         // overlap region
-                        std::vector<BYTE> overlapRegion = {};
+                        std::vector<BYTE> overlapRegion;
                         if (!bufferPreviousPage.empty())
                         {
                             overlapRegion = std::vector<BYTE>(bufferPreviousPage.end() - static_cast<ptrdiff_t>(signatureLen), bufferPreviousPage.end());
