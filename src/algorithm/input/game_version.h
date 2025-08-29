@@ -15,47 +15,45 @@ enum GameVersion
     ICR2_RENDITION,
     ICR2_WINDOWS,
     NASCAR1,
-    NASCAR2_V2_03
+    NASCAR2_V2_03,
+
+    // detect any supported game - if this does not work, try explicitly requesting a specific game,
+    // as the mechanism to detect the games is rudimentary and for example cannot handle multiple Papy games in a DosBox process
+    AUTO_DETECT
 };
 
-inline GameVersion ReadGameVersion(const std::wstring& versionText)
+// Things to look for in the Memory to make it tick
+struct GameOffsets
 {
-    // Select game version
-    std::wstring gameVersionLower = ToLower(versionText);
+    uintptr_t signature;
 
-    if (gameVersionLower == L"icr2dos") {
-        return ICR2_DOS4G_1_02;
-    }
-    else if (gameVersionLower == L"icr2rend") {
-        return ICR2_RENDITION;
-    }
-    else if (gameVersionLower == L"icr2windy") {
-        return ICR2_WINDOWS;
-    }
-    else if (gameVersionLower == L"nascar1") {
-        return NASCAR1;
-    }
-    else if (gameVersionLower == L"nascar2") {
-        return NASCAR2_V2_03;
-    }
-    else {
-        LogMessage(L"[ERROR] Invalid game version: " + versionText);
-        return VERSION_UNINITIALIZED;
-    }
-}
+    uintptr_t cars_data;
 
-inline std::wstring PrintGameVersion(GameVersion version)
+    uintptr_t tire_data_fl;
+    uintptr_t tire_data_fr;
+    uintptr_t tire_data_lr;
+    uintptr_t tire_data_rr;
+
+    uintptr_t tire_maglat_fl;
+    uintptr_t tire_maglat_fr;
+    uintptr_t tire_maglat_lr;
+    uintptr_t tire_maglat_rr;
+
+    uintptr_t tire_maglong_fl;
+    uintptr_t tire_maglong_fr;
+    uintptr_t tire_maglong_lr;
+    uintptr_t tire_maglong_rr;
+
+    const char* signatureStr;
+
+    void ApplySignature(uintptr_t signatureAddress);
+};
+
+struct DetectedGame
 {
-    switch (version)
-    {
-        case ICR2_DOS4G_1_02: return L"ICR2 - Dos4G 1.02";
-        case ICR2_RENDITION:  return L"ICR2 - Rendition";
-        case ICR2_WINDOWS:    return L"ICR2 - Windows";
-        case NASCAR1:         return L"NASCAR1";
-        case NASCAR2_V2_03:   return L"NASCAR2 - V2.03";
-        case VERSION_UNINITIALIZED:
-        default:
-            break;
-    }
-    return L"Uninitialized";
+    DetectedGame(const std::wstring& versionText);
+
+    std::wstring ToString() const;
+    GameVersion version;
+    GameOffsets offsets;
 }

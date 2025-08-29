@@ -2,6 +2,7 @@
 #include "project_dependencies.h" // IWYU pragma: keep
 
 #include "ffb_config.h"
+#include "game_version.h"
 #include "memoryapi.h"
 
 #if !defined(IS_CPP11_COMPLIANT)
@@ -42,33 +43,6 @@ struct RawTelemetry
     bool valid;
 };
 
-// Things to look for in the Memory to make it tick
-struct GameOffsets
-{
-    uintptr_t signature;
-
-    uintptr_t cars_data;
-
-    uintptr_t tire_data_fl;
-    uintptr_t tire_data_fr;
-    uintptr_t tire_data_lr;
-    uintptr_t tire_data_rr;
-
-    uintptr_t tire_maglat_fl;
-    uintptr_t tire_maglat_fr;
-    uintptr_t tire_maglat_lr;
-    uintptr_t tire_maglat_rr;
-
-    uintptr_t tire_maglong_fl;
-    uintptr_t tire_maglong_fr;
-    uintptr_t tire_maglong_lr;
-    uintptr_t tire_maglong_rr;
-
-    const char* signatureStr;
-
-    void ApplySignature(uintptr_t signatureAddress);
-};
-
 struct TelemetryReader
 {
 public:
@@ -81,6 +55,7 @@ public:
     const RawTelemetry& Data() const;
 
 private:
+    bool Initialize(const FFBConfig& config);
     void ConvertCarData();
     void ConvertTireData();
     bool ReadCarData();

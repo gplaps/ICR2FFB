@@ -27,7 +27,6 @@ FFBProcessor::FFBProcessor(const FFBConfig& config) :
 {
     if (!telemetryReader.Valid())
     {
-        LogMessage(L"[ERROR] TelemetryReader failed to initialize.");
         return;
     }
     if (!ffbOutput.Valid())
