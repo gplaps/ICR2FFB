@@ -7,6 +7,219 @@
 #include <string>
 #include <vector>
 
+// Game detection and offsets are a work in progress and only very specific versions are detected in this version
+// This has to undergo a rewrite if more versions are added
+
+// Offsets database for different games/versions
+// THANK YOU ERIC
+
+// Provides standardized 'point' to reference for memory
+static const char* DOS_EXTENDER_DOS32A   = "DOS/32A";
+static const char* DOS_EXTENDER_DOS4G    = "DOS/4G";
+
+static const char* ICR2_SIG_ALL_VERSIONS = "license with Bob";
+static const char* ICR2_V1_00            = "Version 1.0.0"; // exists, offsets unknown
+static const char* ICR2_V1_02            = "Version 1.0.2"; // offsets valid for this version
+static const char* ICR2_SIG_REND         = "-RN1 Build";
+static const char* ICR2_SIG_WINDY        = "<Insert text that only is found in the Windows version of ICR2";
+
+static const char* NR1_SIG               = "name of Harry Gant";
+static const char* NR1_V1_21             = "Version 1.21";
+
+static const char* NR2_SIG               = "NASCAR V2.03"; // too specific - this and some of the game detection mechanism has to be changed if more binaries and their offsets are known
+static const char* NR2_V1_005            = "Version 1.00(5)";
+static const char* NR2_RENDITION         = "Rendition communication timeout";
+
+static const char* UNINIT_SIG            = "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND";
+
+// Rendition EXE
+static const GameOffsets Offsets_ICR2_REND = {
+    0xB1C0C, //signature
+
+    0xE0EA4, //cars data
+
+    0xBB4E8, //lf tire load?
+    0xBB4EA, //rf tire load?
+    0xBB4E4, //lr tire load?
+    0xBB4E6, //rr tire load?
+
+    0xEAB24, //lf tire lat load
+    0xEAB26, //rf tire lat load
+    0xEAB20, //lr tire lat load
+    0xEAB22, //rr tire lat load
+
+    0xEAB04, //lf tire long load
+    0xEAB06, //rf tire long load
+    0xEAB00, //lr tire long load
+    0xEAB02, //rr tire long load
+
+    ICR2_SIG_ALL_VERSIONS //offset base
+};
+
+// DOS4G Exe, should be 1.02
+static const GameOffsets Offsets_ICR2_DOS = {
+    0xA0D78,
+
+    0xD4718,
+
+    0xA85B8,
+    0xA85BA,
+    0xA85B4,
+    0xA85B6,
+
+    0xC5C48,
+    0xC5C4A,
+    0xC5C44,
+    0xC5C46,
+
+    0xC5C18,
+    0xC5C1A,
+    0xC5C14,
+    0xC5C16,
+
+    ICR2_SIG_ALL_VERSIONS //offset base
+};
+
+// ICR2 Windy
+static const GameOffsets Offsets_ICR2_WINDY = {
+    0x004E2161,
+
+    0x004E0000, /* ???? */ // missing cars data
+
+    0x004F3854,
+    0x004F3856,
+    0x004F3850,
+    0x004F3852,
+
+    0x00528204,
+    0x00528206,
+    0x00528200,
+    0x00528202,
+
+    0x005281F8,
+    0x005281Fa,
+    0x005281F4,
+    0x005281F6,
+
+    ICR2_SIG_ALL_VERSIONS //offset base
+};
+
+// N1 Offsets
+static const GameOffsets Offsets_NASCAR = {
+    0xAEA8C,
+
+    0xEFED4,
+
+    0xCEF70,
+    0xCEF70,
+    0xCEF70,
+    0xCEF70,
+
+    0x9F6F8,
+    0x9F6FA,
+    0x9f780,
+    0x9F6F6,
+
+    0xF0970,
+    0xF0970,
+    0xF0970,
+    0xF0970,
+
+    NR1_SIG //offset base
+};
+
+// N2 Offsets
+static const GameOffsets Offsets_NASCAR2_V2_03 = {
+    0xD7125, // "NASCAR V2.03"
+
+    0xAD440,
+
+    0xF39FA,
+    0xF39FC,
+    0xF39F6,
+    0xF39F8,
+
+    0xF3B0E,
+    0xF3B10,
+    0xF3B0A,
+    0xF3B0C,
+
+    0xF3B02,
+    0xF3B04,
+    0xF3AFE,
+    0xF3B00,
+
+    NR2_SIG //offset base
+};
+
+// Not found
+static const GameOffsets Offsets_Unspecified = {
+    0x0,
+
+    0x0,
+
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+
+    UNINIT_SIG //offset base
+};
+
+GameOffsets GetGameOffsets(GameVersion version)
+{
+    switch (version)
+    {
+        case ICR2_DOS:
+            return Offsets_ICR2_DOS;
+        case ICR2_RENDITION:
+            return Offsets_ICR2_REND;
+        case ICR2_WINDOWS:
+            return Offsets_ICR2_WINDY;
+        case NASCAR1:
+            return Offsets_NASCAR;
+        case NASCAR2:
+            return Offsets_NASCAR2_V2_03;
+        case AUTO_DETECT:
+        case VERSION_UNINITIALIZED:
+        default:
+            return Offsets_Unspecified;
+    }
+}
+
+void GameOffsets::ApplySignature(uintptr_t signatureAddress)
+{
+    const uintptr_t exeBase = signatureAddress - signature;
+    signature               = exeBase;
+
+    cars_data += exeBase;
+
+    tire_data_fl += exeBase;
+    tire_data_fr += exeBase;
+    tire_data_lr += exeBase;
+    tire_data_rr += exeBase;
+
+    tire_maglat_fl += exeBase;
+    tire_maglat_fr += exeBase;
+    tire_maglat_lr += exeBase;
+    tire_maglat_rr += exeBase;
+
+    tire_maglong_fl += exeBase;
+    tire_maglong_fr += exeBase;
+    tire_maglong_lr += exeBase;
+    tire_maglong_rr += exeBase;
+}
+
 // ----------------------------------
 // Find window
 // ----------------------------------
@@ -155,34 +368,34 @@ static std::pair<std::vector<std::string>, std::vector<std::string> > GetKeyword
     {
         case ICR2_DOS:
         {
-            result.first.push_back(ICR2SIG_ALL_VERSIONS);
+            result.first.push_back(ICR2_SIG_ALL_VERSIONS);
 
-            result.second.push_back(ICR2SIG_REND);
+            result.second.push_back(ICR2_SIG_REND);
             break;
         }
         case ICR2_RENDITION:
         {
-            result.first.push_back(ICR2SIG_ALL_VERSIONS);
-            result.first.push_back(ICR2SIG_REND);
+            result.first.push_back(ICR2_SIG_ALL_VERSIONS);
+            result.first.push_back(ICR2_SIG_REND);
             break;
         }
         case ICR2_WINDOWS:
         {
             // not implemented
-            result.first.push_back(ICR2SIG_ALL_VERSIONS);
+            result.first.push_back(ICR2_SIG_ALL_VERSIONS);
 
-            result.second.push_back(ICR2SIG_REND);
+            result.second.push_back(ICR2_SIG_REND);
             LogMessage(L"[WARNING] Game detection of ICR2 Windows version not implemented");
             break;
         }
         case NASCAR1:
         {
-            result.first.push_back(NR1SIG);
+            result.first.push_back(NR1_SIG);
             break;
         }
         case NASCAR2:
         {
-            result.first.push_back(NR2SIG);
+            result.first.push_back(NR2_SIG);
             break;
         }
         case AUTO_DETECT:
@@ -200,38 +413,38 @@ static std::vector<std::string> GetKnownSignatures(GameVersion version)
     {
         case ICR2_DOS:
         {
-            result.push_back(ICR2SIG_ALL_VERSIONS);
+            result.push_back(ICR2_SIG_ALL_VERSIONS);
             break;
         }
         case ICR2_RENDITION:
         {
-            result.push_back(ICR2SIG_ALL_VERSIONS);
-            result.push_back(ICR2SIG_REND);
+            result.push_back(ICR2_SIG_ALL_VERSIONS);
+            result.push_back(ICR2_SIG_REND);
             break;
         }
         case ICR2_WINDOWS:
         {
-            result.push_back(ICR2SIG_ALL_VERSIONS);
-            result.push_back(ICR2SIG_WINDY);
+            result.push_back(ICR2_SIG_ALL_VERSIONS);
+            result.push_back(ICR2_SIG_WINDY);
             break;
         }
         case NASCAR1:
         {
-            result.push_back(NR1SIG);
+            result.push_back(NR1_SIG);
             break;
         }
         case NASCAR2:
         {
-            result.push_back(NR2SIG);
+            result.push_back(NR2_SIG);
             break;
         }
         case AUTO_DETECT:
         {
-            result.push_back(ICR2SIG_ALL_VERSIONS);
-            result.push_back(ICR2SIG_REND);
-            result.push_back(ICR2SIG_WINDY);
-            result.push_back(NR1SIG);
-            result.push_back(NR2SIG);
+            result.push_back(ICR2_SIG_ALL_VERSIONS);
+            result.push_back(ICR2_SIG_REND);
+            result.push_back(ICR2_SIG_WINDY);
+            result.push_back(NR1_SIG);
+            result.push_back(NR2_SIG);
             break;
         }
         case VERSION_UNINITIALIZED:
@@ -244,27 +457,27 @@ static std::vector<std::string> GetKnownSignatures(GameVersion version)
 // search predicates
 static bool IsIcr2(const std::pair<uintptr_t, std::string>& elem)
 {
-    return elem.second == ICR2SIG_ALL_VERSIONS;
+    return elem.second == ICR2_SIG_ALL_VERSIONS;
 }
 
 static bool IsIcr2Rend(const std::pair<uintptr_t, std::string>& elem)
 {
-    return elem.second == ICR2SIG_REND;
+    return elem.second == ICR2_SIG_REND;
 }
 
 static bool IsIcr2Windy(const std::pair<uintptr_t, std::string>& elem)
 {
-    return elem.second == ICR2SIG_WINDY;
+    return elem.second == ICR2_SIG_WINDY;
 }
 
 static bool IsNR1(const std::pair<uintptr_t, std::string>& elem)
 {
-    return elem.second == NR1SIG;
+    return elem.second == NR1_SIG;
 }
 
 static bool IsNR2(const std::pair<uintptr_t, std::string>& elem)
 {
-    return elem.second == NR2SIG;
+    return elem.second == NR2_SIG;
 }
 
 static std::pair<uintptr_t, GameVersion> DetectGame(const std::vector<std::pair<uintptr_t, std::string> >& scanResult, GameVersion version)
