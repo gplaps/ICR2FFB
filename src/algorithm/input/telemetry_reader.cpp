@@ -37,7 +37,7 @@ TelemetryReader::TelemetryReader(const FFBConfig& config) :
     rawData(),
     carData()
 {
-    if(!Initialize())
+    if(!Initialize(config))
     {
         LogMessage(L"[ERROR] TelemetryReader failed to initialize.");
         return;
@@ -64,20 +64,19 @@ bool TelemetryReader::Initialize(const FFBConfig& config)
     }
 
     // Find process window
-    const DWORD pid = FindProcessIdByWindow(config.version);
+    const DWORD pid = FindProcessIdByWindow(config.game.version);
     if (!pid)
     {
         LogMessage(L"[ERROR] Game window not found.");
-        return;
+        return false;
     }
 
     hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (!hProcess) { return false; }
 
-    // it should be possible to detect any supported game by searching the memory for known signatures and selecting one of the known offsets for it without the need for the user to specify it
-    // if more game offsets have been found this project likely has to undergo a (significant) rewrite
-    offsets                 = GetGameOffsets(config.version);
-    const uintptr_t signatureAddress = ScanSignature(hProcess, offsets);
+    // scan for game or auto detect
+    const std::pair<uintptr_t, GameVersion> result = ScanSignature(hProcess, config.game.version);
+    const uintptr_t signatureAddress = result.first;
     if (!signatureAddress)
     {
         CloseHandle(hProcess);
@@ -85,6 +84,7 @@ bool TelemetryReader::Initialize(const FFBConfig& config)
         return false;
     }
 
+    offsets = GetGameOffsets(result.second);
     offsets.ApplySignature(signatureAddress);
 
     LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signature) +

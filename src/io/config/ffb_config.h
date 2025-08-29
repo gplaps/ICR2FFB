@@ -11,7 +11,7 @@ struct FFBConfig
 {
     FFBConfig();
     bool        Valid() const;
-    DetectedGame version;
+    DetectedGame game;
 
     //settings from the ffb.ini
     bool         GetBool(const std::wstring& section, const std::wstring& key) const;

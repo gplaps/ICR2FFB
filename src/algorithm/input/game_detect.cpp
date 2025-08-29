@@ -1,6 +1,13 @@
 #include "game_detect.h"
 
-static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeywordsForGame(GameVersion version)
+#include "game_version.h"
+
+#include <algorithm>
+#include <cwchar>
+#include <string>
+#include <vector>
+
+static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeywordsForGameWindow(GameVersion version)
 {
     std::pair<std::vector<std::wstring>,std::vector<std::wstring>> result; // first == keywords, second == excludedKeywords
 
@@ -33,7 +40,7 @@ static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeyword
         case ICR2_WINDOWS:
         {
             // not implemented
-            LogMessage(L"[INFO] Game detection of ICR2 Windows version not implemented");
+            LogMessage(L"[INFO] Game window detection of ICR2 Windows version not implemented");
             break;
         }
         case NASCAR1: 
@@ -61,6 +68,50 @@ static std::pair<std::vector<std::wstring>,std::vector<std::wstring>> GetKeyword
             result.second.push_back(L"status window"); // DosBox status window
             break;
         }
+        case VERSION_UNINITIALIZED:
+        default:
+            break;
+    }
+    return result;
+}
+
+static std::pair<std::vector<std::string>,std::vector<std::string>> GetKeywordsForGameDetection(GameVersion version)
+{
+    std::pair<std::vector<std::string>,std::vector<std::string>> result; // first == keywords, second == excludedKeywords
+
+    switch(version)
+    {
+        case ICR2_DOS4G_1_02:
+        {
+            result.first.push_back(ICR2SIG);
+            result.second.push_back(ICR2SIG_REND);
+            break;
+        }
+        case ICR2_RENDITION:
+        {
+            result.first.push_back(ICR2SIG);
+            result.first.push_back(ICR2SIG_REND);
+            break;
+        }
+        case ICR2_WINDOWS:
+        {
+            // not implemented
+            result.first.push_back(ICR2SIG);
+            result.second.push_back(ICR2SIG_REND);
+            LogMessage(L"[INFO] Game detection of ICR2 Windows version not implemented");
+            break;
+        }
+        case NASCAR1: 
+        {
+            result.first.push_back(NR1SIG);
+            break;
+        }
+        case NASCAR2_V2_03:
+        {
+            result.first.push_back(NR2SIG);
+            break;
+        }
+        case AUTO_DETECT:
         case VERSION_UNINITIALIZED:
         default:
             break;
@@ -119,23 +170,94 @@ static BOOL
 }
 
 // Gets the process ID of indycar
-static DWORD FindProcessIdByWindow(GameVersion version)
+DWORD FindProcessIdByWindow(GameVersion version)
 {
-    FindWindowData data(GetKeywordsForGame(version), 0);
+    FindWindowData data(GetKeywordsForGameWindow(version), 0);
     EnumWindows(EnumerateWindowsCallback, reinterpret_cast<LPARAM>(&data));
     return data.pid;
 }
 
+static std::vector<std::string> GetKnownSignatures(GameVersion version)
+{
+    std::vector<std::string> result;
+    switch(version)
+    {
+        case ICR2_DOS4G_1_02:
+        {
+            result.push_back(ICR2SIG);
+            break;
+        }
+        case ICR2_RENDITION:
+        {
+            result.push_back(ICR2SIG);
+            result.push_back(ICR2SIG_REND);
+            break;
+        }
+        case ICR2_WINDOWS:
+        {
+            result.push_back(ICR2SIG);
+            result.push_back(ICR2SIG_WINDY);
+            break;
+        }
+        case NASCAR1:
+        {
+            result.push_back(NR1SIG);
+            break;
+        }
+        case NASCAR2_V2_03:
+        {
+            result.push_back(NR2SIG);
+            break;
+        }
+        case AUTO_DETECT:
+        {
+            result.push_back(ICR2SIG);
+            result.push_back(ICR2SIG_REND);
+            result.push_back(ICR2SIG_WINDY);
+            result.push_back(NR1SIG);
+            result.push_back(NR2SIG);
+            break;
+        }
+        case VERSION_UNINITIALIZED:
+        default:
+            break;
+    }
+    return result;
+}
+
+// search predicates
+static bool IsIcr2(const std::pair<uintptr_t, std::string>& elem)
+{
+    return elem.second == ICR2SIG;
+}
+
+static bool IsIcr2Rend(const std::pair<uintptr_t, std::string>& elem)
+{
+    return elem.second == ICR2SIG_REND;
+}
+
+static bool IsIcr2Windy(const std::pair<uintptr_t, std::string>& elem)
+{
+    return elem.second == ICR2SIG_WINDY;
+}
+
+static bool IsNR1(const std::pair<uintptr_t, std::string>& elem)
+{
+    return elem.second == NR1SIG;
+}
+
+static bool IsNR2(const std::pair<uintptr_t, std::string>& elem)
+{
+    return elem.second == NR2SIG;
+}
+
 // Really don't understand this, but here is where we scan the memory for the data needed
 // scanning dosbox memory may not work as expected as once a process was started and is closed it still resides in dosbox processes memory, so maybe the wrong instance / closed instance of a supported game is found and not the most recent / active. it worked if opening and closing the same exe inside dosbox multiple times but its not robust
-static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
-{
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // strlen() and memcmp() unsafe
-#endif
 
-    std::vector<GameOffsets> knownGameOffsets = GetKnownGameOffsets();
+// ScanSignature scans for known signatures for either a specific version or and tries to even auto detect between different versions if requested (version == AUTO_DETECT)
+std::pair<uintptr_t, GameVersion> ScanSignature(HANDLE processHandle, GameVersion version)
+{
+
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -143,13 +265,19 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
     LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress)));
     LogMessage(L"[DEBUG] Process max addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress)));
 
-    uintptr_t       addr    = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
+    uintptr_t       addr     = reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress);
     const uintptr_t maxAddr = 0x7FFFFFFF;
 
     MEMORY_BASIC_INFORMATION mbi;
-    const size_t             targetLen          = strlen(offsets.signatureStr);
-    const size_t             renditionSigLength = strlen(ICR2SIG_REND);
-    bool                     isRendition        = false;
+
+    const std::vector<std::string> signaturesToScan = GetKnownSignatures(version);
+    std::vector<BYTE> bufferPreviousPage(0);
+    std::vector<std::pair<uintptr_t, std::string> > result = {};
+
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // memcmp() unsafe
+#endif
 
     while (addr < maxAddr)
     {
@@ -162,45 +290,97 @@ static uintptr_t ScanSignature(HANDLE processHandle, const GameOffsets& offsets)
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
-                    // edge case: search string is across region boundary - this case is not covered
-
-                    // scan for rendition text - as its before the common search string, it should be found before the next loop may exit
-                    for (SIZE_T i = 0; i <= bytesRead - renditionSigLength; ++i)
+                    for(size_t gi = 0; gi < signaturesToScan.size(); ++gi)
                     {
-                        if (memcmp(buffer.data() + i, ICR2SIG_REND, renditionSigLength) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                        const std::string& signature = signaturesToScan[gi];
+                        const size_t signatureLen          = signature.size();
+                        
+                        // overlap region
+                        std::vector<BYTE> overlapRegion = {};
+                        if(!bufferPreviousPage.empty())
                         {
-                            isRendition = true;
-                        }
-                    }
+                            overlapRegion = std::vector<BYTE>(bufferPreviousPage.end()-static_cast<ptrdiff_t>(signatureLen),bufferPreviousPage.end());
+                            overlapRegion.insert(overlapRegion.end(),buffer.begin(),buffer.begin()+static_cast<ptrdiff_t>(signatureLen));
 
-                    for (SIZE_T i = 0; i <= bytesRead - targetLen; ++i)
-                    {
-                        if (memcmp(buffer.data() + i, offsets.signatureStr, targetLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-                        {
-                            std::wstringstream ss;
-                            ss << L"[MATCH] Found Game at 0x" << std::hex << (addr + i);
-                            if (isRendition)
+                            for (SIZE_T i = 0; i < overlapRegion.size(); ++i)
                             {
-                                ss << L" in the rendition version";
+                                if (memcmp(overlapRegion.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                                {
+                                    result.push_back(std::pair<uintptr_t,std::string>(addr + i - signatureLen, signature));
+                                    break;
+                                }
                             }
-                            LogMessage(ss.str());
-                            return addr + i;
+                        }
+
+                        for (SIZE_T i = 0; i <= bytesRead - signatureLen; ++i)
+                        {
+                            if (memcmp(buffer.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                            {
+                                result.push_back(std::pair<uintptr_t,std::string>(addr + i, signature));
+                                break;
+                            }
                         }
                     }
+
+                    bufferPreviousPage = buffer;
                 }
+            }
+            else
+            {
+                bufferPreviousPage.clear();
             }
             addr += mbi.RegionSize;
         }
         else
         {
             addr += 0x1000;
+            bufferPreviousPage.clear();
         }
     }
-
-    LogMessage(L"[ERROR] Signature not found in game.");
-    return 0;
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
 #endif
+
+    // select from detected keywords
+    // GetKeywordsForGameDetection(version);
+    std::vector<std::pair<uintptr_t,std::string>>::const_iterator it = result.end();
+    if(!result.empty())
+    {
+        it = std::find_if(result.begin(),result.end(), IsIcr2);
+        if(it != result.end())
+        {
+            it = std::find_if(result.begin(),result.end(), IsIcr2Rend);
+            if(it != result.end() && (version == ICR2_RENDITION || version == AUTO_DETECT))
+            {
+                // ICR2 Rendition
+                return std::pair<uintptr_t, GameVersion>(it->first, ICR2_RENDITION);
+            }
+            it = std::find_if(result.begin(),result.end(), IsIcr2Windy);
+            if(it != result.end() && (version == ICR2_WINDOWS || version == AUTO_DETECT))
+            {
+                // ICR2 Windows - not implemented
+                return std::pair<uintptr_t, GameVersion>(it->first, ICR2_WINDOWS);
+            }
+            if(version == ICR2_DOS4G_1_02 || version == AUTO_DETECT)
+            {
+                // ICR2 DOS
+                return std::pair<uintptr_t, GameVersion>(it->first, ICR2_DOS4G_1_02);
+            }
+        }
+        it = std::find_if(result.begin(),result.end(), IsNR1);
+        if(it != result.end() && (version == NASCAR1 || version == AUTO_DETECT))
+        {
+            // NASCAR 1
+            return std::pair<uintptr_t, GameVersion>(it->first, NASCAR1);
+        }
+        it = std::find_if(result.begin(),result.end(), IsNR2);
+        if(it != result.end() && (version == NASCAR2_V2_03 || version == AUTO_DETECT))
+        {
+            // NASCAR 2
+            return std::pair<uintptr_t, GameVersion>(it->first, NASCAR2_V2_03);
+        }
+    }
+    LogMessage(L"[ERROR] Signature not found in game.");
+    return std::pair<uintptr_t, GameVersion>(0x0, VERSION_UNINITIALIZED);
 }

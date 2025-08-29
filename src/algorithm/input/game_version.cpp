@@ -1,17 +1,5 @@
 #include "game_version.h"
 
-// Offsets database for different games/versions
-// THANK YOU ERIC
-
-// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
-// Provides standardized 'point' to reference for memory
-// Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
-#define ICR2SIG      "license with Bob"
-#define ICR2SIG_REND "Use Rendition" // or search for "-gRN1f" command line switch
-#define NR1SIG       "name of Harry Gant"
-#define NR2SIG       "NASCAR V2.03"
-#define UNINIT_SIG   "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND"
-
 // Rendition EXE
 static const GameOffsets Offsets_ICR2_REND = {
     0xB1C0C, //signature
@@ -156,17 +144,38 @@ static const GameOffsets Offsets_Unspecified = {
     UNINIT_SIG
 };
 
-static std::vector<GameVersion,GameOffsets> GetKnownGameOffsets()
+// static std::vector<GameVersion,GameOffsets> GetKnownGameOffsets()
+// {
+//     std::vector<std::pair<GameVersion,GameOffsets>> result;
+//     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_DOS4G_1_02, Offsets_ICR2_DOS));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_RENDITION, Offsets_ICR2_REND));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_WINDOWS, Offsets_ICR2_WINDY));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(NASCAR1, Offsets_NASCAR));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(NASCAR2, Offsets_NASCAR2));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(AUTO_DETECT, Offsets_Unspecified));
+//     result.push_back(std::pair<GameVersion,GameOffsets>(VERSION_UNINITIALIZED, Offsets_Unspecified));
+//     return result;
+// }
+
+GameOffsets GetGameOffsets(GameVersion version)
 {
-    std::vector<std::pair<GameVersion,GameOffsets>> result;
-    result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_DOS4G_1_02, Offsets_ICR2_DOS));
-    result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_RENDITION, Offsets_ICR2_REND));
-    result.push_back(std::pair<GameVersion,GameOffsets>(ICR2_WINDOWS, Offsets_ICR2_WINDY));
-    result.push_back(std::pair<GameVersion,GameOffsets>(NASCAR1, Offsets_NASCAR));
-    result.push_back(std::pair<GameVersion,GameOffsets>(NASCAR2, Offsets_NASCAR2));
-    result.push_back(std::pair<GameVersion,GameOffsets>(AUTO_DETECT, Offsets_Unspecified));
-    result.push_back(std::pair<GameVersion,GameOffsets>(VERSION_UNINITIALIZED, Offsets_Unspecified));
-    return result;
+    switch (version)
+    {
+        case ICR2_DOS4G_1_02:
+            return Offsets_ICR2_DOS;
+        case ICR2_RENDITION:
+            return Offsets_ICR2_REND;
+        case ICR2_WINDOWS:
+            return Offsets_ICR2_WINDY;
+        case NASCAR1:
+            return Offsets_NASCAR;
+        case NASCAR2_V2_03:
+            return Offsets_NASCAR2;
+        case AUTO_DETECT:
+        case VERSION_UNINITIALIZED:
+        default:
+            return Offsets_Unspecified;
+    }
 }
 
 void GameOffsets::ApplySignature(uintptr_t signatureAddress)
@@ -192,48 +201,27 @@ void GameOffsets::ApplySignature(uintptr_t signatureAddress)
     tire_maglong_rr += exeBase;
 }
 
-static GameOffsets GetGameOffsets(GameVersion version)
-{
-    switch (version)
-    {
-        case ICR2_DOS4G_1_02:
-            return Offsets_ICR2_DOS;
-        case ICR2_RENDITION:
-            return Offsets_ICR2_REND;
-        case ICR2_WINDOWS:
-            return Offsets_ICR2_WINDY;
-        case NASCAR1:
-            return Offsets_NASCAR;
-        case NASCAR2_V2_03:
-            return Offsets_NASCAR2;
-        case AUTO_DETECT:
-        case VERSION_UNINITIALIZED:
-        default:
-            return Offsets_Unspecified;
-    }
-}
-
 DetectedGame::DetectedGame(const std::wstring& versionText)
 {
     // Select game version
-    std::wstring gameVersionLower = ToLower(versionText);
+    std::wstring gameVersion = ToLower(versionText);
 
-    if (gameVersionLower == L"icr2dos") {
+    if (gameVersion == L"icr2dos") {
         version = ICR2_DOS4G_1_02;
     }
-    else if (gameVersionLower == L"icr2rend") {
+    else if (gameVersion == L"icr2rend") {
         version = ICR2_RENDITION;
     }
-    else if (gameVersionLower == L"icr2windy") {
+    else if (gameVersion == L"icr2windy") {
         version = ICR2_WINDOWS;
     }
-    else if (gameVersionLower == L"nascar1") {
+    else if (gameVersion == L"nascar1") {
         version = NASCAR1;
     }
-    else if (gameVersionLower == L"nascar2") {
+    else if (gameVersion == L"nascar2") {
         version = NASCAR2_V2_03;
     }
-    else if (gameVersionLower.empty() || gameVersionLower.find(L"auto") != std::wstring::npos) {
+    else if (gameVersion.empty() || gameVersion.find(L"auto") != std::wstring::npos) {
         version = AUTO_DETECT;
     }
     else {

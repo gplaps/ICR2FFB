@@ -25,7 +25,7 @@
  */
 
 FFBConfig::FFBConfig() :
-    version(),
+    game(),
     settings()
 {
     RegisterSettings();
@@ -35,14 +35,14 @@ FFBConfig::FFBConfig() :
     }
 }
 
-bool FFBConfig::Valid() const { return version != VERSION_UNINITIALIZED; }
+bool FFBConfig::Valid() const { return game.version != VERSION_UNINITIALIZED; }
 
 void FFBConfig::RegisterSettings()
 {
     settings[L"none"].push_back(Setting(L"none", false, L"not found"));
 
-    settings[L"base"].push_back(Setting(L"device", L"FFB Wheel", L"list your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
-    settings[L"base"].push_back(Setting(L"game", L"ICR2DOS", L"List the game you are using ie:\n'ICR2DOS', 'ICR2REND', 'ICR2WINDY', 'NASCAR1' or 'NASCAR2'"));
+    settings[L"base"].push_back(Setting(L"device", L"FFB Wheel", L"Name your device here with the exact name it uses in the game controllers menu\nyou can also use the device index (1, 2, 3, 4 etc) instead"));
+    settings[L"base"].push_back(Setting(L"game", L"ICR2DOS", L"Select game you are using or leave blank for auto detection. Recognized values are:\n'ICR2DOS', 'ICR2REND', 'ICR2WINDY', 'NASCAR1', 'NASCAR2', 'AUTO'"));
     settings[L"base"].push_back(Setting(L"verbose", false, L"Verbose logging - e.g. used config and FFB thread timing"));
 
     settings[L"effects"].push_back(Setting(L"force", 25.0, L"Master toggle for what % of force do you want? [0-100]"));
@@ -295,8 +295,8 @@ int FFBConfig::LoadFFBSettings()
     LogMessage(L"[INFO] Successfully loaded FFB settings");
     LogMessage(L"[INFO] Target device: " + GetString(L"base", L"device"));
 
-    version = DetectedGame(GetString(L"base", L"game"));
-    LogMessage(L"[INFO] Configured game: " + version.ToString());
+    game = DetectedGame(GetString(L"base", L"game"));
+    LogMessage(L"[INFO] Configured game: " + game.ToString());
     return 0;
 }
 

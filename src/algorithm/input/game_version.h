@@ -5,6 +5,19 @@
 #include "log.h"
 #include "string_utilities.h"
 
+// Offsets database for different games/versions
+// THANK YOU ERIC
+
+// BOB! Bobby Rahal unlocks it all. Find where the text for licensing him is and work from there
+// Provides standardized 'point' to reference for memory
+// Maybe this can be replaced with something else more reliable and something that stays the same no matter the game version?
+inline const char* ICR2SIG =      "license with Bob";
+inline const char* ICR2SIG_REND = "Use Rendition"; // or search for "-gRN1f" command line switch
+inline const char* ICR2SIG_WINDY = "<Insert text that only is found in the Windows version of ICR2";
+inline const char* NR1SIG =       "name of Harry Gant";
+inline const char* NR2SIG =       "NASCAR V2.03";
+inline const char* UNINIT_SIG =   "TEXT_THAT_SHOULD_NOT_BE_IN_ANY_BINARY_N0Txt2BFouND";
+
 enum GameVersion
 #if defined(IS_CPP11_COMPLIANT)
     : unsigned char
@@ -49,11 +62,14 @@ struct GameOffsets
     void ApplySignature(uintptr_t signatureAddress);
 };
 
+GameOffsets GetGameOffsets(GameVersion version);
+
 struct DetectedGame
 {
+    DetectedGame() {}
     DetectedGame(const std::wstring& versionText);
 
     std::wstring ToString() const;
     GameVersion version;
     GameOffsets offsets;
-}
+};
