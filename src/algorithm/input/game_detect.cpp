@@ -331,6 +331,12 @@ static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std:
     // translate scan results into a SupportedGame and lookup if this matches any supported version
     if (!scanResult.empty())
     {
+        /* Debug */
+        for (size_t i = 0; i < scanResult.size(); ++i)
+        {
+            LogMessage(L"[DEBUG] Scan result contains: " + AnsiToWide(scanResult[i].second.c_str()));
+        }
+
         const std::pair<uintptr_t, BaseGame> game     = DetectGame(scanResult);
         const Renderer                       renderer = DetectRenderer(scanResult);
         const BinaryType                     options  = DetectBinaryType(scanResult);
@@ -340,7 +346,7 @@ static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std:
         if (detectedGame.Valid())
         {
             detectedGame.ApplySignature(game.first);
-            LogMessage(L"Detected game: " + detectedGame.ToString());
+            LogMessage(L"[INFO] Detected game: " + detectedGame.ToString());
             return detectedGame;
         }
         else
