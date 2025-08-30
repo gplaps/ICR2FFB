@@ -57,12 +57,12 @@ enum Renderer
     RENDITION
 };
 
-enum BinaryOptions
+enum BinaryType
 #if defined(IS_CPP11_COMPLIANT)
     : unsigned char
 #endif
 {
-    UNDETECTED_BINARY_OPTIONS,
+    UNDETECTED_BINARY_TYPE,
     DOS4GW,
     DOS32A,
     WIN32_APPLICATION
@@ -84,20 +84,20 @@ enum VersionInfo
 struct SupportedGame
 {
     SupportedGame();
-    SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions, const GameOffsets& offsets);
+    SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType, const GameOffsets& offsets);
 
     bool               Valid() const;
     std::wstring       ToString() const;
     const GameOffsets& Offsets() const;
     void               ApplySignature(uintptr_t signatureAddress);
-    bool               IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions) const; // don't like to express with operator== as GameOffsets are not known when looking up entries in the list of known games
+    bool               IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType) const; // don't like to express with operator== as GameOffsets are not known when looking up entries in the list of known games
     BaseGame           Game() const;
 
 private:
-    BaseGame      mGame;
-    Renderer      mRenderer;
-    VersionInfo   mVersion;
-    BinaryOptions mBinaryInfo;
+    BaseGame    mGame;
+    Renderer    mRenderer;
+    VersionInfo mVersion;
+    BinaryType  mBinaryInfo;
 
     GameOffsets mOffsets;
 };
@@ -106,12 +106,12 @@ void InitGameDetection();
 struct SupportedGames
 {
     // Lists of text to look for in the binary
-    static std::map<std::string, BaseGame>      baseGameStrings;
-    static std::map<std::string, Renderer>      rendererStrings;
-    static std::map<std::string, BinaryOptions> binaryStrings;
-    static std::map<std::string, VersionInfo>   versionStrings;
+    static std::map<std::string, BaseGame>    baseGameStrings;
+    static std::map<std::string, Renderer>    rendererStrings;
+    static std::map<std::string, BinaryType>  binaryStrings;
+    static std::map<std::string, VersionInfo> versionStrings;
 
     // Game list
-    static SupportedGame              FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryOptions binaryOptions);
+    static SupportedGame              FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType);
     static std::vector<SupportedGame> gameList;
 };

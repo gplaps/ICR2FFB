@@ -11,11 +11,11 @@
 
 // Game detection and offsets are a work in progress and only very specific versions are detected in this version
 
-std::vector<SupportedGame>           SupportedGames::gameList;
-std::map<std::string, BaseGame>      SupportedGames::baseGameStrings;
-std::map<std::string, Renderer>      SupportedGames::rendererStrings;
-std::map<std::string, BinaryOptions> SupportedGames::binaryStrings;
-std::map<std::string, VersionInfo>   SupportedGames::versionStrings;
+std::vector<SupportedGame>         SupportedGames::gameList;
+std::map<std::string, BaseGame>    SupportedGames::baseGameStrings;
+std::map<std::string, Renderer>    SupportedGames::rendererStrings;
+std::map<std::string, BinaryType>  SupportedGames::binaryStrings;
+std::map<std::string, VersionInfo> SupportedGames::versionStrings;
 
 // Provides standardized 'point' to reference for memory
 
@@ -254,7 +254,7 @@ static std::vector<std::string> SignaturesToScan()
     {
         result.push_back(it->first);
     }
-    for (std::map<std::string, BinaryOptions>::const_iterator it = SupportedGames::binaryStrings.begin(); it != SupportedGames::binaryStrings.end(); ++it)
+    for (std::map<std::string, BinaryType>::const_iterator it = SupportedGames::binaryStrings.begin(); it != SupportedGames::binaryStrings.end(); ++it)
     {
         result.push_back(it->first);
     }
@@ -296,11 +296,11 @@ static Renderer DetectRenderer(const std::vector<std::pair<uintptr_t, std::strin
     return SOFTWARE;
 }
 
-static BinaryOptions DetectBinaryOptions(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
+static BinaryType DetectBinaryType(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
 {
     for (size_t i = 0; i < scanResult.size(); ++i)
     {
-        for (std::map<std::string, BinaryOptions>::const_iterator it = SupportedGames::binaryStrings.begin(); it != SupportedGames::binaryStrings.end(); ++it)
+        for (std::map<std::string, BinaryType>::const_iterator it = SupportedGames::binaryStrings.begin(); it != SupportedGames::binaryStrings.end(); ++it)
         {
             if (it->first == scanResult[i].second)
             {
@@ -308,7 +308,7 @@ static BinaryOptions DetectBinaryOptions(const std::vector<std::pair<uintptr_t, 
             }
         }
     }
-    return UNDETECTED_BINARY_OPTIONS;
+    return UNDETECTED_BINARY_TYPE;
 }
 
 static VersionInfo DetectVersion(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
@@ -333,7 +333,7 @@ static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std:
     {
         const std::pair<uintptr_t, BaseGame> game     = DetectGame(scanResult);
         const Renderer                       renderer = DetectRenderer(scanResult);
-        const BinaryOptions                  options  = DetectBinaryOptions(scanResult);
+        const BinaryType                     options  = DetectBinaryType(scanResult);
         const VersionInfo                    version  = DetectVersion(scanResult);
 
         SupportedGame detectedGame                    = SupportedGames::FindGame(game.second, renderer, version, options);
