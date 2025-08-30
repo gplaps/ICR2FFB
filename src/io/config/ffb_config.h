@@ -10,8 +10,8 @@
 struct FFBConfig
 {
     FFBConfig();
-    bool          Valid() const;
-    SupportedGame game;
+    bool Valid() const;
+    Game game;
 
     //settings from the ffb.ini
     bool         GetBool(const std::wstring& section, const std::wstring& key) const;

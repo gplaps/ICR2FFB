@@ -25,15 +25,15 @@ void GameOffsets::ApplySignature(uintptr_t signatureAddress)
     tire_maglong_rr += exeBase;
 }
 
-SupportedGame::SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType, const GameOffsets& offsets) :
-    mGame(game),
+Game::Game(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType, const GameOffsets& offsets) :
+    mProduct(game),
     mRenderer(renderer),
     mVersion(version),
     mBinaryInfo(BinaryType),
     mOffsets(offsets) {}
 
-SupportedGame::SupportedGame() :
-    mGame(),
+Game::Game() :
+    mProduct(),
     mRenderer(),
     mVersion(),
     mBinaryInfo(),
@@ -92,56 +92,56 @@ static std::wstring BinaryInfoToString(BinaryType options)
     return L"Unspecified";
 }
 
-std::wstring SupportedGame::ToString() const
+std::wstring Game::ToString() const
 {
     std::wstringstream ss;
-    ss << BaseGameToString(mGame) << L" - ";
+    ss << BaseGameToString(mProduct) << L" - ";
     ss << RendererToString(mRenderer) << L" - ";
     ss << VersionToString(mVersion) << L" - ";
     ss << BinaryInfoToString(mBinaryInfo);
     return ss.str();
 }
 
-bool SupportedGame::Valid() const
+bool Game::Valid() const
 {
-    return mGame != UNDETECTED_GAME &&
+    return mProduct != UNDETECTED_GAME &&
         mRenderer != UNDETECTED_RENDERER &&
         mBinaryInfo != UNDETECTED_BINARY_TYPE &&
         mVersion != UNDETECTED_VERSION;
 }
 
-const GameOffsets& SupportedGame::Offsets() const
+const GameOffsets& Game::Offsets() const
 {
     return mOffsets;
 }
 
-BaseGame SupportedGame::Game() const
+BaseGame Game::Product() const
 {
-    return mGame;
+    return mProduct;
 }
 
-void SupportedGame::ApplySignature(uintptr_t signatureAddress)
+void Game::ApplySignature(uintptr_t signatureAddress)
 {
     mOffsets.ApplySignature(signatureAddress);
 }
 
-bool SupportedGame::IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType) const
+bool Game::IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType) const
 {
-    return mGame == game &&
+    return mProduct == game &&
         mRenderer == renderer &&
         mBinaryInfo == BinaryType &&
         mVersion == version;
 }
 
-SupportedGame SupportedGames::FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType)
+Game SupportedGames::FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType)
 {
     for (size_t i = 0; i < SupportedGames::gameList.size(); ++i)
     {
-        const SupportedGame& entry = SupportedGames::gameList[i];
+        const Game& entry = SupportedGames::gameList[i];
         if (entry.IsThis(game, renderer, version, BinaryType))
         {
             return entry; // with valid GameOffsets
         }
     }
-    return SupportedGame();
+    return Game();
 }

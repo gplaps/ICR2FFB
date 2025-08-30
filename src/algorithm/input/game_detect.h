@@ -4,5 +4,5 @@
 
 #include "game_version.h"
 
-DWORD         FindProcessIdByWindow();
-SupportedGame ScanSignature(HANDLE processHandle);
+DWORD FindProcessIdByWindow();
+Game  ScanSignature(HANDLE processHandle);

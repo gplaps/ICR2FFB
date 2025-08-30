@@ -11,7 +11,7 @@
 
 // Game detection and offsets are a work in progress and only very specific versions are detected in this version
 
-std::vector<SupportedGame>         SupportedGames::gameList;
+std::vector<Game>                  SupportedGames::gameList;
 std::map<std::string, BaseGame>    SupportedGames::baseGameStrings;
 std::map<std::string, Renderer>    SupportedGames::rendererStrings;
 std::map<std::string, BinaryType>  SupportedGames::binaryStrings;
@@ -151,11 +151,11 @@ void InitGameDetection()
     SupportedGames::versionStrings["Version 2.0.2"]                    = V2_0_2; // NR2
     SupportedGames::versionStrings["Version 2.0.3"]                    = V2_0_3; // NR2
 
-    SupportedGames::gameList.push_back(SupportedGame(INDYCAR_RACING_2, SOFTWARE, V1_0_2, DOS4GW, Offsets_ICR2_DOS4G_102));
-    SupportedGames::gameList.push_back(SupportedGame(INDYCAR_RACING_2, RENDITION, V1_0_2, DOS32A, Offsets_ICR2_REND_DOS32A_102));
-    SupportedGames::gameList.push_back(SupportedGame(INDYCAR_RACING_2, SOFTWARE, V1_0_2, WIN32_APPLICATION, Offsets_ICR2_WINDY));
-    SupportedGames::gameList.push_back(SupportedGame(NASCAR_RACING_1, SOFTWARE, V1_2_1, DOS4GW, Offsets_NASCAR1));
-    SupportedGames::gameList.push_back(SupportedGame(NASCAR_RACING_2, SOFTWARE, V2_0_3, DOS4GW, Offsets_NASCAR2_V2_03));
+    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, SOFTWARE, V1_0_2, DOS4GW, Offsets_ICR2_DOS4G_102));
+    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, RENDITION, V1_0_2, DOS32A, Offsets_ICR2_REND_DOS32A_102));
+    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, SOFTWARE, V1_0_2, WIN32_APPLICATION, Offsets_ICR2_WINDY));
+    SupportedGames::gameList.push_back(Game(NASCAR_RACING_1, SOFTWARE, V1_2_1, DOS4GW, Offsets_NASCAR1));
+    SupportedGames::gameList.push_back(Game(NASCAR_RACING_2, SOFTWARE, V2_0_3, DOS4GW, Offsets_NASCAR2_V2_03));
 }
 
 // ----------------------------------
@@ -326,7 +326,7 @@ static VersionInfo DetectVersion(const std::vector<std::pair<uintptr_t, std::str
     return UNDETECTED_VERSION;
 }
 
-static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
+static Game ToSupportedGame(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
 {
     // translate scan results into a SupportedGame and lookup if this matches any supported version
     if (!scanResult.empty())
@@ -342,7 +342,7 @@ static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std:
         const BinaryType                     options  = DetectBinaryType(scanResult);
         const VersionInfo                    version  = DetectVersion(scanResult);
 
-        SupportedGame detectedGame                    = SupportedGames::FindGame(game.second, renderer, version, options);
+        Game detectedGame                             = SupportedGames::FindGame(game.second, renderer, version, options);
         if (detectedGame.Valid())
         {
             detectedGame.ApplySignature(game.first);
@@ -352,17 +352,17 @@ static SupportedGame ToSupportedGame(const std::vector<std::pair<uintptr_t, std:
         else
         {
             LogMessage(L"[ERROR] Game detected failed. Result: " + detectedGame.ToString());
-            return SupportedGame();
+            return Game();
         }
     }
     LogMessage(L"[ERROR] No signatures found in game.");
-    return SupportedGame();
+    return Game();
 }
 
 // Really don't understand this, but here is where we scan the memory for the data needed
 // scanning dosbox memory may not work as expected as once a process was started and is closed it still resides in dosbox processes memory, so maybe the wrong instance / closed instance of a supported game is found and not the most recent / active. it worked if opening and closing the same exe inside dosbox multiple times but its not robust
 
-SupportedGame ScanSignature(HANDLE processHandle)
+Game ScanSignature(HANDLE processHandle)
 {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);

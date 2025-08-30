@@ -81,20 +81,20 @@ enum VersionInfo
     V2_0_3  // NR2
 };
 
-struct SupportedGame
+struct Game
 {
-    SupportedGame();
-    SupportedGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType, const GameOffsets& offsets);
+    Game();
+    Game(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType, const GameOffsets& offsets);
 
     bool               Valid() const;
     std::wstring       ToString() const;
     const GameOffsets& Offsets() const;
     void               ApplySignature(uintptr_t signatureAddress);
     bool               IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType) const; // don't like to express with operator== as GameOffsets are not known when looking up entries in the list of known games
-    BaseGame           Game() const;
+    BaseGame           Product() const;
 
 private:
-    BaseGame    mGame;
+    BaseGame    mProduct;
     Renderer    mRenderer;
     VersionInfo mVersion;
     BinaryType  mBinaryInfo;
@@ -112,6 +112,6 @@ struct SupportedGames
     static std::map<std::string, VersionInfo> versionStrings;
 
     // Game list
-    static SupportedGame              FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType);
-    static std::vector<SupportedGame> gameList;
+    static Game              FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType);
+    static std::vector<Game> gameList;
 };

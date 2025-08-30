@@ -57,6 +57,6 @@ private:
     TelemetryReader                        telemetryReader;
     TelemetryDisplay::TelemetryDisplayData displayData;
 
-    SupportedGame detectedGame;
-    bool          mInitialized;
+    Game detectedGame;
+    bool mInitialized;
 };

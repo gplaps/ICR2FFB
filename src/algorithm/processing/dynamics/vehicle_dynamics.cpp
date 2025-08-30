@@ -90,13 +90,13 @@ static GameConstants NASCAR(
 
 // Select constants based on game
 
-static GameConstants GetGameConstants(SupportedGame detectedGame)
+static GameConstants GetGameConstants(Game detectedGame)
 {
-    if (detectedGame.Game() == INDYCAR_RACING_2)
+    if (detectedGame.Product() == INDYCAR_RACING_2)
     {
         return VehicleConstants::IndyCar;
     }
-    else if (detectedGame.Game() == NASCAR_RACING_1 || detectedGame.Game() == NASCAR_RACING_2)
+    else if (detectedGame.Product() == NASCAR_RACING_1 || detectedGame.Product() == NASCAR_RACING_2)
     {
         return VehicleConstants::NASCAR;
     }
@@ -131,7 +131,7 @@ static int GetTurnDirection(double lf, double rf, double lr, double rr)
     }
 }
 
-bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, SupportedGame detectedGame)
+bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, Game detectedGame)
 {
     const GameConstants constants = GetGameConstants(detectedGame);
 
