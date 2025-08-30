@@ -30,8 +30,12 @@ static bool IsRunningAsAdmin()
 static int RestartAsAdmin()
 {
     // Get the current executable path
-    wchar_t exePath[MAX_PATH];
-    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    wchar_t exePath[MAX_PATH] = {};
+    if (GetModuleFileNameW(NULL, exePath, MAX_PATH) == 0)
+    {
+        std::wcout << L"[ERROR] Failed to determine executable path." << L'\n';
+        return 1;
+    }
 
     // Use ShellExecuteW to restart with "runas" (admin prompt)
     HINSTANCE result = ShellExecuteW(

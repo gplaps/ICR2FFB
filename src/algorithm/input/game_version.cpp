@@ -151,7 +151,7 @@ static std::wstring RendererToString(Renderer renderer)
 {
     switch (renderer)
     {
-        case SOFTWARE:            return L"Software";
+        case SOFTWARE:            return L"Software Renderer";
         case RENDITION:           return L"Rendition";
         case UNDETECTED_RENDERER:
         default:                  break;
@@ -191,9 +191,9 @@ std::wstring Game::ToString() const
 {
     std::wstringstream ss;
     ss << BaseGameToString(mProduct) << L" - ";
-    ss << RendererToString(mRenderer) << L" - ";
     ss << VersionToString(mVersion) << L" - ";
-    ss << BinaryInfoToString(mBinaryInfo);
+    ss << BinaryInfoToString(mBinaryInfo) << L" - ";
+    ss << RendererToString(mRenderer);
     return ss.str();
 }
 

@@ -5,6 +5,7 @@
 #include "string_utilities.h"
 
 #include <cwchar>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -361,11 +362,14 @@ static Game ToSupportedGame(const std::vector<std::pair<uintptr_t, std::string> 
 
 // Really don't understand this, but here is where we scan the memory for the data needed
 // scanning dosbox memory may not work as expected as once a process was started and is closed it still resides in dosbox processes memory, so maybe the wrong instance / closed instance of a supported game is found and not the most recent / active. it worked if opening and closing the same exe inside dosbox multiple times but its not robust
-
+// the "auto detect" scanning mechanism is rather slow as it has to check for quite a few strings! but therefore its convenient
+// consider rewriting this again to check for basegame and other options sequentially, ruling out non fitting combinations
 Game ScanSignature(HANDLE processHandle)
 {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
+
+	std::wcout << L"Game window found, now scanning process memory. This might take a moment...\n";
 
     LogMessage(L"[DEBUG] Scanning for game...");
     LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress)));
@@ -376,7 +380,7 @@ Game ScanSignature(HANDLE processHandle)
 
     MEMORY_BASIC_INFORMATION mbi;
 
-    const std::vector<std::string>&                 signaturesToScan = SignaturesToScan();
+    std::vector<std::string>                        signaturesToScan = SignaturesToScan();
     std::vector<BYTE>                               bufferPreviousPage(0);
     std::vector<std::pair<uintptr_t, std::string> > result;
 
@@ -396,10 +400,11 @@ Game ScanSignature(HANDLE processHandle)
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
-                    for (size_t si = 0; si < signaturesToScan.size(); ++si)
+					for (size_t si = 0; si < signaturesToScan.size();)
                     {
-                        const std::string& signature    = signaturesToScan[si];
-                        const size_t       signatureLen = signature.size();
+                        const std::string& signature      = signaturesToScan[si];
+                        const size_t       signatureLen   = signature.size();
+                        bool               signatureFound = false;
 
                         // overlap region
                         std::vector<BYTE> overlapRegion;
@@ -413,18 +418,32 @@ Game ScanSignature(HANDLE processHandle)
                                 if (memcmp(overlapRegion.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                                 {
                                     result.push_back(std::pair<uintptr_t, std::string>(addr + i - signatureLen + 1, signature));
+									signatureFound = true;
                                     break;
                                 }
                             }
                         }
 
+						if (!signatureFound)
+						{
                         for (SIZE_T i = 0; i <= bytesRead - signatureLen; ++i)
                         {
                             if (memcmp(buffer.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                             {
                                 result.push_back(std::pair<uintptr_t, std::string>(addr + i, signature));
+									signatureFound = true;
                                 break;
                             }
+							}
+						}
+						if (signatureFound)
+						{
+							// one less signature to scan to accelerate the rather slow scanning process
+                            signaturesToScan.erase(signaturesToScan.begin() + static_cast<ptrdiff_t>(si));
+						}
+						else
+						{
+							++si;
                         }
                     }
 

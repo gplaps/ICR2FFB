@@ -136,6 +136,17 @@ int main()
     timing = new Timing(*config);
     ENSURE(timing);
     ffbProcessor = new FFBProcessor(*config);
+	if (ffbProcessor && !ffbProcessor->Valid())
+	{
+		std::wcout << L"Init failed. Exiting the program in 10 seconds.\n\nIs the input device detected?\n\nCheck the log file.\n";
+		const DWORD waitTimeMs = 10000;
+#    if defined(HAS_STL_THREAD_MUTEX)
+		std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeMs));
+#    else
+		Sleep(waitTimeMs);
+#    endif
+
+	}
     ENSURE(ffbProcessor && ffbProcessor->Valid());
 
     // Start telemetry processing!
