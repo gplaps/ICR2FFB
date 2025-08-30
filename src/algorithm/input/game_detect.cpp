@@ -376,7 +376,7 @@ Game ScanSignature(HANDLE processHandle)
 
     MEMORY_BASIC_INFORMATION mbi;
 
-    const std::vector<std::string>                  signaturesToScan = SignaturesToScan();
+    const std::vector<std::string>&                 signaturesToScan = SignaturesToScan();
     std::vector<BYTE>                               bufferPreviousPage(0);
     std::vector<std::pair<uintptr_t, std::string> > result;
 
@@ -396,9 +396,9 @@ Game ScanSignature(HANDLE processHandle)
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
-                    for (size_t gi = 0; gi < signaturesToScan.size(); ++gi)
+                    for (size_t si = 0; si < signaturesToScan.size(); ++si)
                     {
-                        const std::string& signature    = signaturesToScan[gi];
+                        const std::string& signature    = signaturesToScan[si];
                         const size_t       signatureLen = signature.size();
 
                         // overlap region

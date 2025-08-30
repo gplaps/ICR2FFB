@@ -135,13 +135,14 @@ bool Game::IsThis(BaseGame game, Renderer renderer, VersionInfo version, BinaryT
 
 Game SupportedGames::FindGame(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType)
 {
-    for (size_t i = 0; i < SupportedGames::gameList.size(); ++i)
+    for (size_t i = 0; i < gameList.size(); ++i)
     {
-        const Game& entry = SupportedGames::gameList[i];
+        const Game& entry = gameList[i];
         if (entry.IsThis(game, renderer, version, BinaryType))
         {
             return entry; // with valid GameOffsets
         }
     }
-    return Game();
+    GameOffsets invalidOffsets = {};
+    return Game(game, renderer, version, BinaryType, invalidOffsets);
 }
