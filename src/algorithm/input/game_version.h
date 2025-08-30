@@ -14,6 +14,12 @@
 // Things to look for in the Memory to make it tick
 struct GameOffsets
 {
+    GameOffsets();
+    GameOffsets(const GameOffsets& rhs);
+    GameOffsets(uintptr_t sig, uintptr_t car, uintptr_t td_fl, uintptr_t td_fr, uintptr_t td_lr, uintptr_t td_rr, uintptr_t td_mlat_fl, uintptr_t td_mlat_fr, uintptr_t td_mlat_lr, uintptr_t td_mlat_rr, uintptr_t td_mlon_fl, uintptr_t td_mlon_fr, uintptr_t td_mlon_lr, uintptr_t td_mlon_rr);
+
+    GameOffsets& operator=(const GameOffsets& rhs);
+
     uintptr_t signature;
 
     uintptr_t cars_data;
@@ -34,6 +40,9 @@ struct GameOffsets
     uintptr_t tire_maglong_rr;
 
     void ApplySignature(uintptr_t signatureAddress);
+
+    bool operator==(const GameOffsets& rhs) const;
+    bool operator!=(const GameOffsets& rhs) const;
 };
 
 enum BaseGame

@@ -2,6 +2,74 @@
 
 #include <sstream>
 
+GameOffsets::GameOffsets() :
+    signature(),
+    cars_data(),
+    tire_data_fl(),
+    tire_data_fr(),
+    tire_data_lr(),
+    tire_data_rr(),
+    tire_maglat_fl(),
+    tire_maglat_fr(),
+    tire_maglat_lr(),
+    tire_maglat_rr(),
+    tire_maglong_fl(),
+    tire_maglong_fr(),
+    tire_maglong_lr(),
+    tire_maglong_rr() {}
+
+GameOffsets::GameOffsets(const GameOffsets& rhs) :
+    signature(rhs.signature),
+    cars_data(rhs.cars_data),
+    tire_data_fl(rhs.tire_data_fl),
+    tire_data_fr(rhs.tire_data_fr),
+    tire_data_lr(rhs.tire_data_lr),
+    tire_data_rr(rhs.tire_data_rr),
+    tire_maglat_fl(rhs.tire_maglat_fl),
+    tire_maglat_fr(rhs.tire_maglat_fr),
+    tire_maglat_lr(rhs.tire_maglat_lr),
+    tire_maglat_rr(rhs.tire_maglat_rr),
+    tire_maglong_fl(rhs.tire_maglong_fl),
+    tire_maglong_fr(rhs.tire_maglong_fr),
+    tire_maglong_lr(rhs.tire_maglong_lr),
+    tire_maglong_rr(rhs.tire_maglong_rr) {}
+
+GameOffsets::GameOffsets(uintptr_t sig, uintptr_t car, uintptr_t td_fl, uintptr_t td_fr, uintptr_t td_lr, uintptr_t td_rr, uintptr_t td_mlat_fl, uintptr_t td_mlat_fr, uintptr_t td_mlat_lr, uintptr_t td_mlat_rr, uintptr_t td_mlon_fl, uintptr_t td_mlon_fr, uintptr_t td_mlon_lr, uintptr_t td_mlon_rr) :
+    signature(sig),
+    cars_data(car),
+    tire_data_fl(td_fl),
+    tire_data_fr(td_fr),
+    tire_data_lr(td_lr),
+    tire_data_rr(td_rr),
+    tire_maglat_fl(td_mlat_fl),
+    tire_maglat_fr(td_mlat_fr),
+    tire_maglat_lr(td_mlat_lr),
+    tire_maglat_rr(td_mlat_rr),
+    tire_maglong_fl(td_mlon_fl),
+    tire_maglong_fr(td_mlon_fr),
+    tire_maglong_lr(td_mlon_lr),
+    tire_maglong_rr(td_mlon_rr) {}
+
+GameOffsets& GameOffsets::operator=(const GameOffsets& rhs)
+{
+    signature       = rhs.signature;
+    cars_data       = rhs.cars_data;
+    tire_data_fl    = rhs.tire_data_fl;
+    tire_data_fr    = rhs.tire_data_fr;
+    tire_data_lr    = rhs.tire_data_lr;
+    tire_data_rr    = rhs.tire_data_rr;
+    tire_maglat_fl  = rhs.tire_maglat_fl;
+    tire_maglat_fr  = rhs.tire_maglat_fr;
+    tire_maglat_lr  = rhs.tire_maglat_lr;
+    tire_maglat_rr  = rhs.tire_maglat_rr;
+    tire_maglong_fl = rhs.tire_maglong_fl;
+    tire_maglong_fr = rhs.tire_maglong_fr;
+    tire_maglong_lr = rhs.tire_maglong_lr;
+    tire_maglong_rr = rhs.tire_maglong_rr;
+
+    return *this;
+}
+
 void GameOffsets::ApplySignature(uintptr_t signatureAddress)
 {
     const uintptr_t exeBase = signatureAddress - signature;
@@ -23,6 +91,33 @@ void GameOffsets::ApplySignature(uintptr_t signatureAddress)
     tire_maglong_fr += exeBase;
     tire_maglong_lr += exeBase;
     tire_maglong_rr += exeBase;
+}
+
+bool GameOffsets::operator==(const GameOffsets& rhs) const
+{
+    return signature == rhs.signature &&
+
+        cars_data == rhs.cars_data &&
+
+        tire_data_fl == rhs.tire_data_fl &&
+        tire_data_fr == rhs.tire_data_fr &&
+        tire_data_lr == rhs.tire_data_lr &&
+        tire_data_rr == rhs.tire_data_rr &&
+
+        tire_maglat_fl == rhs.tire_maglat_fl &&
+        tire_maglat_fr == rhs.tire_maglat_fr &&
+        tire_maglat_lr == rhs.tire_maglat_lr &&
+        tire_maglat_rr == rhs.tire_maglat_rr &&
+
+        tire_maglong_fl == rhs.tire_maglong_fl &&
+        tire_maglong_fr == rhs.tire_maglong_fr &&
+        tire_maglong_lr == rhs.tire_maglong_lr &&
+        tire_maglong_rr == rhs.tire_maglong_rr;
+}
+
+bool GameOffsets::operator!=(const GameOffsets& rhs) const
+{
+    return !(*this == rhs);
 }
 
 Game::Game(BaseGame game, Renderer renderer, VersionInfo version, BinaryType BinaryType, const GameOffsets& offsets) :
@@ -107,7 +202,8 @@ bool Game::Valid() const
     return mProduct != UNDETECTED_GAME &&
         mRenderer != UNDETECTED_RENDERER &&
         mBinaryInfo != UNDETECTED_BINARY_TYPE &&
-        mVersion != UNDETECTED_VERSION;
+        mVersion != UNDETECTED_VERSION &&
+        mOffsets != GameOffsets();
 }
 
 const GameOffsets& Game::Offsets() const

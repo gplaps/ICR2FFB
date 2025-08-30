@@ -41,7 +41,7 @@ static const GameOffsets Offsets_ICR2_REND_DOS32A_102 = {
     0xEAB04, //lf tire long load
     0xEAB06, //rf tire long load
     0xEAB00, //lr tire long load
-    0xEAB02, //rr tire long load
+    0xEAB02  //rr tire long load
 };
 
 // DOS4G Exe, should be 1.02
@@ -63,7 +63,7 @@ static const GameOffsets Offsets_ICR2_DOS4G_102 = {
     0xC5C18,
     0xC5C1A,
     0xC5C14,
-    0xC5C16,
+    0xC5C16
 };
 
 // ICR2 Windy
@@ -86,10 +86,10 @@ static const GameOffsets Offsets_ICR2_WINDY = {
     0x005281F8,
     0x005281Fa,
     0x005281F4,
-    0x005281F6,
+    0x005281F6
 };
 
-// N1 Offsets
+// N1 Offsets - version unknown
 static const GameOffsets Offsets_NASCAR1 = {
     0xAEA8C,
 
@@ -108,7 +108,7 @@ static const GameOffsets Offsets_NASCAR1 = {
     0xF0970,
     0xF0970,
     0xF0970,
-    0xF0970,
+    0xF0970
 };
 
 // N2 Offsets
@@ -130,7 +130,7 @@ static const GameOffsets Offsets_NASCAR2_V2_03 = {
     0xF3B02,
     0xF3B04,
     0xF3AFE,
-    0xF3B00,
+    0xF3B00
 };
 
 void InitGameDetection()
@@ -405,14 +405,14 @@ Game ScanSignature(HANDLE processHandle)
                         std::vector<BYTE> overlapRegion;
                         if (!bufferPreviousPage.empty())
                         {
-                            overlapRegion = std::vector<BYTE>(bufferPreviousPage.end() - static_cast<ptrdiff_t>(signatureLen), bufferPreviousPage.end());
-                            overlapRegion.insert(overlapRegion.end(), buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(signatureLen));
+                            overlapRegion = std::vector<BYTE>(bufferPreviousPage.end() - static_cast<ptrdiff_t>(signatureLen) + 1, bufferPreviousPage.end());
+                            overlapRegion.insert(overlapRegion.end(), buffer.begin(), buffer.begin() + static_cast<ptrdiff_t>(signatureLen) - 1);
 
-                            for (SIZE_T i = 0; i < overlapRegion.size(); ++i)
+                            for (SIZE_T i = 0; i <= overlapRegion.size() - signatureLen; ++i)
                             {
                                 if (memcmp(overlapRegion.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                                 {
-                                    result.push_back(std::pair<uintptr_t, std::string>(addr + i - signatureLen, signature));
+                                    result.push_back(std::pair<uintptr_t, std::string>(addr + i - signatureLen + 1, signature));
                                     break;
                                 }
                             }
