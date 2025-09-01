@@ -4,6 +4,7 @@
 #include "log.h"
 #include "string_utilities.h"
 
+#include <cstddef>
 #include <cwchar>
 #include <iostream>
 #include <string>
@@ -175,7 +176,7 @@ struct FindWindowData
 };
 
 static BOOL
-#if defined(__GNUC__) && !defined(__clang__)
+#if (defined(__GNUC__) && !defined(__clang__)) || defined(_MSC_VER)
     CALLBACK
 #endif
     EnumerateWindowsCallback(HWND hwnd, LPARAM lParam)

@@ -175,9 +175,10 @@ std::vector<std::wstring> DirectInput::AvailableDevices() const
 // Kick-off DirectInput - consider renaming CreateDevice and InitializeDevice functions ... currently CreateDevice are the "internal" functions and "InitializeDevice" is the API, but it would be more expressive if CreateDevice is the outwards facing naming
 IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNameOrIndex)
 {
-    IDirectInputDevice8* device = NULL;
     if (productNameOrIndex.empty() || knownDevices.empty()) { return NULL; }
-
+    
+    IDirectInputDevice8* device = NULL;
+    
     // by index
     try
     {

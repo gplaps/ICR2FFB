@@ -19,7 +19,7 @@ const int DesiredTimerResolution = 1;
 // in case of timing issues (log.txt contains frequent timing reports), fall back to active wait/spinning by removing the PUT_THREADS_TO_SLEEP define.
 // thread being late was observed when changing window focus and does not need to be fixed
 // if it does happen constantly - e.g. between the at the time of writing - [DEBUG] tire load messages - it needs to be addressed
-// also consider calling timeBeginPeriod only if FFB output is required (game not paused). otherwise jitter may be tolerable
+// also consider calling timeBeginPeriod only if FFB output is required (game not paused). otherwise thread scheduling jitter may be tolerable
 static const double SLACK_TIME_MS = 0.5; // wake up thread this amount of time before scheduled time resulting in active wait / polling == likely on time, but wasting some resources ... set to zero, to accept slightly late
 #endif
 
@@ -83,10 +83,8 @@ void ThreadTimer::schedule() const
         // }
 #    if defined(HAS_STL_THREAD_MUTEX)
         std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeI));
-        // std::this_thread::yield();
 #    else
-        Sleep(static_cast<DWORD>(waitTimeI));
-        // Sleep(0); // == yield
+        Sleep(static_cast<DWORD>(waitTimeI));        // Sleep(0); // == yield
 #    endif
     }
 #else

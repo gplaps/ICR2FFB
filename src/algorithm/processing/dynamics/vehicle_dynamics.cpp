@@ -90,7 +90,7 @@ static GameConstants NASCAR(
 
 // Select constants based on game
 
-static GameConstants GetGameConstants(Game detectedGame)
+static GameConstants GetGameConstants(const Game& detectedGame)
 {
     if (detectedGame.Product() == INDYCAR_RACING_2)
     {
@@ -133,7 +133,7 @@ static int GetTurnDirection(double lf, double rf, double lr, double rr)
 
 bool CalculatedVehicleDynamics::Calculate(const RawTelemetry& current, RawTelemetry& /*previous*/, Game detectedGame)
 {
-    const GameConstants constants = GetGameConstants(detectedGame);
+    const GameConstants& constants = GetGameConstants(detectedGame);
 
     // Convert units
     const double speed_ms = current.speed_mph * MPH_TO_MS;

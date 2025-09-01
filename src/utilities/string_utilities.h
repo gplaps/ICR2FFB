@@ -124,8 +124,8 @@ inline std::wstring TrimWhiteSpaces(const std::wstring& input)
 {
     std::wstring       s     = input;
     const std::wstring query = L" \t\r\n";
-    size_t             pos   = s.find_first_not_of(query);
     // leading
+    size_t             pos   = s.find_first_not_of(query);
     if (pos != std::wstring::npos)
     {
         s = s.substr(pos);
@@ -136,13 +136,5 @@ inline std::wstring TrimWhiteSpaces(const std::wstring& input)
     {
         s = s.substr(0, pos + 1);
     }
-    // alternative:
-    // for(size_t i = 0; i < input.size();++i)
-    // {
-    //     if(!std::isspace(input[i]))
-    //     {
-    //         s+=input[i];
-    //     }
-    // }
     return s;
 }

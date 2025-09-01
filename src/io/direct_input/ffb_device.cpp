@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iostream>
 
-FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name, bool optional) :
+FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& nameOrIndex, bool optional) :
     diDevice(NULL),
     js(),
     constant(NULL),
@@ -19,7 +19,7 @@ FFBDevice::FFBDevice(const FFBConfig& config, const std::wstring& name, bool opt
     optionalDevice(optional),
     mInitialized(false)
 {
-    if (!InitDevice(name))
+    if (!InitDevice(nameOrIndex))
     {
         return;
     }
@@ -81,7 +81,6 @@ void FFBDevice::Update(double constantStrength, double damperStrength, double sp
     if (damper)
     {
         damperStrength = CheckOutOfRangeValue(damperStrength, L"damper");
-        CheckOutOfRangeValue(constantStrength, L"damper");
         const double damperDirectInput = damperStrength * DEFAULT_DINPUT_GAIN_DBL;
         damper->Update(static_cast<LONG>(damperDirectInput));
     }
