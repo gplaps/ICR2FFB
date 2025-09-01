@@ -49,14 +49,15 @@ static FFBConfig*    config       = NULL;
 
 static DWORD WINAPI ProcessLoop(LPVOID /*lpThreadParameter*/)
 {
+    double lastTime = TimeSinceStartInMs();
     // Loop which kicks stuff off and coordinates everything!
     while (!shouldExit)
     {
-        const double lastTime = TimeSinceStartInMs();
         if (timing->ffb.ready())
         {
             const double deltaTimeMs = TimeSinceStartInMs() - lastTime;
             ffbProcessor->Update(deltaTimeMs);
+            lastTime = TimeSinceStartInMs();
             timing->ffb.schedule();
         }
     }
