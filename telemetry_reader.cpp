@@ -90,20 +90,20 @@ constexpr GameOffsets Offsets_DOS = {
 
 // ICR2 Windy
 constexpr GameOffsets Offsets_WINDY = {
-     0x004E2161,
-     /* ???? */ // missing cars data
-     0x004F3854,
-     0x004F3856,
-     0x004F3850,
-     0x004F3852,
-     0x00528204,
-     0x00528206,
-     0x00528200,
-     0x00528202,
-     0x005281F8,
-     0x005281Fa,
-     0x005281F4,
-     0x005281F6,
+     0x4E2199, // signature
+     0x523784, // cars data
+     0x4F3854, // lf tire load
+     0x4F3856, // rf tire load
+     0x4F3850, // lr tire load
+     0x4F3852, // rr tire load
+     0x528204, // lf tire lat load
+     0x528206, // rf tire lat load
+     0x528200, // lr tire lat load
+     0x528202, // rr tire lat load
+     0x5281F8, // lr tire long load
+     0x5281FA, // rr tire long load
+     0x5281F4, // lr tire long load
+     0x5281F6 // rr tire long load
 };
 
 //N1 Offsets
@@ -157,7 +157,7 @@ std::wstring ToLower(const std::wstring& str) {
 const char* GetSignatureString() {
     std::wstring gameName = ToLower(targetGameVersion);
 
-    if (gameName == L"icr2dos" || gameName == L"icr2rend") {
+    if (gameName == L"icr2dos" || gameName == L"icr2rend" || gameName == L"icr2wnd") {
         return "license with Bob";
     }
     else if (gameName == L"nascar1") {
@@ -380,6 +380,9 @@ bool ReadTelemetryData(RawTelemetry& out) {
     else if (gameVersionLower == L"icr2rend") {
         offsets = &Offsets_REND;
     }
+    else if (gameVersionLower == L"icr2wnd") {
+        offsets = &Offsets_WINDY;
+    }
     else if (gameVersionLower == L"nascar1") {
         offsets = &Offsets_NASCAR;
     }
@@ -446,6 +449,21 @@ bool ReadTelemetryData(RawTelemetry& out) {
             }
             else {
                 LogMessage(L"[INFO] Correct game version detected and verified");
+            }
+        }
+
+        //game versions for Windy
+        else if (gameVersionLower == L"icr2wnd") {
+            keywords = { L"cart", L"racing" };
+            pid = FindProcessIdByWindow(keywords);
+            if (!pid) {
+                LogMessage(L"[ERROR] WINDY game window not found!");
+                LogMessage(L"[ERROR] Looking for window containing: 'cart' AND 'racing'");
+                LogMessage(L"[ERROR] Make sure ICR2 Windy is running!");
+                return false;
+            }
+            else {
+                LogMessage(L"[INFO] Found WINDY game window");
             }
         }
 

@@ -1,6 +1,5 @@
 // FFB for Papy Sims
 // I don't know what I am doing!
-// Beta 1.0.1 Don't forget to update this down below
 
 
 // File: main.cpp
@@ -302,7 +301,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"PAPY FFB Program Version 1.0.1 BETA") << L"\n";
+    std::wcout << padLine(L"PAPY FFB Program Version 1.0.2 BETA") << L"\n";
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
     std::wcout << padLine(L"Game: " + targetGameVersion) << L"\n";
@@ -337,6 +336,57 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     ss << L"Steering Lock Degree: " << std::setw(8) << displayData.steering_deg;
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
+
+    /*
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LF: " << std::setw(10) << displayData.tireload_lf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad RF: " << std::setw(10) << displayData.tireload_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LR: " << std::setw(10) << displayData.tireload_lr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad RR: " << std::setw(10) << displayData.tireload_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT LF: " << std::setw(10) << displayData.tiremaglat_lf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT RF: " << std::setw(10) << displayData.tiremaglat_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT LR: " << std::setw(10) << displayData.tiremaglat_lr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT RR: " << std::setw(10) << displayData.tiremaglat_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG LF: " << std::setw(10) << displayData.tiremaglong_lf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG RF: " << std::setw(10) << displayData.tiremaglong_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG LR: " << std::setw(10) << displayData.tiremaglong_lr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG RR: " << std::setw(10) << displayData.tiremaglong_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    */
 
     // Tire loads section
     std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
@@ -744,6 +794,16 @@ void ProcessLoop() {
 
 // Where it all happens
 int main() {
+
+    HMODULE vcruntime = LoadLibrary(L"vcruntime140.dll");
+    if (!vcruntime) {
+        MessageBox(NULL,
+            L"This application requires Visual C++ Redistributable 2015-2022.\n\n"
+            L"Please download it from Microsoft's website or check the included installer.",
+            L"Missing Runtime", MB_OK | MB_ICONERROR);
+        return 1;
+    }
+    FreeLibrary(vcruntime);
     
     if (!IsRunningAsAdmin()) {
         std::wcout << L"===============================================" << std::endl;
