@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.3)
 
 option(STATIC_RUNTIME "Tie runtime libraries to program, so it does not depend on dlls in path or beside it" TRUE) # pro: binary independent of dlls, so e.g. no MSVC runtime libraries prerequisites for users - con: if runtime library contains errors, program has to be recompiled instead of being able to replace the DLL
 if(STATIC_RUNTIME)
@@ -29,7 +29,7 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /wd4127 /wd4265 /wd4350 /wd4512 /wd4625 /wd4571) # tested on MSVC 2013
     target_compile_definitions(${PROJECT_NAME} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 else()
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(${PROJECT_NAME} PRIVATE -Weverything
             -Wno-padded
             -Wno-global-constructors
@@ -48,6 +48,7 @@ else()
     else()
         target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
     endif()
+	target_link_libraries(${PROJECT_NAME} PUBLIC "-static")
 endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE DIRECTINPUT_VERSION=0x0800 _WIN32_WINNT=0x501) # _WIN32_WINNT_WINXP
 target_link_libraries(${PROJECT_NAME} PRIVATE dinput8 winmm)
@@ -125,7 +126,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang") # MinGW Clang
         COMPONENT application)
     endif()
 elseif(MSVC)
-    string(FIND ${CMAKE_CXX_COMPILER} "x64" STR_POS)
+    string(FIND ${CMAKE_CXX_COMPILER} "amd64" STR_POS)
     if(${STR_POS} EQUAL -1)
         set(TARGET_PLATFORM "32bit")
     else()
