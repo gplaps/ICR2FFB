@@ -174,11 +174,7 @@ struct FindWindowData
     DWORD                     pid;
 };
 
-static BOOL
-#if (defined(__GNUC__) && !defined(__clang__)) || defined(_MSC_VER)
-    CALLBACK
-#endif
-    EnumerateWindowsCallback(HWND hwnd, LPARAM lParam)
+static BOOL CALLBACK EnumerateWindowsCallback(HWND hwnd, LPARAM lParam)
 {
     FindWindowData* wdata = reinterpret_cast<FindWindowData*>(lParam);
     TCHAR           title[256];
