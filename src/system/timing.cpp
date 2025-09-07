@@ -84,7 +84,7 @@ void ThreadTimer::schedule() const
 #    if defined(HAS_STL_THREAD_MUTEX)
         std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeI));
 #    else
-        Sleep(static_cast<DWORD>(waitTimeI));        // Sleep(0); // == yield
+        Sleep(static_cast<DWORD>(waitTimeI)); // Sleep(0); // == yield
 #    endif
     }
 #else

@@ -80,7 +80,7 @@ void FFBDevice::Update(double constantStrength, double damperStrength, double sp
     }
     if (damper)
     {
-        damperStrength = CheckOutOfRangeValue(damperStrength, L"damper");
+        damperStrength                 = CheckOutOfRangeValue(damperStrength, L"damper");
         const double damperDirectInput = damperStrength * DEFAULT_DINPUT_GAIN_DBL;
         damper->Update(static_cast<LONG>(damperDirectInput));
     }

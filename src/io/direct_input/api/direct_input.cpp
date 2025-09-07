@@ -176,9 +176,9 @@ std::vector<std::wstring> DirectInput::AvailableDevices() const
 IDirectInputDevice8* DirectInput::InitializeDevice(const std::wstring& productNameOrIndex)
 {
     if (productNameOrIndex.empty() || knownDevices.empty()) { return NULL; }
-    
+
     IDirectInputDevice8* device = NULL;
-    
+
     // by index
     try
     {

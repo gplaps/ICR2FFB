@@ -70,25 +70,24 @@ static const GameOffsets Offsets_ICR2_DOS4G_102 = {
 
 // ICR2 Windy
 static const GameOffsets Offsets_ICR2_WINDY = {
-    0x004E2161,
+    0x4E2199, // signature
 
-    0x004E0000,
-    /* ???? */ // missing cars data
+    0x523784, // cars data
 
-    0x004F3854,
-    0x004F3856,
-    0x004F3850,
-    0x004F3852,
+    0x4F3854, // lf tire load
+    0x4F3856, // rf tire load
+    0x4F3850, // lr tire load
+    0x4F3852, // rr tire load
 
-    0x00528204,
-    0x00528206,
-    0x00528200,
-    0x00528202,
+    0x528204, // lf tire lat load
+    0x528206, // rf tire lat load
+    0x528200, // lr tire lat load
+    0x528202, // rr tire lat load
 
-    0x005281F8,
-    0x005281Fa,
-    0x005281F4,
-    0x005281F6
+    0x5281F8, // lr tire long load
+    0x5281FA, // rr tire long load
+    0x5281F4, // lr tire long load
+    0x5281F6  // rr tire long load
 };
 
 // N1 Offsets - version unknown

@@ -113,6 +113,21 @@ static void CloseMutexes()
 // Where it all happens
 int main()
 {
+#if defined(_MSC_VER)
+    HMODULE vcruntime = LoadLibrary(STRINGIFY("vcruntime140.dll"));
+    if (!vcruntime)
+    {
+        MessageBox(
+            NULL,
+            STRINGIFY("This application requires Visual C++ Redistributable 2015-2022.\n\nPlease download it from Microsoft's website or check the included installer."),
+            STRINGIFY("Missing Runtime"),
+            MB_OK | MB_ICONERROR
+        );
+        return 1;
+    }
+    FreeLibrary(vcruntime);
+#endif
+
     if (!CheckAndRestartAsAdmin())
     {
         return 1;
@@ -137,17 +152,16 @@ int main()
     timing = new Timing(*config);
     ENSURE(timing);
     ffbProcessor = new FFBProcessor(*config);
-	if (ffbProcessor && !ffbProcessor->Valid())
-	{
-		std::wcout << L"Init failed. Exiting the program in 10 seconds.\n\nIs the input device detected?\n\nCheck the log file.\n";
-		const DWORD waitTimeMs = 10000;
-#    if defined(HAS_STL_THREAD_MUTEX)
-		std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeMs));
-#    else
-		Sleep(waitTimeMs);
-#    endif
-
-	}
+    if (ffbProcessor && !ffbProcessor->Valid())
+    {
+        std::wcout << L"Init failed. Exiting the program in 10 seconds.\n\nIs the input device detected?\n\nCheck the log file.\n";
+        const DWORD waitTimeMs = 10000;
+#if defined(HAS_STL_THREAD_MUTEX)
+        std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeMs));
+#else
+        Sleep(waitTimeMs);
+#endif
+    }
     ENSURE(ffbProcessor && ffbProcessor->Valid());
 
     // Start telemetry processing!

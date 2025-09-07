@@ -1,4 +1,4 @@
-# FFB for ICR2 – BETA 1.0.1
+# FFB for ICR2 – BETA 1.0.2
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
@@ -58,6 +58,9 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**1.0.2 (2025-09-05)** 
+- Now supports the Windows version (WINDY). Use 'ICR2WND' in the config. Big thanks to hatcher for help in figuring it out, this specifically supports the "second wind" version which you can find here: https://grandprix2.racing/file/misc/view/windy-gets-a-second-wind.
+
 **1.0.1 (2025-08-27)** 
 - Some large structural changes to begin adding support (hopefully) for additional games in the future
 - Changed Game definition in the ffb.ini. It now uses a simplified 'Game:' setting which can be set to 'ICR2DOS' for the Dos version or 'ICR2REND' for the rendition version. 

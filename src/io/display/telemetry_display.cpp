@@ -80,6 +80,57 @@ void TelemetryDisplay::DisplayTelemetry(const FFBConfig& config) const
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";
 
+    /*
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LF: " << std::setw(10) << displayData.tireload_lf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad RF: " << std::setw(10) << displayData.tireload_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LR: " << std::setw(10) << displayData.tireload_lr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad RR: " << std::setw(10) << displayData.tireload_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT LF: " << std::setw(10) << displayData.tiremaglat_lf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT RF: " << std::setw(10) << displayData.tiremaglat_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT LR: " << std::setw(10) << displayData.tiremaglat_lr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LAT RR: " << std::setw(10) << displayData.tiremaglat_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG LF: " << std::setw(10) << displayData.tiremaglong_lf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG RF: " << std::setw(10) << displayData.tiremaglong_rf;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG LR: " << std::setw(10) << displayData.tiremaglong_lr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    ss.str(L""); ss.clear();
+    ss << L"TireLoad LONG RR: " << std::setw(10) << displayData.tiremaglong_rr;
+    std::wcout << padLine(ss.str()) << L"\n";
+
+    */
+
     // Tire loads section
     std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
     std::wcout << padLine(L"") << L"\n";
