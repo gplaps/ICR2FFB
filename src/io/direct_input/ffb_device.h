@@ -8,7 +8,7 @@
 
 struct FFBDevice
 {
-    explicit FFBDevice(const FFBConfig& config, const std::wstring& name, bool optional = false);
+    explicit FFBDevice(const FFBConfig& config, const std::wstring& nameOrIndex, bool optional = false);
 #if defined(IS_CPP11_COMPLIANT)
     FFBDevice() = delete;
 #else
