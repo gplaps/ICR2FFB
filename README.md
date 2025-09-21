@@ -45,6 +45,16 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 ---
 
+## Build from source 
+
+0. Prerequisites: CMake and a version of MSVC compiler (2013 and 2019 tested) or MinGW GCC / MinGW Clang
+1. `mkdir build && cd build`
+2. MSVC/Default compiler: `cmake ..` or MinGW: `cmake -DCMAKE_TOOLCHAIN_FILE=cmake/MinGW.cmake -DTOOLCHAIN_PREFIX=<path-to-mingw>/bin/x86_64-w64-mingw32 -DCMAKE_INSTALL_PREFIX=<path-is-your-choice e.g. ../installed> ..`
+3. `cmake --build . -j4 --target install`
+4. Start program as usual
+
+---
+
 ## Version History
 
 ### Betas
@@ -57,6 +67,14 @@ To avoid sudden force application, **pause the game first** before restarting th
 - Redid FFB curve to give better center feeling
 - Output display will include game version now
 - Removed some Legacy code for calculations (slip/lateral load)
+
+**0.9.1 (2025-08-20)**
+- Code structure improved
+- Log file is opened and closed only once
+- Reduce change of deadlocks
+- Improve game detection by excluding certain keywords
+- Ini layout with sections
+- Write a defaulted ini file if non exists beside binary
 
 **0.9.0 (2025-08-18)** 
 - Added longitudinal tire forces (we think) to the constant force calculation. Now braking or accelerating values can have an effect on the force feedback. Although you cannot lock a tire in ICR2, you can still feel better now if you have a potential weight shift under braking! 
