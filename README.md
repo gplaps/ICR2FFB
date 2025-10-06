@@ -24,11 +24,9 @@ I’ve been using it without issues on my own hardware, but your mileage may var
 
 1. **Download** the app. Get the latest version from Releases
 2. **Open `ffb.ini`** and edit the following:
-    - `Device` — Must match your device name **exactly** as seen in Windows "Game Controllers".
-    - `Game` — Set to either `indycar` or `cart` depending on your executable name.
-    - `Version` — Set to `REND32A` for Rendition builds, or `DOS4G` for standard DOS builds.  
-      _(Windy not supported yet.)_
-    - `Force` — Controls force scale (default is 25%).  
+		a. "Device" - This should match exactly your device name as you see it in "Game Controllers" in windows
+		b. "Game" - this can either be 'ICR2REND' for rendition or 'ICR2DOS' for regular dos or 'ICR2WND' for Windy
+		c. "Force" - This controls the force scale, PLEASE BE CAREFUL I have tried to make my code to not send a massive input to the wheel but you can never be too careful
       **Be careful** — although the code limits input, always test with low force first.
 
 3. **Run the app**, then launch the game.  
