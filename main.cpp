@@ -67,6 +67,9 @@ const size_t maxLogLines = 1000;  // Show last 1000 log lines
 // I have 3 effects right now which all get calculated separately
 // I think probably all you need are these three to make good FFB
 
+bool enableTelemetryDisplay = false;
+bool enableLogFile = false;
+
 // Constant force is the most in depth
 // Damper & Spring just use speed to do things
 bool enableRateLimit = false;
@@ -93,6 +96,7 @@ struct TelemetryDisplayData {
     double dlat = 0.0;
     double dlong = 0.0;
     double rotation_deg = 0.0;
+    double rotation_raw = 0.0;
     double speed_mph = 0.0;
     double steering_deg = 0.0;
     double steering_raw = 0.0;
@@ -301,7 +305,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"PAPY FFB Program Version 1.0.2 BETA") << L"\n";
+    std::wcout << padLine(L"PAPY FFB Program Version 1.1.0 BETA") << L"\n";
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
     std::wcout << padLine(L"Game: " + targetGameVersion) << L"\n";
@@ -312,193 +316,200 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
     std::wcout << padLine(ss.str()) << L"\n";
     std::wcout << padLine(L"") << L"\n";  // Empty line
 
-    // Raw data section
-    std::wcout << padLine(L"      == Raw Data ==") << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+    if (enableTelemetryDisplay) {
+        // Raw data section
+        std::wcout << padLine(L"      == Raw Data ==") << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Latitude: " << std::setw(10) << displayData.dlat << L"   Longitude: " << std::setw(10) << displayData.dlong;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Latitude: " << std::setw(10) << displayData.dlat << L"   Longitude: " << std::setw(10) << displayData.dlong;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Centerline Rotation: " << std::setw(8) << displayData.rotation_deg << L" deg";
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Centerline Rotation: " << std::setw(8) << displayData.rotation_deg << L" deg";
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Speed: " << std::setw(8) << displayData.speed_mph << L" mph";
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Rotation Raw: " << std::setw(8) << displayData.rotation_raw << L" deg";
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Steering Raw: " << std::setw(10) << displayData.steering_raw;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Speed: " << std::setw(8) << displayData.speed_mph << L" mph";
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Steering Lock Degree: " << std::setw(8) << displayData.steering_deg;
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Steering Raw: " << std::setw(10) << displayData.steering_raw;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    /*
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LF: " << std::setw(10) << displayData.tireload_lf;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Steering Lock Degree: " << std::setw(8) << displayData.steering_deg;
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad RF: " << std::setw(10) << displayData.tireload_rf;
-    std::wcout << padLine(ss.str()) << L"\n";
+        /*
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LR: " << std::setw(10) << displayData.tireload_lr;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LF: " << std::setw(10) << displayData.tireload_lf;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad RR: " << std::setw(10) << displayData.tireload_rr;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad RF: " << std::setw(10) << displayData.tireload_rf;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LAT LF: " << std::setw(10) << displayData.tiremaglat_lf;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LR: " << std::setw(10) << displayData.tireload_lr;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LAT RF: " << std::setw(10) << displayData.tiremaglat_rf;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad RR: " << std::setw(10) << displayData.tireload_rr;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LAT LR: " << std::setw(10) << displayData.tiremaglat_lr;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LAT LF: " << std::setw(10) << displayData.tiremaglat_lf;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LAT RR: " << std::setw(10) << displayData.tiremaglat_rr;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LAT RF: " << std::setw(10) << displayData.tiremaglat_rf;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LONG LF: " << std::setw(10) << displayData.tiremaglong_lf;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LAT LR: " << std::setw(10) << displayData.tiremaglat_lr;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LONG RF: " << std::setw(10) << displayData.tiremaglong_rf;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LAT RR: " << std::setw(10) << displayData.tiremaglat_rr;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LONG LR: " << std::setw(10) << displayData.tiremaglong_lr;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LONG LF: " << std::setw(10) << displayData.tiremaglong_lf;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"TireLoad LONG RR: " << std::setw(10) << displayData.tiremaglong_rr;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LONG RF: " << std::setw(10) << displayData.tiremaglong_rf;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    */
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LONG LR: " << std::setw(10) << displayData.tiremaglong_lr;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    // Tire loads section
-    std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
-    std::wcout << padLine(L"") << L"\n";
-    std::wcout << padLine(L"      Left Front      Right Front") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"TireLoad LONG RR: " << std::setw(10) << displayData.tiremaglong_rr;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rf);
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        */
 
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        // Tire loads section
+        std::wcout << padLine(L"      == Tire Loads ==") << L"\n";
+        std::wcout << padLine(L"") << L"\n";
+        std::wcout << padLine(L"      Left Front      Right Front") << L"\n";
 
-    //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << L"latN: " << static_cast<int16_t>(displayData.vd_frontLeftForce_N) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.vd_frontRightForce_N);
-    //std::wcout << padLine(ss.str()) << L"\n";
-    //std::wcout << padLine(L"") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rf);
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    std::wcout << padLine(L"      Left Rear      Right Rear") << L"\n";
-    //ss.str(L""); ss.clear();
-    //ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
-    //std::wcout << padLine(ss.str()) << L"\n";
-    //std::wcout << padLine(L"") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lf) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rf);
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rr);
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
-    
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << std::setw(10) << L"latN: " << static_cast<int16_t>(displayData.vd_frontLeftForce_N) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.vd_frontRightForce_N);
+        //std::wcout << padLine(ss.str()) << L"\n";
+        //std::wcout << padLine(L"") << L"\n";
 
-    // Vehicle Dynamics section
-    std::wcout << padLine(L"      == Vehicle Dynamics ==") << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        //std::wcout << padLine(L"      Left Rear      Right Rear") << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << std::setw(10) << displayData.tireload_lr << L"           " << std::setw(10) << displayData.tireload_rr;
+        //std::wcout << padLine(ss.str()) << L"\n";
+        //std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Lateral G: " << std::setw(8) << displayData.vd_lateralG << L" G";
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rr);
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    //ss.str(L""); ss.clear();
-    //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/s²";
-    //std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    //ss.str(L""); ss.clear();
-    //ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
-    //std::wcout << padLine(ss.str()) << L"\n";
+        // Vehicle Dynamics section
+        std::wcout << padLine(L"      == Vehicle Dynamics ==") << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Direction Value: " << displayData.vd_directionVal;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Lateral G: " << std::setw(8) << displayData.vd_lateralG << L" G";
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Force Magnitude: " << g_currentFFBForce;
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << L"Yaw Rate: " << std::setw(8) << displayData.vd_yaw << L" deg/s²";
+        //std::wcout << padLine(ss.str()) << L"\n";
 
-    /*
-    // Tire Forces
-    std::wcout << padLine(L"      == Decoded Tire Forces ==") << L"\n";
-    std::wcout << padLine(L"") << L"\n";
-    std::wcout << padLine(L"Front Left      Front Right") << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
+        //std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.vd_force_lf << L"           " << std::setw(10) << displayData.vd_force_rf;
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Direction Value: " << displayData.vd_directionVal;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
-    ss.str(L""); ss.clear();
-    ss << std::setw(10) << displayData.vd_force_lr << L"           " << std::setw(10) << displayData.vd_force_rr;
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Force Magnitude: " << g_currentFFBForce;
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Front Total: " << std::setw(8) << displayData.vd_frontLateralForce << L"   Rear Total: " << std::setw(8) << displayData.vd_rearLateralForce;
-    std::wcout << padLine(ss.str()) << L"\n";
+        /*
+        // Tire Forces
+        std::wcout << padLine(L"      == Decoded Tire Forces ==") << L"\n";
+        std::wcout << padLine(L"") << L"\n";
+        std::wcout << padLine(L"Front Left      Front Right") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Total Force: " << std::setw(8) << displayData.vd_totalLateralForce << L"   Yaw Moment: " << std::setw(8) << displayData.vd_yawMoment;
-    std::wcout << padLine(ss.str()) << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << std::setw(10) << displayData.vd_force_lf << L"           " << std::setw(10) << displayData.vd_force_rf;
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    /*
-    // Legacy calculated data section
-    std::wcout << padLine(L"      == Legacy Calculated Data ==") << L"\n";
-    std::wcout << padLine(L"") << L"\n";
+        std::wcout << padLine(L"Rear Left       Rear Right") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << std::setw(10) << displayData.vd_force_lr << L"           " << std::setw(10) << displayData.vd_force_rr;
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Direction Value: " << displayData.directionVal;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Front Total: " << std::setw(8) << displayData.vd_frontLateralForce << L"   Rear Total: " << std::setw(8) << displayData.vd_rearLateralForce;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Slip: " << displayData.slipAngleDeg;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Total Force: " << std::setw(8) << displayData.vd_totalLateralForce << L"   Yaw Moment: " << std::setw(8) << displayData.vd_yawMoment;
+        std::wcout << padLine(ss.str()) << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Lateral G: " << displayData.lateralG << L" G";
-    std::wcout << padLine(ss.str()) << L"\n";
+        /*
+        // Legacy calculated data section
+        std::wcout << padLine(L"      == Legacy Calculated Data ==") << L"\n";
+        std::wcout << padLine(L"") << L"\n";
 
-    ss.str(L""); ss.clear();
-    ss << L"Force Magnitude: " << displayData.forceMagnitude;
-    std::wcout << padLine(ss.str()) << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Direction Value: " << displayData.directionVal;
+        std::wcout << padLine(ss.str()) << L"\n";
 
-    */
-    std::wcout << padLine(L"----------------------------------------") << L"\n";
-    std::wcout << padLine(L"Log:") << L"\n";
+        ss.str(L""); ss.clear();
+        ss << L"Slip: " << displayData.slipAngleDeg;
+        std::wcout << padLine(ss.str()) << L"\n";
+
+        ss.str(L""); ss.clear();
+        ss << L"Lateral G: " << displayData.lateralG << L" G";
+        std::wcout << padLine(ss.str()) << L"\n";
+
+        ss.str(L""); ss.clear();
+        ss << L"Force Magnitude: " << displayData.forceMagnitude;
+        std::wcout << padLine(ss.str()) << L"\n";
+
+        */
+        std::wcout << padLine(L"----------------------------------------") << L"\n";
+        std::wcout << padLine(L"Log:") << L"\n";
+    }
 }
 
 // Logging stuff - Keeps messages for future debugging!
@@ -512,9 +523,11 @@ void LogMessage(const std::wstring& msg) {
         logLines.pop_front();
 
     // Append to log.txt
-    std::wofstream logFile("log.txt", std::ios::app);
-    if (logFile.is_open()) {
-        logFile << msg << std::endl;
+    if (enableLogFile) {
+        std::wofstream logFile("ffblog.txt", std::ios::app);
+        if (logFile.is_open()) {
+            logFile << msg << std::endl;
+        }
     }
 }
 
@@ -739,6 +752,7 @@ void ProcessLoop() {
                     displayData.dlat = current.dlat;
                     displayData.dlong = current.dlong;
                     displayData.rotation_deg = current.rotation_deg;
+                    displayData.rotation_raw = current.rotation_raw;
                     displayData.speed_mph = current.speed_mph;
                     displayData.steering_deg = current.steering_deg;
                     displayData.steering_raw = current.steering_raw;
@@ -924,6 +938,10 @@ int main() {
     else {
         LogMessage(L"[INFO] Device acquired successfully");
     }
+
+    enableTelemetryDisplay = (targetTelemetryEnabled == L"true" || targetTelemetryEnabled == L"True");
+    enableLogFile = (targetLogEnabled == L"true" || targetLogEnabled == L"True");
+
 
     // Parse FFB effect toggles from config <- should all ffb types be enabled? Allows user to select if they dont like damper for instance
     // Would be nice to add a % per effect in the future

@@ -110,24 +110,24 @@ constexpr GameOffsets Offsets_WINDY = {
 constexpr GameOffsets Offsets_NASCAR = {
     0xAEA8C,
     0xEFED4,
-    0xCEF70,
-    0xCEF70,
-    0xCEF70,
-    0xCEF70,
-    0x9F6F8,
-    0x9F6FA,
-    0x9f780,
-    0x9F6F6,
-    0xF0970,
-    0xF0970,
-    0xF0970,
-    0xF0970
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x9D6F8,
+    0x9D6FA,
+    0x9D6F4,
+    0x9D6F6,
+    0x9D6EC,
+    0x9D6EE,
+    0x9D6E8,
+    0x9D6EA
 };
 
 //N2 Offsets
 constexpr GameOffsets Offsets_NASCAR2 = {
     0xD7125, // "NASCAR V2.03"
-    0xAD440,
+    0x1230D0,
     0xF39FA,
     0xF39FC,
     0xF39F6,
@@ -140,6 +140,24 @@ constexpr GameOffsets Offsets_NASCAR2 = {
     0xF3B04,
     0xF3AFE,
     0xF3B00
+};
+
+//N99  Offsets
+constexpr GameOffsets Offsets_N993DFX = {
+    0x0, // "modulebase?"
+    0x111CB0,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+    0x10AA14,
+    0x10AA16,
+    0x10AA10,
+    0x10AA12,
+    0x10AC44,
+    0x10AC46,
+    0x0,
+    0x0,
 };
 
 // Provides standardized 'point' to reference for memory
@@ -165,6 +183,9 @@ const char* GetSignatureString() {
     }
     else if (gameName == L"nascar2") {
         return "NASCAR V2.03";
+    }
+    else if (gameName == L"n993dfx") {
+        return "";
     }
     else {
         // Default fallback
@@ -389,6 +410,9 @@ bool ReadTelemetryData(RawTelemetry& out) {
     else if (gameVersionLower == L"nascar2") {
         offsets = &Offsets_NASCAR2;
     }
+    else if (gameVersionLower == L"n993dfx") {
+        offsets = &Offsets_N993DFX;
+    }
     else {
         LogMessage(L"[ERROR] Unknown game version: " + targetGameVersion);
         return false;
@@ -396,6 +420,8 @@ bool ReadTelemetryData(RawTelemetry& out) {
 
     //LogMessage(L"[DEBUG] Offsets pointer: " + std::to_wstring((uintptr_t)offsets));
     //LogMessage(L"[DEBUG] Direct offset read: sig=0x" + std::to_wstring(offsets->signatureOffset) + L" car=0x" + std::to_wstring(offsets->cars_data_offset));
+
+    uintptr_t exeBase = 0;
 
     if (!hProcess) {
         if (targetGameVersion.empty()) {
@@ -407,112 +433,193 @@ bool ReadTelemetryData(RawTelemetry& out) {
         std::vector<std::wstring> keywords;
         DWORD pid = 0;
 
-        //game versions for icr2
-        if (gameVersionLower == L"icr2dos" || gameVersionLower == L"icr2rend") {
-            // Try indycar first
-            keywords = { L"dosbox", L"indycar" };
+        // Check if custom window keywords are provided
+        if (!targetWindowKeywords.empty()) {
+            // Parse custom keywords (comma-separated)
+            LogMessage(L"[INFO] Using custom window keywords: " + targetWindowKeywords);
+
+            std::wstring keyword;
+            std::wstringstream ss(targetWindowKeywords);
+
+            while (std::getline(ss, keyword, L',')) {
+                // Trim whitespace
+                keyword.erase(0, keyword.find_first_not_of(L" \t"));
+                keyword.erase(keyword.find_last_not_of(L" \t") + 1);
+
+                if (!keyword.empty()) {
+                    keywords.push_back(keyword);
+                }
+            }
+
+            if (keywords.empty()) {
+                LogMessage(L"[ERROR] Custom window keywords provided but none were valid");
+                return false;
+            }
+
             pid = FindProcessIdByWindow(keywords);
 
             if (!pid) {
-                // Fallback to cart keywords
-                keywords = { L"dosbox", L"cart" };
+                LogMessage(L"[ERROR] Game window not found using custom keywords!");
+                std::wstring keywordList = L"Looking for window containing: ";
+                for (size_t i = 0; i < keywords.size(); i++) {
+                    keywordList += L"'" + keywords[i] + L"'";
+                    if (i < keywords.size() - 1) keywordList += L" AND ";
+                }
+                LogMessage(L"[ERROR] " + keywordList);
+                return false;
+            }
+
+            LogMessage(L"[INFO] Found game window using custom keywords");
+        }
+        else {
+            // Use default keywords based on game version
+            if (gameVersionLower == L"icr2dos" || gameVersionLower == L"icr2rend") {
+                // Try indycar first
+                keywords = { L"dosbox", L"indycar" };
                 pid = FindProcessIdByWindow(keywords);
 
                 if (!pid) {
-                    LogMessage(L"[ERROR] Game window not found!");
-                    LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND ('indycar' OR 'cart')");
-                    LogMessage(L"[ERROR] Make sure " + targetGameVersion + L" is running in DOSBox");
+                    // Fallback to cart keywords
+                    keywords = { L"dosbox", L"cart" };
+                    pid = FindProcessIdByWindow(keywords);
+
+                    if (!pid) {
+                        LogMessage(L"[ERROR] Game window not found!");
+                        LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND ('indycar' OR 'cart')");
+                        LogMessage(L"[ERROR] Make sure " + targetGameVersion + L" is running in DOSBox");
+                        return false;
+                    }
+                    else {
+                        LogMessage(L"[INFO] Found game window with 'cart' keywords");
+                    }
+                }
+                else {
+                    LogMessage(L"[INFO] Found game window with 'indycar' keywords");
+                }
+
+                // Version verification code
+                bool windowHasRendition = CheckWindowForKeyword(pid, L"rendition");
+
+                if (gameVersionLower == L"icr2dos" && windowHasRendition) {
+                    LogMessage(L"[ERROR] Wrong game version detected!");
+                    LogMessage(L"[ERROR] Found Rendition version but config is set to 'ICR2DOS'");
+                    LogMessage(L"[ERROR] Please change your INI file to use 'ICR2REND' instead");
+                    return false;
+                }
+                else if (gameVersionLower == L"icr2rend" && !windowHasRendition) {
+                    LogMessage(L"[ERROR] Wrong game version detected!");
+                    LogMessage(L"[ERROR] Found DOS version but config is set to 'ICR2REND'");
+                    LogMessage(L"[ERROR] Please change your INI file to use 'ICR2DOS' instead");
                     return false;
                 }
                 else {
-                    LogMessage(L"[INFO] Found game window with 'cart' keywords");
+                    LogMessage(L"[INFO] Correct game version detected and verified");
                 }
             }
-            else {
-                LogMessage(L"[INFO] Found game window with 'indycar' keywords");
+            else if (gameVersionLower == L"icr2wnd") {
+                keywords = { L"cart", L"racing" };
+                pid = FindProcessIdByWindow(keywords);
+                if (!pid) {
+                    LogMessage(L"[ERROR] WINDY game window not found!");
+                    LogMessage(L"[ERROR] Looking for window containing: 'cart' AND 'racing'");
+                    LogMessage(L"[ERROR] Make sure ICR2 Windy is running!");
+                    return false;
+                }
+                else {
+                    LogMessage(L"[INFO] Found WINDY game window");
+                }
             }
-
-            // Version verification code (your existing logic)
-            bool windowHasRendition = CheckWindowForKeyword(pid, L"rendition");
-
-            if (gameVersionLower == L"icr2dos" && windowHasRendition) {
-                LogMessage(L"[ERROR] Wrong game version detected!");
-                LogMessage(L"[ERROR] Found Rendition version but config is set to 'ICR2DOS'");
-                LogMessage(L"[ERROR] Please change your INI file to use 'ICR2REND' instead");
-                return false;
+            else if (gameVersionLower == L"nascar1") {
+                keywords = { L"dosbox", L"nascar" };
+                pid = FindProcessIdByWindow(keywords);
+                if (!pid) {
+                    LogMessage(L"[ERROR] NASCAR game window not found!");
+                    LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND 'nascar'");
+                    LogMessage(L"[ERROR] Make sure NASCAR Racing is running in DOSBox");
+                    return false;
+                }
+                else {
+                    LogMessage(L"[INFO] Found NASCAR game window");
+                }
             }
-            else if (gameVersionLower == L"icr2rend" && !windowHasRendition) {
-                LogMessage(L"[ERROR] Wrong game version detected!");
-                LogMessage(L"[ERROR] Found DOS version but config is set to 'ICR2REND'");
-                LogMessage(L"[ERROR] Please change your INI file to use 'ICR2DOS' instead");
-                return false;
+            else if (gameVersionLower == L"nascar2") {
+                keywords = { L"dosbox", L"nascar2" };
+                pid = FindProcessIdByWindow(keywords);
+                if (!pid) {
+                    LogMessage(L"[ERROR] NASCAR 2 game window not found!");
+                    LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND 'nascar2'");
+                    LogMessage(L"[ERROR] Make sure NASCAR Racing 2 is running in DOSBox");
+                    return false;
+                }
+                else {
+                    LogMessage(L"[INFO] Found NASCAR 2 game window");
+                }
             }
-            else {
-                LogMessage(L"[INFO] Correct game version detected and verified");
-            }
-        }
-
-        //game versions for Windy
-        else if (gameVersionLower == L"icr2wnd") {
-            keywords = { L"cart", L"racing" };
-            pid = FindProcessIdByWindow(keywords);
-            if (!pid) {
-                LogMessage(L"[ERROR] WINDY game window not found!");
-                LogMessage(L"[ERROR] Looking for window containing: 'cart' AND 'racing'");
-                LogMessage(L"[ERROR] Make sure ICR2 Windy is running!");
-                return false;
-            }
-            else {
-                LogMessage(L"[INFO] Found WINDY game window");
-            }
-        }
-
-        //game versions for N1
-        else if (gameVersionLower == L"nascar1") {
-            keywords = { L"dosbox", L"nascar" };
-            pid = FindProcessIdByWindow(keywords);
-            if (!pid) {
-                LogMessage(L"[ERROR] NASCAR game window not found!");
-                LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND 'nascar'");
-                LogMessage(L"[ERROR] Make sure NASCAR Racing is running in DOSBox");
-                return false;
-            }
-            else {
-                LogMessage(L"[INFO] Found NASCAR game window");
-            }
-        }
-
-        //game versions for N2
-        else if (gameVersionLower == L"nascar2") {
-            keywords = { L"dosbox", L"nascar2" };
-            pid = FindProcessIdByWindow(keywords);
-            if (!pid) {
-                LogMessage(L"[ERROR] NASCAR 2 game window not found!");
-                LogMessage(L"[ERROR] Looking for window containing: 'dosbox' AND 'nascar2'");
-                LogMessage(L"[ERROR] Make sure NASCAR Racing 2 is running in DOSBox");
-                return false;
-            }
-            else {
-                LogMessage(L"[INFO] Found NASCAR 2 game window");
+            else if (gameVersionLower == L"n993dfx") {
+                keywords = { L"nascar", L"1999" };
+                pid = FindProcessIdByWindow(keywords);
+                if (!pid) {
+                    LogMessage(L"[ERROR] NASCAR 1999 3DFX game window not found!");
+                    LogMessage(L"[ERROR] Looking for window containing NASCAR 1999 3DFX");
+                    LogMessage(L"[ERROR] Make sure NASCAR Racing 1999 Edition 3DFX is running!");
+                    return false;
+                }
+                else {
+                    LogMessage(L"[INFO] Found NASCAR 1999 3DFX game window");
+                }
             }
         }
 
         //LogMessage(L"[DEBUG] Raw targetGameVersion: '" + targetGameVersion + L"'");
         //LogMessage(L"[DEBUG] gameVersionLower: '" + gameVersionLower + L"'");
 
-        hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
-        if (!hProcess) return false;
+        //hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
+        //if (!hProcess) return false;
 
-        //SearchForMaxwellHouseCoffee(hProcess);
-
-        uintptr_t sigAddr = ScanSignature(hProcess);
-        if (!sigAddr) {
-            CloseHandle(hProcess);
-            hProcess = nullptr;
+        hProcess = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION, FALSE, pid);
+        if (!hProcess) {
+            LogMessage(L"[ERROR] Failed to open process. GetLastError(): " + std::to_wstring(GetLastError()));
             return false;
         }
 
-        uintptr_t exeBase = sigAddr - offsets->signatureOffset;
+        // Handle different game types
+        if (gameVersionLower == L"n993dfx") {
+            // Native Windows game - use fixed module base
+            LogMessage(L"[DEBUG] Getting module base for 32-bit game...");
+            exeBase = 0x00400000;
+
+            // Verify it's readable
+            MEMORY_BASIC_INFORMATION mbi;
+            if (VirtualQueryEx(hProcess, (LPCVOID)exeBase, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+                if (mbi.State == MEM_COMMIT) {
+                    LogMessage(L"[INIT] Native Windows game - Module base: 0x" + std::to_wstring(exeBase));
+                }
+                else {
+                    LogMessage(L"[ERROR] Module base not valid memory. State: " + std::to_wstring(mbi.State));
+                    CloseHandle(hProcess);
+                    hProcess = nullptr;
+                    return false;
+                }
+            }
+            else {
+                LogMessage(L"[ERROR] Cannot query memory at 0x00400000. GetLastError(): " + std::to_wstring(GetLastError()));
+                CloseHandle(hProcess);
+                hProcess = nullptr;
+                return false;
+            }
+        }
+        else {
+            // DOSBox games - use signature scanning
+            uintptr_t sigAddr = ScanSignature(hProcess);
+            if (!sigAddr) {
+                CloseHandle(hProcess);
+                hProcess = nullptr;
+                return false;
+            }
+            exeBase = sigAddr - offsets->signatureOffset;
+        }
+
+        // Calculate all addresses (works for both types)
         carsDataAddr = exeBase + offsets->cars_data_offset;
         tireLoadAddrLF = exeBase + offsets->tire_data_offsetfl;
         tireLoadAddrFR = exeBase + offsets->tire_data_offsetfr;
@@ -527,84 +634,10 @@ bool ReadTelemetryData(RawTelemetry& out) {
         tireMagLongAddrLR = exeBase + offsets->tire_maglong_offsetrl;
         tireMagLongAddrRR = exeBase + offsets->tire_maglong_offsetrr;
 
-        /*
-        if (gameVersionLower == L"icr2dos" || gameVersionLower == L"icr2rend") {
-
-            LogMessage(L"=== ICR2 MEMORY ANALYSIS ===");
-
-            // Log the found signature address
-            LogMessage(L"[ICR2] Signature found at: 0x" + std::to_wstring(sigAddr));
-
-            // Log the signature offset being used
-            LogMessage(L"[ICR2] Using signature offset: 0x" + std::to_wstring(offsets->signatureOffset));
-
-            // Calculate and log the EXE base
-            uintptr_t calculatedExeBase = sigAddr - offsets->signatureOffset;
-            LogMessage(L"[ICR2] Calculated EXE base: 0x" + std::to_wstring(calculatedExeBase));
-
-            // Known values from your analysis
-            uintptr_t knownFileOffset = 0xF21CC;  // From HxD
-            uintptr_t knownCheatEngineAddr = 0x1054BD98;  // From Cheat Engine
-            uintptr_t knownSignatureOffset = 0xA0D78;  // From working code
-
-            LogMessage(L"[ICR2] Known file offset: 0x" + std::to_wstring(knownFileOffset));
-            LogMessage(L"[ICR2] Known Cheat Engine addr: 0x" + std::to_wstring(knownCheatEngineAddr));
-            LogMessage(L"[ICR2] Known signature offset: 0x" + std::to_wstring(knownSignatureOffset));
-
-            // Calculate various relationships
-            uintptr_t memoryToFileOffset = sigAddr - knownFileOffset;
-            LogMessage(L"[ICR2] Memory to file offset diff: 0x" + std::to_wstring(memoryToFileOffset));
-
-            uintptr_t baseFromFile = knownCheatEngineAddr - knownFileOffset;
-            LogMessage(L"[ICR2] Base calculated from file: 0x" + std::to_wstring(baseFromFile));
-
-            uintptr_t baseFromSignature = knownCheatEngineAddr - knownSignatureOffset;
-            LogMessage(L"[ICR2] Base calculated from signature: 0x" + std::to_wstring(baseFromSignature));
-
-            // Test if our current calculation matches the working method
-            bool calculationMatches = (calculatedExeBase == baseFromSignature);
-            LogMessage(L"[ICR2] Current calculation matches working method: " + std::wstring(calculationMatches ? L"YES" : L"NO"));
-
-            // Show the actual working car data address
-            uintptr_t workingCarDataAddr = calculatedExeBase + offsets->cars_data_offset;
-            LogMessage(L"[ICR2] Working car data address: 0x" + std::to_wstring(workingCarDataAddr));
-
-            // Calculate what the NASCAR signature offset should be using the same relationship
-            uintptr_t nascarFileOffset = 0xF1C69;  // NASCAR's file offset from HxD
-            uintptr_t nascarMemoryAddr = 0x10916635;  // NASCAR's memory address from your search
-
-            // Method 1: Use the same memory-to-file relationship
-            uintptr_t nascarSigOffset1 = nascarMemoryAddr - nascarFileOffset;
-            LogMessage(L"[NASCAR CALC 1] Using memory-file diff: 0x" + std::to_wstring(nascarSigOffset1));
-
-            // Method 2: Use the same base calculation method
-            uintptr_t icr2BaseOffset = baseFromSignature - knownCheatEngineAddr;
-            uintptr_t nascarSigOffset2 = nascarMemoryAddr + icr2BaseOffset;
-            LogMessage(L"[NASCAR CALC 2] Using base offset method: 0x" + std::to_wstring(nascarSigOffset2));
-
-            // Method 3: Direct signature offset calculation
-            uintptr_t nascarSigOffset3 = nascarMemoryAddr - (calculatedExeBase - sigAddr + nascarMemoryAddr);
-            LogMessage(L"[NASCAR CALC 3] Direct calculation: Need to determine correct base");
-
-            LogMessage(L"=== END ICR2 ANALYSIS ===");
-          */
-          //}
-
-         // LogMessage(L"[DEBUG] Selected signatureOffset: 0x" + std::to_wstring(offsets->signatureOffset));
-         // LogMessage(L"[DEBUG] Selected cars_data_offset: 0x" + std::to_wstring(offsets->cars_data_offset));
-         // LogMessage(L"[DEBUG] Raw calculation: 0x" + std::to_wstring(sigAddr) + L" - 0x" + std::to_wstring(offsets->signatureOffset) + L" + 0x" + std::to_wstring(offsets->cars_data_offset));
-
-          //temp debug
-         // LogMessage(L"[DEBUG] Signature found at: 0x" + std::to_wstring(sigAddr));
-         // LogMessage(L"[DEBUG] Calculated EXE base: 0x" + std::to_wstring(exeBase));
-         // LogMessage(L"[DEBUG] Calculated car data addr: 0x" + std::to_wstring(carsDataAddr));
-         // LogMessage(L"[DEBUG] Expected car data addr: 0x1058474C");
-
         LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(exeBase) +
-            L" | cars_data @ 0x" + std::to_wstring(carsDataAddr) + 
+            L" | cars_data @ 0x" + std::to_wstring(carsDataAddr) +
             L" | rf_mag_lat @ 0x" + std::to_wstring(tireMagLatAddrFR));
     }
-
 
     int32_t car0_data[12] = { 0 };
     if (!ReadProcessMemory(hProcess, (LPCVOID)carsDataAddr, &car0_data, sizeof(car0_data), &bytesRead)) {
@@ -619,6 +652,7 @@ bool ReadTelemetryData(RawTelemetry& out) {
     out.dlong = static_cast<double>(car0_data[4]);
     out.dlat = static_cast<double>(car0_data[5]);
     out.rotation_deg = static_cast<double>(car0_data[7]) / 2147483648.0 * 180.0;
+    out.rotation_raw = static_cast<double>(car0_data[7]);
     out.speed_mph = static_cast<double>(car0_data[8]) / 75.0;
     out.steering_deg = static_cast<double>(car0_data[10]) / 11600000.0;
     out.steering_raw = static_cast<double>(car0_data[10]);

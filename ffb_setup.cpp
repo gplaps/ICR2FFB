@@ -34,7 +34,9 @@ std::wstring targetWeightScale;
 std::wstring targetDamperEnabled;
 std::wstring targetDamperScale;
 std::wstring targetSpringEnabled;
-
+std::wstring targetTelemetryEnabled;
+std::wstring targetLogEnabled;
+std::wstring targetWindowKeywords;
 
 
 IDirectInputDevice8* matchedDevice = nullptr;
@@ -168,8 +170,12 @@ bool LoadFFBSettings(const std::wstring& filename) {
             targetDamperScale = line.substr(14);
         else if (line.rfind(L"Spring: ", 0) == 0)
             targetSpringEnabled = line.substr(8);
-
-
+        else if (line.rfind(L"Telemetry: ", 0) == 0)
+            targetTelemetryEnabled = line.substr(11);
+        else if (line.rfind(L"Log: ", 0) == 0)
+            targetLogEnabled = line.substr(5);
+        else if (line.rfind(L"Window: ", 0) == 0)
+            targetWindowKeywords = line.substr(8);
     }
     return !targetDeviceName.empty();
 }

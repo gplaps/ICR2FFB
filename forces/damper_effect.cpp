@@ -2,6 +2,8 @@
 #include <dinput.h>
 #include <iostream>
 #include <algorithm>
+#include <sstream>
+
 
 
 // Create damper to make it feel like the steering is not powered, mostly for pitlane, maybe hairpin use
@@ -37,8 +39,11 @@ void UpdateDamperEffect(double speedMph, IDirectInputEffect* effect, double mast
     eff.lpvTypeSpecificParams = &condition;
 
     HRESULT hr = effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
+
     if (FAILED(hr)) {
-        std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << std::endl;
+        std::wstringstream ss;
+        ss << L"Failed to update damper effect: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
     if (!effect) return;
 }

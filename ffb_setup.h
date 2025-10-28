@@ -23,6 +23,9 @@ extern std::wstring targetWeightScale;
 extern std::wstring targetDamperEnabled;
 extern std::wstring targetDamperScale;
 extern std::wstring targetSpringEnabled;
+extern std::wstring targetTelemetryEnabled;
+extern std::wstring targetLogEnabled;
+extern std::wstring targetWindowKeywords;
 
 
 

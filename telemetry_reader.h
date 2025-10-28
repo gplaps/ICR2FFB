@@ -6,6 +6,7 @@ struct RawTelemetry {
     double dlat;
     double dlong;
     double rotation_deg;
+    double rotation_raw;
     double speed_mph;
     double steering_deg;
     double steering_raw;
