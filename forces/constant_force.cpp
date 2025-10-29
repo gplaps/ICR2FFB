@@ -664,6 +664,6 @@ void ApplyConstantForceEffect(const RawTelemetry& current,
     HRESULT hr = constantForceEffect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);  // ← Removed | DIEP_DIRECTION
 
     if (FAILED(hr)) {
-        std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << std::endl;
+        LogMessage(L"Constant force SetParameters failed: 0x");
     }
 }

@@ -1,4 +1,4 @@
-# FFB for ICR2 (and other Papy sims) – BETA 1.1.0
+# FFB for ICR2 (and other Papy sims) – BETA 1.1.1
 **USE AT YOUR OWN RISK**
 
 This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus (and now some of their NASCAR games too!).
@@ -32,8 +32,7 @@ I’ve been using it without issues on my own hardware, but your mileage may var
    - 'NASCAR1' for NASCAR Racing 1 US version 1.21
    - 'NASCAR2' for NASCAR Racing 2 DOS version 2.03
    - 'N993DFX' for NASCAR Racing 1999 Edition 3DFX for Windows
- - "Force" - This controls the force scale, PLEASE BE CAREFUL I have tried to make my code to not send a massive input to the wheel but you can never be too careful
-      **Be careful** — although the code limits input, always test with low force first.
+ - "Force" - This controls the force scale, **PLEASE BE CAREFUL** I have tried to make my code to not send a massive input to the wheel but you can never be too careful
 
 4. **Run the app**, then launch the game.  
    After a moment, the window should begin showing telemetry.
@@ -44,7 +43,7 @@ I’ve been using it without issues on my own hardware, but your mileage may var
 
 ## Changing Settings
 
-You can close the app, edit `ffb.ini`, and reopen it while ICR2 is still running.  
+You can close the app, edit `ffb.ini`, and reopen it while the game is still running.  
 To avoid sudden force application, **pause the game first** before restarting the app.
 
 ---
@@ -52,6 +51,11 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**1.1.1 (2025-10-29)** 
+- added retry logic for finding n1999 in case the app is started before the game
+- fixed errors corrupting the display for constant force effect
+- cleaned up display parameters to fit on one window without having to use the 'resize' setting for compatibility
+
 **1.1.0 (2025-10-28)** 
 - Now supports NASCAR!  NASCAR Racing 1, NASCAR Racing 2 and NASCAR Racing 1999 Edition (3DFX) are all supported!
 - FFB with NASCAR1 and NASCAR2 are both supported with the dos versions (1.21 for N1 and 2.03 for N2). FFB feels pretty great on N2, but N1 might need some more work to get feeling ok!

@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <sstream>
 #include <cwctype>
+#include <thread>
+#include <chrono> 
 
 #include "telemetry_reader.h"
 #include "ffb_setup.h"
@@ -158,6 +160,24 @@ constexpr GameOffsets Offsets_N993DFX = {
     0x10AC46,
     0x0,
     0x0,
+};
+
+//N99Rend Offsets
+constexpr GameOffsets Offsets_N99REND = {
+    0xD7125, // "NASCAR V2.03"
+    0x1230D0,
+    0xF39FA,
+    0xF39FC,
+    0xF39F6,
+    0xF39F8,
+    0xF3B0E,
+    0xF3B10,
+    0xF3B0A,
+    0xF3B0C,
+    0xF3B02,
+    0xF3B04,
+    0xF3AFE,
+    0xF3B00
 };
 
 // Provides standardized 'point' to reference for memory
@@ -588,21 +608,46 @@ bool ReadTelemetryData(RawTelemetry& out) {
             LogMessage(L"[DEBUG] Getting module base for 32-bit game...");
             exeBase = 0x00400000;
 
-            // Verify it's readable
+            // Wait for memory to be committed (game fully loaded)
             MEMORY_BASIC_INFORMATION mbi;
-            if (VirtualQueryEx(hProcess, (LPCVOID)exeBase, &mbi, sizeof(mbi)) == sizeof(mbi)) {
-                if (mbi.State == MEM_COMMIT) {
-                    LogMessage(L"[INIT] Native Windows game - Module base: 0x" + std::to_wstring(exeBase));
+            int retryCount = 0;
+            const int maxRetries = 50;  // 5 seconds max wait
+            bool memoryReady = false;
+
+            while (retryCount < maxRetries) {
+                if (VirtualQueryEx(hProcess, (LPCVOID)exeBase, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+                    if (mbi.State == MEM_COMMIT) {
+                        LogMessage(L"[INIT] Native Windows game - Module base: 0x" + std::to_wstring(exeBase));
+                        memoryReady = true;
+                        break;  // Memory is ready!
+                    }
+                    else if (mbi.State == MEM_RESERVE) {
+                        // Memory reserved but not committed yet - game still loading
+                        if (retryCount == 0) {
+                            LogMessage(L"[INFO] Waiting for game to fully load...");
+                        }
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        retryCount++;
+                        continue;
+                    }
+                    else {
+                        LogMessage(L"[ERROR] Module base not valid memory. State: " + std::to_wstring(mbi.State));
+                        CloseHandle(hProcess);
+                        hProcess = nullptr;
+                        return false;
+                    }
                 }
                 else {
-                    LogMessage(L"[ERROR] Module base not valid memory. State: " + std::to_wstring(mbi.State));
+                    LogMessage(L"[ERROR] Cannot query memory at 0x00400000. GetLastError(): " + std::to_wstring(GetLastError()));
                     CloseHandle(hProcess);
                     hProcess = nullptr;
                     return false;
                 }
             }
-            else {
-                LogMessage(L"[ERROR] Cannot query memory at 0x00400000. GetLastError(): " + std::to_wstring(GetLastError()));
+
+            if (!memoryReady) {
+                LogMessage(L"[ERROR] Timeout waiting for game to load (waited 5 seconds)");
+                LogMessage(L"[ERROR] Please make sure the game is fully loaded to the main menu before starting this application");
                 CloseHandle(hProcess);
                 hProcess = nullptr;
                 return false;

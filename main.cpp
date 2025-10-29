@@ -305,7 +305,7 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         };
 
     // Header section
-    std::wcout << padLine(L"PAPY FFB Program Version 1.1.0 BETA") << L"\n";
+    std::wcout << padLine(L"PAPY FFB Program Version 1.1.1 BETA") << L"\n";
     std::wcout << padLine(L"") << L"\n";
     std::wcout << padLine(L"Connected Device: " + targetDeviceName) << L"\n";
     std::wcout << padLine(L"Game: " + targetGameVersion) << L"\n";
@@ -325,21 +325,21 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         ss << L"Latitude: " << std::setw(10) << displayData.dlat << L"   Longitude: " << std::setw(10) << displayData.dlong;
         std::wcout << padLine(ss.str()) << L"\n";
 
-        ss.str(L""); ss.clear();
-        ss << L"Centerline Rotation: " << std::setw(8) << displayData.rotation_deg << L" deg";
-        std::wcout << padLine(ss.str()) << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << L"Centerline Rotation: " << std::setw(8) << displayData.rotation_deg << L" deg";
+        //std::wcout << padLine(ss.str()) << L"\n";
 
-        ss.str(L""); ss.clear();
-        ss << L"Rotation Raw: " << std::setw(8) << displayData.rotation_raw << L" deg";
-        std::wcout << padLine(ss.str()) << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << L"Rotation Raw: " << std::setw(8) << displayData.rotation_raw << L" deg";
+        //std::wcout << padLine(ss.str()) << L"\n";
 
         ss.str(L""); ss.clear();
         ss << L"Speed: " << std::setw(8) << displayData.speed_mph << L" mph";
         std::wcout << padLine(ss.str()) << L"\n";
 
-        ss.str(L""); ss.clear();
-        ss << L"Steering Raw: " << std::setw(10) << displayData.steering_raw;
-        std::wcout << padLine(ss.str()) << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << L"Steering Raw: " << std::setw(10) << displayData.steering_raw;
+        //std::wcout << padLine(ss.str()) << L"\n";
 
         ss.str(L""); ss.clear();
         ss << L"Steering Lock Degree: " << std::setw(8) << displayData.steering_deg;
@@ -424,15 +424,15 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         //std::wcout << padLine(ss.str()) << L"\n";
         //std::wcout << padLine(L"") << L"\n";
 
-        ss.str(L""); ss.clear();
-        ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rr);
-        std::wcout << padLine(ss.str()) << L"\n";
-        std::wcout << padLine(L"") << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << std::setw(10) << L"long: " << static_cast<int16_t>(displayData.tiremaglong_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglong_rr);
+        //std::wcout << padLine(ss.str()) << L"\n";
+        //std::wcout << padLine(L"") << L"\n";
 
-        ss.str(L""); ss.clear();
-        ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
-        std::wcout << padLine(ss.str()) << L"\n";
-        std::wcout << padLine(L"") << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << std::setw(10) << L"lat: " << static_cast<int16_t>(displayData.tiremaglat_lr) << L"           " << std::setw(10) << static_cast<int16_t>(displayData.tiremaglat_rr);
+        //std::wcout << padLine(ss.str()) << L"\n";
+        //std::wcout << padLine(L"") << L"\n";
 
         // Vehicle Dynamics section
         std::wcout << padLine(L"      == Vehicle Dynamics ==") << L"\n";
@@ -450,9 +450,9 @@ void DisplayTelemetry(const TelemetryDisplayData& displayData, double masterForc
         //ss << L"Longi Force: " << std::setw(8) << displayData.long_force << L"";
         //std::wcout << padLine(ss.str()) << L"\n";
 
-        ss.str(L""); ss.clear();
-        ss << L"Direction Value: " << displayData.vd_directionVal;
-        std::wcout << padLine(ss.str()) << L"\n";
+        //ss.str(L""); ss.clear();
+        //ss << L"Direction Value: " << displayData.vd_directionVal;
+        //std::wcout << padLine(ss.str()) << L"\n";
 
         ss.str(L""); ss.clear();
         ss << L"Force Magnitude: " << g_currentFFBForce;
@@ -852,7 +852,7 @@ int main() {
         }
     }
 
-    SetConsoleWindowSize();
+   // SetConsoleWindowSize();
     HideConsoleCursor();
     DisableConsoleQuickEdit();
 
