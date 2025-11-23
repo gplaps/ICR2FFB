@@ -57,7 +57,7 @@ bool TelemetryReader::Initialize(FFBConfig& config)
     if (mInitialized) { return true; }
 
     // Find process window
-    const DWORD pid = FindProcessIdByWindow();
+    const DWORD pid = FindProcessIdByWindow(config.GetString(L"other", L"window"));
     if (!pid)
     {
         LogMessage(L"[ERROR] Game window not found.");
@@ -81,79 +81,6 @@ bool TelemetryReader::Initialize(FFBConfig& config)
     LogMessage(L"[INIT] EXE base: 0x" + std::to_wstring(offsets.signature) +
                L" | cars_data @ 0x" + std::to_wstring(offsets.cars_data) +
                L" | rf_mag_lat @ 0x" + std::to_wstring(offsets.tire_maglat_fr));
-
-    /*
-    if (config.version == ICR2_DOS || config.version == ICR2_RENDITION) {
-
-        LogMessage(L"=== ICR2 MEMORY ANALYSIS ===");
-
-        // Log the found signature address
-        LogMessage(L"[ICR2] Signature found at: 0x" + std::to_wstring(signatureAddress));
-
-        // Log the signature offset being used
-        LogMessage(L"[ICR2] Using signature offset: 0x" + std::to_wstring(offsets.signature));
-
-        // Calculate and log the EXE base
-        uintptr_t calculatedExeBase = signatureAddress - offsets.signature;
-        LogMessage(L"[ICR2] Calculated EXE base: 0x" + std::to_wstring(calculatedExeBase));
-
-        // Known values from your analysis
-        uintptr_t knownFileOffset = 0xF21CC;  // From HxD
-        uintptr_t knownCheatEngineAddr = 0x1054BD98;  // From Cheat Engine
-        uintptr_t knownsignature = 0xA0D78;  // From working code
-
-        LogMessage(L"[ICR2] Known file offset: 0x" + std::to_wstring(knownFileOffset));
-        LogMessage(L"[ICR2] Known Cheat Engine addr: 0x" + std::to_wstring(knownCheatEngineAddr));
-        LogMessage(L"[ICR2] Known signature offset: 0x" + std::to_wstring(knownsignature));
-
-        // Calculate various relationships
-        uintptr_t memoryToFileOffset = signatureAddress - knownFileOffset;
-        LogMessage(L"[ICR2] Memory to file offset diff: 0x" + std::to_wstring(memoryToFileOffset));
-
-        uintptr_t baseFromFile = knownCheatEngineAddr - knownFileOffset;
-        LogMessage(L"[ICR2] Base calculated from file: 0x" + std::to_wstring(baseFromFile));
-
-        uintptr_t baseFromSignature = knownCheatEngineAddr - knownsignature;
-        LogMessage(L"[ICR2] Base calculated from signature: 0x" + std::to_wstring(baseFromSignature));
-
-        // Test if our current calculation matches the working method
-        bool calculationMatches = (calculatedExeBase == baseFromSignature);
-        LogMessage(L"[ICR2] Current calculation matches working method: " + std::wstring(calculationMatches ? L"YES" : L"NO"));
-
-        // Show the actual working car data address
-        uintptr_t workingCarDataAddr = calculatedExeBase + offsets.cars_data;
-        LogMessage(L"[ICR2] Working car data address: 0x" + std::to_wstring(workingCarDataAddr));
-
-        // Calculate what the NASCAR signature offset should be using the same relationship
-        uintptr_t nascarFileOffset = 0xF1C69;  // NASCAR's file offset from HxD
-        uintptr_t nascarMemoryAddr = 0x10916635;  // NASCAR's memory address from your search
-
-        // Method 1: Use the same memory-to-file relationship
-        uintptr_t nascarSigOffset1 = nascarMemoryAddr - nascarFileOffset;
-        LogMessage(L"[NASCAR CALC 1] Using memory-file diff: 0x" + std::to_wstring(nascarSigOffset1));
-
-        // Method 2: Use the same base calculation method
-        uintptr_t icr2BaseOffset = baseFromSignature - knownCheatEngineAddr;
-        uintptr_t nascarSigOffset2 = nascarMemoryAddr + icr2BaseOffset;
-        LogMessage(L"[NASCAR CALC 2] Using base offset method: 0x" + std::to_wstring(nascarSigOffset2));
-
-        // Method 3: Direct signature offset calculation
-        uintptr_t nascarSigOffset3 = nascarMemoryAddr - (calculatedExeBase - signatureAddress + nascarMemoryAddr);
-        LogMessage(L"[NASCAR CALC 3] Direct calculation: Need to determine correct base");
-
-        LogMessage(L"=== END ICR2 ANALYSIS ===");
-        */
-    //}
-
-    // LogMessage(L"[DEBUG] Selected signature: 0x" + std::to_wstring(offsets.signature));
-    // LogMessage(L"[DEBUG] Selected cars_data: 0x" + std::to_wstring(offsets.cars_data));
-    // LogMessage(L"[DEBUG] Raw calculation: 0x" + std::to_wstring(signatureAddress) + L" - 0x" + std::to_wstring(offsets.signature) + L" + 0x" + std::to_wstring(offsets.cars_data));
-
-    //temp debug
-    // LogMessage(L"[DEBUG] Signature found at: 0x" + std::to_wstring(signatureAddress));
-    // LogMessage(L"[DEBUG] Calculated EXE base: 0x" + std::to_wstring(exeBase));
-    // LogMessage(L"[DEBUG] Calculated car data addr: 0x" + std::to_wstring(carsDataAddr));
-    // LogMessage(L"[DEBUG] Expected car data addr: 0x1058474C");
 
     mInitialized = true;
     return mInitialized;
@@ -189,6 +116,7 @@ void TelemetryReader::ConvertCarData()
     out.pos.dlong        = static_cast<double>(carData.data[4]);
     out.pos.dlat         = static_cast<double>(carData.data[5]);
     out.pos.rotation_deg = static_cast<double>(carData.data[7]) / 2147483648.0 /*static_cast<double>(INT_MAX - 1)*/ * 180.0;
+    out.rotation_raw     = static_cast<double>(carData.data[7]);
 
     out.speed_mph        = static_cast<double>(carData.data[8]) / 75.0;
 

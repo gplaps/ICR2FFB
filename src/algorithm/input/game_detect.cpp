@@ -5,6 +5,7 @@
 #include "string_utilities.h"
 
 #include <cstddef>
+#include <cstring>
 #include <cwchar>
 #include <iostream>
 #include <string>
@@ -65,8 +66,7 @@ static const GameOffsets Offsets_ICR2_DOS4G_102 = {
     0xC5C18,
     0xC5C1A,
     0xC5C14,
-    0xC5C16
-};
+    0xC5C16};
 
 // ICR2 Windy
 static const GameOffsets Offsets_ICR2_WINDY = {
@@ -96,27 +96,26 @@ static const GameOffsets Offsets_NASCAR1 = {
 
     0xEFED4,
 
-    0xCEF70,
-    0xCEF70,
-    0xCEF70,
-    0xCEF70,
+    0x0,
+    0x0,
+    0x0,
+    0x0,
 
-    0x9F6F8,
-    0x9F6FA,
-    0x9f780,
-    0x9F6F6,
+    0x9D6F8,
+    0x9D6FA,
+    0x9D6F4,
+    0x9D6F6,
 
-    0xF0970,
-    0xF0970,
-    0xF0970,
-    0xF0970
-};
+    0x9D6EC,
+    0x9D6EE,
+    0x9D6E8,
+    0x9D6EA};
 
 // N2 Offsets
 static const GameOffsets Offsets_NASCAR2_V2_03 = {
     0xD7125, // "NASCAR V2.03"
 
-    0xAD440,
+    0x1230D0,
 
     0xF39FA,
     0xF39FC,
@@ -131,32 +130,58 @@ static const GameOffsets Offsets_NASCAR2_V2_03 = {
     0xF3B02,
     0xF3B04,
     0xF3AFE,
-    0xF3B00
+    0xF3B00};
+
+//N99  Offsets
+static const GameOffsets Offsets_N993DFX = {
+    0x00400000, // "modulebase?"
+
+    0x111CB0,
+
+    0x0,
+    0x0,
+    0x0,
+    0x0,
+
+    0x10AA14,
+    0x10AA16,
+    0x10AA10,
+    0x10AA12,
+
+    0x10AC44,
+    0x10AC46,
+    0x0,
+    0x0,
 };
 
 void InitGameDetection()
 {
-    SupportedGames::baseGameStrings["license with Bob"]                = INDYCAR_RACING_2;
-    SupportedGames::baseGameStrings["name of Harry Gant"]              = NASCAR_RACING_1;
-    SupportedGames::baseGameStrings["NASCAR V2.0"]                     = NASCAR_RACING_2;
+    SupportedGames::baseGameStrings["license with Bob"]                     = INDYCAR_RACING_2;
+    SupportedGames::baseGameStrings["name of Harry Gant"]                   = NASCAR_RACING_1;
+    SupportedGames::baseGameStrings["NASCAR V2.0"]                          = NASCAR_RACING_2;
+    SupportedGames::baseGameStrings["nr1999"]                               = NASCAR_RACING_1999; // 0x00400000 - Windows binary - typical base offset
 
-    SupportedGames::rendererStrings["-RN1 Build"]                      = RENDITION; // ICR2
-    SupportedGames::rendererStrings["Rendition communication timeout"] = RENDITION; // NR2
+    SupportedGames::rendererStrings["-RN1 Build"]                           = RENDERER_RENDITION; // ICR2
+    SupportedGames::rendererStrings["Rendition communication timeout"]      = RENDERER_RENDITION; // NR2
+    SupportedGames::rendererStrings["3Dfx Glide"]                           = RENDERER_3DFX;      // NR1999
 
-    SupportedGames::binaryStrings["DOS/32A"]                           = DOS32A;
-    SupportedGames::binaryStrings["DOS/4G"]                            = DOS4GW;
+    SupportedGames::binaryStrings["DOS/32A"]                                = DOS32A;
+    SupportedGames::binaryStrings["DOS/4G"]                                 = DOS4GW;
+    SupportedGames::binaryStrings["This program cannot be run in DOS mode"] = WIN32_APPLICATION;
 
-    SupportedGames::versionStrings["Version 1.0.0"]                    = V1_0_0; // ICR2
-    SupportedGames::versionStrings["Version 1.0.2"]                    = V1_0_2; // ICR2
-    SupportedGames::versionStrings["Version 1.21"]                     = V1_2_1; // NR1
-    SupportedGames::versionStrings["Version 2.0.2"]                    = V2_0_2; // NR2
-    SupportedGames::versionStrings["Version 2.0.3"]                    = V2_0_3; // NR2
+    SupportedGames::versionStrings["Version 1.0.0"]                         = V1_0_0; // ICR2
+    SupportedGames::versionStrings["Version 1.0.2"]                         = V1_0_2; // ICR2
+    SupportedGames::versionStrings["Version 1.21"]                          = V1_2_1; // NR1
+    SupportedGames::versionStrings["Version 2.0.2"]                         = V2_0_2; // NR2
+    SupportedGames::versionStrings["Version 2.0.3"]                         = V2_0_3; // NR2
+    SupportedGames::versionStrings["Version 1.03"]                          = V1_0_3; // NR1999 3DFX Windows
 
-    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, SOFTWARE, V1_0_2, DOS4GW, Offsets_ICR2_DOS4G_102));
-    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, RENDITION, V1_0_2, DOS32A, Offsets_ICR2_REND_DOS32A_102));
-    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, SOFTWARE, V1_0_2, WIN32_APPLICATION, Offsets_ICR2_WINDY));
-    SupportedGames::gameList.push_back(Game(NASCAR_RACING_1, SOFTWARE, V1_2_1, DOS4GW, Offsets_NASCAR1));
-    SupportedGames::gameList.push_back(Game(NASCAR_RACING_2, SOFTWARE, V2_0_3, DOS4GW, Offsets_NASCAR2_V2_03));
+    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, RENDERER_SOFTWARE, V1_0_2, DOS4GW, Offsets_ICR2_DOS4G_102));
+    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, RENDERER_RENDITION, V1_0_2, DOS32A, Offsets_ICR2_REND_DOS32A_102));
+    SupportedGames::gameList.push_back(Game(INDYCAR_RACING_2, RENDERER_SOFTWARE, V1_0_2, WIN32_APPLICATION, Offsets_ICR2_WINDY));
+    SupportedGames::gameList.push_back(Game(NASCAR_RACING_1, RENDERER_SOFTWARE, V1_2_1, DOS4GW, Offsets_NASCAR1));
+    SupportedGames::gameList.push_back(Game(NASCAR_RACING_2, RENDERER_SOFTWARE, V2_0_3, DOS4GW, Offsets_NASCAR2_V2_03));
+    SupportedGames::gameList.push_back(Game(NASCAR_RACING_1999, RENDERER_3DFX, V1_0_3, WIN32_APPLICATION, Offsets_N993DFX));
 }
 
 // ----------------------------------
@@ -209,7 +234,7 @@ static BOOL CALLBACK EnumerateWindowsCallback(HWND hwnd, LPARAM lParam)
     return TRUE;
 }
 
-static std::pair<std::vector<std::wstring>, std::vector<std::wstring> > GetKeywordsForGameWindow()
+static std::pair<std::vector<std::wstring>, std::vector<std::wstring> > GetKeywordsForGameWindow(const std::wstring& customKeywords)
 {
     std::pair<std::vector<std::wstring>, std::vector<std::wstring> > result; // first == keywords, second == excludedKeywords
 
@@ -218,18 +243,40 @@ static std::pair<std::vector<std::wstring>, std::vector<std::wstring> > GetKeywo
     result.first.push_back(L"indycar");
     result.first.push_back(L"cart");
     result.first.push_back(L"nascar");
+    result.first.push_back(L"1999");
 
     result.second.push_back(L"rready");        // Rendition wrapper window
     result.second.push_back(L"speedy3d");      // Rendition wrapper window
     result.second.push_back(L"status window"); // DosBox status window
 
+    // Check if custom window keywords are provided
+    std::wstring userKeywords = TrimWhiteSpaces(customKeywords);
+    if (!userKeywords.empty())
+    {
+        // Parse custom keywords (comma-separated)
+        LogMessage(L"[INFO] Using custom window keywords: " + userKeywords);
+
+        std::vector<std::wstring> keywords = StringSplit(userKeywords, L',');
+        for (auto& kw : keywords)
+        {
+            kw = TrimWhiteSpaces(kw);
+        }
+
+        if (keywords.empty())
+        {
+            LogMessage(L"[ERROR] Custom window keywords provided but none were valid");
+        }
+
+        result.first.insert(result.first.end(), keywords.begin(), keywords.end());
+    }
+
     return result;
 }
 
 // Gets the process ID of supported games
-DWORD FindProcessIdByWindow()
+DWORD FindProcessIdByWindow(const std::wstring& customKeywords)
 {
-    FindWindowData data(GetKeywordsForGameWindow(), 0);
+    FindWindowData data(GetKeywordsForGameWindow(customKeywords), 0);
     EnumWindows(EnumerateWindowsCallback, reinterpret_cast<LPARAM>(&data));
     return data.pid;
 }
@@ -290,7 +337,7 @@ static Renderer DetectRenderer(const std::vector<std::pair<uintptr_t, std::strin
             }
         }
     }
-    return SOFTWARE;
+    return RENDERER_SOFTWARE;
 }
 
 static BinaryType DetectBinaryType(const std::vector<std::pair<uintptr_t, std::string> >& scanResult)
@@ -344,7 +391,7 @@ static Game ToSupportedGame(const std::vector<std::pair<uintptr_t, std::string> 
         {
             detectedGame.ApplySignature(game.first);
             LogMessage(L"[INFO] Detected game: " + detectedGame.ToString());
-            return detectedGame;
+            return {detectedGame};
         }
         else
         {
@@ -365,7 +412,7 @@ Game ScanSignature(HANDLE processHandle)
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
-	std::wcout << L"Game window found, now scanning process memory. This might take a moment...\n";
+    std::wcout << L"Game window found, now scanning process memory. This might take a moment...\n";
 
     LogMessage(L"[DEBUG] Scanning for game...");
     LogMessage(L"[DEBUG] Process min addr: 0x" + std::to_wstring(reinterpret_cast<uintptr_t>(sysInfo.lpMinimumApplicationAddress)));
@@ -396,7 +443,7 @@ Game ScanSignature(HANDLE processHandle)
 
                 if (ReadProcessMemory(processHandle, reinterpret_cast<LPCVOID>(addr), buffer.data(), mbi.RegionSize, &bytesRead))
                 {
-					for (size_t si = 0; si < signaturesToScan.size();)
+                    for (size_t si = 0; si < signaturesToScan.size();)
                     {
                         const std::string& signature      = signaturesToScan[si];
                         const size_t       signatureLen   = signature.size();
@@ -414,32 +461,32 @@ Game ScanSignature(HANDLE processHandle)
                                 if (memcmp(overlapRegion.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                                 {
                                     result.push_back(std::pair<uintptr_t, std::string>(addr + i - signatureLen + 1, signature));
-									signatureFound = true;
+                                    signatureFound = true;
                                     break;
                                 }
                             }
                         }
 
-						if (!signatureFound)
-						{
-                        for (SIZE_T i = 0; i <= bytesRead - signatureLen; ++i)
+                        if (!signatureFound)
                         {
-                            if (memcmp(buffer.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                            for (SIZE_T i = 0; i <= bytesRead - signatureLen; ++i)
                             {
-                                result.push_back(std::pair<uintptr_t, std::string>(addr + i, signature));
-									signatureFound = true;
-                                break;
+                                if (memcmp(buffer.data() + i, signature.c_str(), signatureLen) == 0) // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+                                {
+                                    result.push_back(std::pair<uintptr_t, std::string>(addr + i, signature));
+                                    signatureFound = true;
+                                    break;
+                                }
                             }
-							}
-						}
-						if (signatureFound)
-						{
-							// one less signature to scan to accelerate the rather slow scanning process
+                        }
+                        if (signatureFound)
+                        {
+                            // one less signature to scan to accelerate the rather slow scanning process
                             signaturesToScan.erase(signaturesToScan.begin() + static_cast<ptrdiff_t>(si));
-						}
-						else
-						{
-							++si;
+                        }
+                        else
+                        {
+                            ++si;
                         }
                     }
 

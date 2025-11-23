@@ -4,5 +4,5 @@
 
 #include "game_version.h"
 
-DWORD FindProcessIdByWindow();
+DWORD FindProcessIdByWindow(const std::wstring& customKeywords);
 Game  ScanSignature(HANDLE processHandle);

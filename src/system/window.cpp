@@ -111,34 +111,34 @@ bool CheckAndRestartAsAdmin()
 // little function to help with display refreshing
 // moves cursor to top without refreshing the screen
 
-static void SetConsoleWindowSize()
-{
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut == INVALID_HANDLE_VALUE)
-    {
-        LogMessage(L"[ERROR] Failed to get console handle");
-        return;
-    }
+// static void SetConsoleWindowSize()
+// {
+//     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+//     if (hOut == INVALID_HANDLE_VALUE)
+//     {
+//         LogMessage(L"[ERROR] Failed to get console handle");
+//         return;
+//     }
 
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(hOut, &csbi))
-    {
-        LogMessage(L"[ERROR] Failed to get console buffer info");
-        return;
-    }
+//     CONSOLE_SCREEN_BUFFER_INFO csbi;
+//     if (!GetConsoleScreenBufferInfo(hOut, &csbi))
+//     {
+//         LogMessage(L"[ERROR] Failed to get console buffer info");
+//         return;
+//     }
 
-    const COORD bufferSize = {120, 200}; // scrollable size
-    if (!SetConsoleScreenBufferSize(hOut, bufferSize))
-    {
-        LogMessage(L"[WARNING] Failed to set console buffer size");
-    }
+//     const COORD bufferSize = {120, 200}; // scrollable size
+//     if (!SetConsoleScreenBufferSize(hOut, bufferSize))
+//     {
+//         LogMessage(L"[WARNING] Failed to set console buffer size");
+//     }
 
-    const SMALL_RECT windowSize = {0, 0, 119, 39}; // window size (note: 119, not 120)
-    if (!SetConsoleWindowInfo(hOut, TRUE, &windowSize))
-    {
-        LogMessage(L"[WARNING] Failed to set console window size");
-    }
-}
+//     const SMALL_RECT windowSize = {0, 0, 119, 39}; // window size (note: 119, not 120)
+//     if (!SetConsoleWindowInfo(hOut, TRUE, &windowSize))
+//     {
+//         LogMessage(L"[WARNING] Failed to set console window size");
+//     }
+// }
 
 // Prevent lockup if window is clicked
 static void DisableConsoleQuickEdit()
@@ -221,7 +221,7 @@ static BOOL WINAPI ConsoleHandler(DWORD CEvent) NO_EXCEPT
 
 int InitConsole()
 {
-    SetConsoleWindowSize();
+    // SetConsoleWindowSize();
     HideConsoleCursor();
     DisableConsoleQuickEdit();
     if (SetConsoleCtrlHandler(

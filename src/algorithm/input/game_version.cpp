@@ -138,11 +138,12 @@ static std::wstring BaseGameToString(BaseGame game)
 {
     switch (game)
     {
-        case INDYCAR_RACING_2: return L"INDYCAR Racing 2";
-        case NASCAR_RACING_1:  return L"NASCAR Racing 1";
-        case NASCAR_RACING_2:  return L"NASCAR Racing 2";
+        case INDYCAR_RACING_2:   return L"INDYCAR Racing 2";
+        case NASCAR_RACING_1:    return L"NASCAR Racing 1";
+        case NASCAR_RACING_2:    return L"NASCAR Racing 2";
+        case NASCAR_RACING_1999: return L"NASCAR Racing 1999";
         case UNDETECTED_GAME:
-        default:               break;
+        default:                 break;
     }
     return L"Unspecified";
 }
@@ -151,9 +152,10 @@ static std::wstring RendererToString(Renderer renderer)
 {
     switch (renderer)
     {
-        case SOFTWARE:            return L"Software Renderer";
-        case RENDITION:           return L"Rendition";
-        case UNDETECTED_RENDERER:
+        case RENDERER_SOFTWARE:   return L"Software Renderer";
+        case RENDERER_RENDITION:  return L"Rendition";
+        case RENDERER_3DFX:       return L"3DFX";
+        case RENDERER_UNDETECTED:
         default:                  break;
     }
     return L"Unspecified";
@@ -165,6 +167,7 @@ static std::wstring VersionToString(VersionInfo version)
     {
         case V1_0_0:             return L"1.0.0";
         case V1_0_2:             return L"1.0.2";
+        case V1_0_3:             return L"1.03";
         case V1_2_1:             return L"1.21";
         case V2_0_2:             return L"2.0.2";
         case V2_0_3:             return L"2.0.3";
@@ -200,7 +203,7 @@ std::wstring Game::ToString() const
 bool Game::Valid() const
 {
     return mProduct != UNDETECTED_GAME &&
-        mRenderer != UNDETECTED_RENDERER &&
+        mRenderer != RENDERER_UNDETECTED &&
         mBinaryInfo != UNDETECTED_BINARY_TYPE &&
         mVersion != UNDETECTED_VERSION &&
         mOffsets != GameOffsets();

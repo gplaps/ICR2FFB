@@ -121,8 +121,7 @@ int main()
             NULL,
             STRINGIFY("This application requires Visual C++ Redistributable 2015-2022.\n\nPlease download it from Microsoft's website or check the included installer."),
             STRINGIFY("Missing Runtime"),
-            MB_OK | MB_ICONERROR
-        );
+            MB_OK | MB_ICONERROR);
         return 1;
     }
     FreeLibrary(vcruntime);
@@ -142,13 +141,14 @@ int main()
     InitializeCriticalSection(TelemetryDisplay::mutex);
 #endif
 
-    logger = new Logger("log.txt");
+    logger = new Logger("ffblog.txt");
     ENSURE(logger);
 
     ENSURE(!InitConsole());
     InitGameDetection();
     config = new FFBConfig;
     ENSURE(config && config->Valid());
+    logger->logToFile(config->GetBool(L"other", L"log")); // log messages before are not written
     timing = new Timing(*config);
     ENSURE(timing);
     ffbProcessor = new FFBProcessor(*config);

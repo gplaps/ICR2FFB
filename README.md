@@ -1,7 +1,7 @@
-# FFB for ICR2 – BETA 1.0.2
+# FFB for ICR2 (and other Papy sims) – BETA 1.1.1
 **USE AT YOUR OWN RISK**
 
-This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus.
+This is a custom Force Feedback application for the classic racing simulator **IndyCar Racing II** by Papyrus (and now some of their NASCAR games too!).
 
 This app works by reading memory from the game (speed, tire loads, etc.) and uses that to send DirectInput force effects to your wheel.
 
@@ -20,27 +20,30 @@ I’ve been using it without issues on my own hardware, but your mileage may var
 
 ---
 
+## Changes in this fork
+
+- Game detection without needing to specify it explicitly. This mechanisms is rather slow, so startup is slower than with explicitly specifying it
+- Some games untested! Especially the windows variants
+
+---
+
 ## Installation
 
 1. **Download** the app. Get the latest version from Releases
 2. **Open `ffb.ini`** and edit the following:
-    - `Device` — Must match your device name **exactly** as seen in Windows "Game Controllers".
-    - `Game` — Set to either `indycar` or `cart` depending on your executable name.
-    - `Version` — Set to `REND32A` for Rendition builds, or `DOS4G` for standard DOS builds.  
-      _(Windy not supported yet.)_
-    - `Force` — Controls force scale (default is 25%).  
-      **Be careful** — although the code limits input, always test with low force first.
+ - "Device" - This should match exactly your device name as you see it in "Game Controllers" in windows
+ - "Force" - This controls the force scale, **PLEASE BE CAREFUL** I have tried to make my code to not send a massive input to the wheel but you can never be too careful
 
-3. **Run the app**, then launch the game.  
+3. Launch the game, then **run the app**.  
    After a moment, the window should begin showing telemetry.
 
-> You may need to run the app in **Admin mode** so it can access IndyCar II’s memory.
+> You may need to run the app in **Admin mode** so it can access the game's memory.
 
 ---
 
 ## Changing Settings
 
-You can close the app, edit `ffb.ini`, and reopen it while ICR2 is still running.  
+You can close the app, edit `ffb.ini`, and reopen it while the game is still running.  
 To avoid sudden force application, **pause the game first** before restarting the app.
 
 ---
@@ -49,7 +52,7 @@ To avoid sudden force application, **pause the game first** before restarting th
 
 0. Prerequisites: CMake and a version of MSVC compiler (2013 and 2019 tested) or MinGW GCC / MinGW Clang
 1. `mkdir build && cd build`
-2. MSVC/Default compiler: `cmake ..` or MinGW: `cmake -DCMAKE_TOOLCHAIN_FILE=cmake/MinGW.cmake -DTOOLCHAIN_PREFIX=<path-to-mingw>/bin/x86_64-w64-mingw32 -DCMAKE_INSTALL_PREFIX=<path-is-your-choice e.g. ../installed> ..`
+2. MSVC/Default compiler: `cmake ..` or MinGW: `cmake -DCMAKE_TOOLCHAIN_FILE=cmake/MinGW.cmake -DTOOLCHAIN_PREFIX=<path-to-mingw>/bin/x86_64-w64-mingw32 -DCMAKE_INSTALL_PREFIX=<optional-path-is-your-choice> ..`
 3. `cmake --build . -j4 --target install`
 4. Start program as usual
 
@@ -58,6 +61,20 @@ To avoid sudden force application, **pause the game first** before restarting th
 ## Version History
 
 ### Betas
+**1.1.1 (2025-10-29)** 
+- added retry logic for finding n1999 in case the app is started before the game
+- fixed errors corrupting the display for constant force effect
+- cleaned up display parameters to fit on one window without having to use the 'resize' setting for compatibility
+
+**1.1.0 (2025-10-28)** 
+- Now supports NASCAR!  NASCAR Racing 1, NASCAR Racing 2 and NASCAR Racing 1999 Edition (3DFX) are all supported!
+- FFB with NASCAR1 and NASCAR2 are both supported with the dos versions (1.21 for N1 and 2.03 for N2). FFB feels pretty great on N2, but N1 might need some more work to get feeling ok!
+- FFB Support with N99 3DFX for windows. Because its a windows program this version REQUIRES you use Vjoy to set your controls in N99 itself. If you try to use your main joystick in N99 and also with this program you will get errors related to FFB effect failures. I recommend using a program like hihide to hide your main joysticks from N99 so that it only sees vjoy.
+- Added options to disable logging to the ffb.ini
+- Renamed log to ffblog.txt to avoid conflicts with other programs
+- Added options to disable telemetry display on the program window
+- Added option to use custom keywords to find the game window
+
 **1.0.2 (2025-09-05)** 
 - Now supports the Windows version (WINDY). Use 'ICR2WND' in the config. Big thanks to hatcher for help in figuring it out, this specifically supports the "second wind" version which you can find here: https://grandprix2.racing/file/misc/view/windy-gets-a-second-wind.
 

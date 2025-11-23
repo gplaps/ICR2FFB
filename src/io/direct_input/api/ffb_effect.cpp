@@ -5,6 +5,7 @@
 #include "string_utilities.h" // IWYU pragma: keep
 
 #include <iostream>
+#include <sstream>
 
 FFBEffect::~FFBEffect() {}
 
@@ -14,7 +15,9 @@ void FFBEffect::Start()
     {
         effect->Start(1, 0);
         started = true;
-        LogMessage(L"[INFO] " + effectName + L" started");
+        std::wstringstream ss;
+        ss << L"[INFO] " << effectName << L" started";
+        LogMessage(ss.str());
     }
 }
 
@@ -51,7 +54,9 @@ DiConstantEffect::DiConstantEffect(IDirectInputDevice8* device) :
     const HRESULT hr = device->CreateEffect(GUID_ConstantForce, &eff, &effect, NULL);
     if (FAILED(hr))
     {
-        LogMessage(L"[ERROR] Failed to create constant force effect. HRESULT: 0x" + std::to_wstring(hr));
+        std::wstringstream ss;
+        ss << L"[ERROR] Failed to create constant force effect. HRESULT: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
     else
     {
@@ -81,9 +86,12 @@ void DiConstantEffect::Update(LONG magnitude, bool withDirection)
     // Only set magnitude params, skip direction
     const DWORD   parameters = static_cast<DWORD>(withDirection ? DIEP_TYPESPECIFICPARAMS | DIEP_DIRECTION : DIEP_TYPESPECIFICPARAMS);
     const HRESULT hr         = effect->SetParameters(&eff, parameters);
+
     if (FAILED(hr))
     {
-        std::wcerr << L"Constant force SetParameters failed: 0x" << std::hex << hr << L'\n';
+        std::wstringstream ss;
+        ss << L"[ERROR] Constant force SetParameters failed. HRESULT: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
 }
 
@@ -117,7 +125,9 @@ DiDamperEffect::DiDamperEffect(IDirectInputDevice8* device) :
     const HRESULT hr               = device->CreateEffect(GUID_Damper, &eff, &effect, NULL);
     if (FAILED(hr) || !effect)
     {
-        LogMessage(L"[ERROR] Failed to create damper effect. HRESULT: 0x" + std::to_wstring(hr));
+        std::wstringstream ss;
+        ss << L"[ERROR] Failed to create damper effect. HRESULT: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
     else
     {
@@ -151,7 +161,9 @@ void DiDamperEffect::Update(LONG magnitude, bool /*withDirection*/)
     const HRESULT hr               = effect->SetParameters(&eff, DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
     {
-        std::wcerr << L"Failed to update damper effect: 0x" << std::hex << hr << L'\n';
+        std::wstringstream ss;
+        ss << L"[ERROR] Failed to update damper effect: HRESULT: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
 }
 
@@ -185,7 +197,9 @@ DiSpringEffect::DiSpringEffect(IDirectInputDevice8* device) :
     const HRESULT hr               = device->CreateEffect(GUID_Spring, &eff, &effect, NULL);
     if (FAILED(hr) || !effect)
     {
-        LogMessage(L"[ERROR] Failed to create spring effect. HRESULT: 0x" + std::to_wstring(hr));
+        std::wstringstream ss;
+        ss << L"[ERROR] Failed to create spring effect. HRESULT: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
     else
     {
@@ -225,6 +239,8 @@ void DiSpringEffect::Update(LONG magnitude, bool /*withDirection*/)
     const HRESULT hr               = effect->SetParameters(&eff, DIEP_DIRECTION | DIEP_TYPESPECIFICPARAMS);
     if (FAILED(hr))
     {
-        std::wcerr << L"[ERROR] Failed to update spring effect: 0x" << std::hex << hr << L'\n';
+        std::wstringstream ss;
+        ss << L"[ERROR] Failed to update spring effect. HRESULT: 0x" << std::hex << hr;
+        LogMessage(ss.str());
     }
 }

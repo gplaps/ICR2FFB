@@ -122,13 +122,13 @@ inline std::wstring ToCamelCase(const std::wstring& input) // only ASCII - not u
 
 inline std::wstring TrimWhiteSpaces(const std::wstring& input)
 {
-    std::wstring       s     = input;
+    std::wstring       s;
     const std::wstring query = L" \t\r\n";
     // leading
-    size_t pos = s.find_first_not_of(query);
+    size_t pos = input.find_first_not_of(query);
     if (pos != std::wstring::npos)
     {
-        s = s.substr(pos);
+        s = input.substr(pos);
     }
     // trailing
     pos = s.find_last_not_of(query);

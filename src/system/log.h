@@ -13,10 +13,12 @@ struct Logger
 {
     explicit Logger(const char* filename);
     ~Logger();
+    void logToFile(bool enabled);
 
     std::deque<std::wstring>  lines;
     std::vector<std::wstring> linesQueue;
     std::wofstream            file;
+    std::string               fileName;
 
     static DECLARE_MUTEX(mutex);
     static const size_t maxLogLines = 1000; // Show last 1000 log lines

@@ -53,7 +53,8 @@ enum BaseGame
     UNDETECTED_GAME,
     INDYCAR_RACING_2,
     NASCAR_RACING_1,
-    NASCAR_RACING_2
+    NASCAR_RACING_2,
+    NASCAR_RACING_1999
 };
 
 enum Renderer
@@ -61,9 +62,10 @@ enum Renderer
     : unsigned char
 #endif
 {
-    UNDETECTED_RENDERER,
-    SOFTWARE,
-    RENDITION
+    RENDERER_UNDETECTED,
+    RENDERER_SOFTWARE,
+    RENDERER_RENDITION,
+    RENDERER_3DFX
 };
 
 enum BinaryType
@@ -85,6 +87,7 @@ enum VersionInfo
     UNDETECTED_VERSION,
     V1_0_0, // ICR2
     V1_0_2, // ICR2
+    V1_0_3, // NR1999 3DFX
     V1_2_1, // NR1
     V2_0_2, // NR2
     V2_0_3  // NR2

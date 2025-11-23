@@ -106,8 +106,15 @@ bool FFBDevice::InitDevice(const std::wstring& productNameOrIndex)
     {
         if (!productNameOrIndex.empty() && !DirectInput::Instance()->AvailableDevices().empty())
         {
-            LogMessage(L"[ERROR] Check your ffb.ini file - device name must match exactly");
-            std::wcout << L"[ERROR] Check your ffb.ini file - device name must match exactly" << L'\n';
+            const std::wstring msg = L"[ERROR] Check your ffb.ini file - device name must match exactly";
+            LogMessage(msg);
+            std::wcout << msg << L'\n';
+        }
+        else if (DirectInput::Instance()->AvailableDevices().empty())
+        {
+            const std::wstring msg = L"[INFO] No force feedback devices detected";
+            LogMessage(msg);
+            std::wcout << msg << L'\n';
         }
         return false;
     }

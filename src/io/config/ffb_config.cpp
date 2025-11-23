@@ -58,8 +58,13 @@ void FFBConfig::RegisterSettings()
     settings[L"effects"].push_back(Setting(L"spring", false, L"Spring enabled - Adds a centering force to the wheel unrelated to physics\nI recommend keeping this off unless you just like the wheel to center itself not based on physics"));
     settings[L"effects"].push_back(Setting(L"spring scale", 65.0, L"Spring strength in % [0-100]"));
 
+    settings[L"other"].push_back(Setting(L"telemetry", true, L"Shows speed and other physics data on the screen"));
+    settings[L"other"].push_back(Setting(L"log", false, L"Log messages to a ffblog.txt file for debugging"));
+    settings[L"other"].push_back(Setting(L"window", L"", L"Optional, include custom words to find the game window by name, for example:\nWindow: dosbox,indycar\nleave blank if you want to use the preset (recommended)"));
+
     sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"base", L"=== Force feedback device, general settings and game selection ==="));
     sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"effects", L"=== Effect Mix ===\nEach effect can be turned on or off with the main toggle ('true' or 'false')\nScale settings will control balance for that given force. I personally tuned it at 100% for all of them"));
+    sectionDescription.push_back(std::pair<std::wstring, std::wstring>(L"other", L"=== Other Settings ==="));
 }
 
 const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& section, const std::wstring& key) const
@@ -256,7 +261,7 @@ bool FFBConfig::LoadIniSettings(const std::wstring& filename)
     std::wifstream file(filename.c_str());
     if (!file.is_open())
     {
-        LogMessage(L"[INFO] No ini file found, creating default log.txt");
+        LogMessage(L"[INFO] No ini file found, creating default ffb.ini");
         WriteFFBIniFile();
         file.open(filename.c_str());
         if (!file.is_open()) { return false; }

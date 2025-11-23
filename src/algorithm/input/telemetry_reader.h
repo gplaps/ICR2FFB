@@ -19,6 +19,7 @@ struct WorldPos
 struct RawTelemetry
 {
     WorldPos pos;
+    double   rotation_raw;
 
     double speed_mph;
 
