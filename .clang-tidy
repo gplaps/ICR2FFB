@@ -42,5 +42,5 @@ Checks:          '
   -readability-magic-numbers,
   -readability-redundant-member-init'
 WarningsAsErrors: ''
-HeaderFilterRegex: '.*,-DirectX*,-concurrent_queue.h,-ode*,-*SDL2*,-*thirdparty*'
+HeaderFilterRegex: ''
 FormatStyle:     none
