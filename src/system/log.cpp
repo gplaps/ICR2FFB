@@ -77,7 +77,7 @@ void PrintToLogFile()
 
 Logger::Logger(const char* filename) :
     lines(),
-    file(filename, std::ios::trunc), // not nice! this overwrites the log without respecting the config option. Logger is the first to be created before FFBConfig, that itself logs data of interest. Only after FFBConfig is instanciated, log file is either closed or kept open
+    file(filename, std::ios::trunc), // not nice! this overwrites the log without respecting the config option. Logger is the first to be created before FFBConfig, that itself logs data of interest. Only after FFBConfig is instantiated, log file is either closed or kept open
     fileName(filename)
 {}
 

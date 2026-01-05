@@ -84,12 +84,12 @@ const FFBConfig::Setting& FFBConfig::GetSetting(const std::wstring& section, con
     catch (std::out_of_range&)
     {
         const std::vector<Setting>& notFoundSection = settings.at(L"none");
-        LogMessage(L"[ERROR] Ivalid setting request: [" + section + L"] " + key);
+        LogMessage(L"[ERROR] Invalid setting request: [" + section + L"] " + key);
         return notFoundSection.front();
     }
 
     const std::vector<Setting>& notFoundSection = settings.at(L"none");
-    LogMessage(L"[ERROR] Ivalid setting request: [" + section + L"] " + key);
+    LogMessage(L"[ERROR] Invalid setting request: [" + section + L"] " + key);
     return notFoundSection.front();
 }
 
@@ -346,7 +346,7 @@ std::wstring FFBConfig::Setting::Value::ToString() const
             std::swprintf(buffer, 32, L"%.2f", d); // NOLINT(*-vararg)
             // format shortening is highly subjective! adjust this if necessary
             // at the time of writing ini values are percentages,
-            // but also support scale values with "pecentage steps" resolution.
+            // but also support scale values with "percentage steps" resolution.
             return buffer;
 #if defined(__clang__)
 #    pragma clang diagnostic pop

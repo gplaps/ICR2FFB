@@ -58,7 +58,7 @@ private:
     DiDeviceData*        GetDevice(const std::wstring& productName);
     DiDeviceData*        GetDevice(size_t index);
 
-    LPDIRECTINPUT8      directInputObject; // thats why there should only be one instance of DirectInput in the program
+    LPDIRECTINPUT8      directInputObject; // that's why there should only be one instance of DirectInput in the program
     static DirectInput* singleton;         // ensures only one instance across the program
 
     bool mInitialized;

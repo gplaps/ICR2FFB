@@ -24,7 +24,7 @@ MovementDetector::MovementState MovementDetector::Calculate(const RawTelemetry& 
     }
 
     const double dtInv        = deltaTimeMs < 0.001 ? DBL_MAX : 1.0 / deltaTimeMs;                         // div-by-zero protection
-    const bool   isStationary = std::abs(current.pos.dlong - lastDlong) * dtInv < movementThreshold_value; // this is time dependent, so liekly put timestamps into RawTelemetry to properly calculate from input data instead of processing time
+    const bool   isStationary = std::abs(current.pos.dlong - lastDlong) * dtInv < movementThreshold_value; // this is time dependent, so likely put timestamps into RawTelemetry to properly calculate from input data instead of processing time
 
     if (isStationary)
     {

@@ -7,7 +7,7 @@ This app works by reading memory from the game (speed, tire loads, etc.) and use
 
 Its all a lot of guesswork and workarounds bandaided together but it feels ok!
 
-This is my first ever big program, so I am sure it could be done better in almost every aspect, let me know if theres an obvious mistake!
+This is my first ever big program, so I am sure it could be done better in almost every aspect, let me know if there's an obvious mistake!
 
 Big thanks to SK, Eric H, Niels Heusinkveld and Hatcher for all their help in bringing this to life.
 
@@ -105,10 +105,10 @@ To avoid sudden force application, **pause the game first** before restarting th
 - Removed the sleep timer from the main compute thread
 
 **0.8.8 (2025-08-14)** 
-- Actually fixed the asymetrical error. All versions up until this had it! WOW!
+- Actually fixed the asymmetrical error. All versions up until this had it! WOW!
 
 **0.8.7 (2025-08-14)** 
-- Fixed an error in how i was reading some game data that resulted in the output being asymetrical.
+- Fixed an error in how i was reading some game data that resulted in the output being asymmetrical.
 
 **0.8.5 (2025-08-14)** 
 - Redid force curve, again, but even better this time. Niels has supplied some knowledge and the main constant force curve is now being calculated on front tire load alone. This removes the separate 'constant' vs 'weight' settings in the INI, but the results are much much better!
@@ -116,7 +116,7 @@ To avoid sudden force application, **pause the game first** before restarting th
 **0.8 (2025-08-13)** 
 - Redid force curve to be MUCH stronger overall. This is to give the most detail possible in normal driving conditions. You may need to lower your overall FFB %. I also found lowering the "Weight" is a good idea, I've set the default for that to 75%. It should now be possible to 'max out' your wheel
 - Added some force which is applied by speed. This should help smooth out oscillation in a straight line (fingers crossed)
-- Added "Deadzone" option to ini. I do not recommend setting this unless you have issues with the direction swapping too eratically (also try the limiter in that case)
+- Added "Deadzone" option to ini. I do not recommend setting this unless you have issues with the direction swapping too erratically (also try the limiter in that case)
 - Added some new logging
 - Added License stuff
 
@@ -127,7 +127,7 @@ To avoid sudden force application, **pause the game first** before restarting th
 - Fixed app from crashing if the window is clicked
 
 **0.7 (2025-08-11)** 
-- Added more options for configuration. In the INI file there are now independant scale options and toggles for each force.
+- Added more options for configuration. In the INI file there are now independent scale options and toggles for each force.
 - I have also added toggles/force scale for the new 'weight' force which gives the surface and camber change feeling. Its now possible to turn this part of the force off, or reduce its scale compared to the other effects.
 
 **0.65 (2025-08-10)** 
@@ -142,7 +142,7 @@ To avoid sudden force application, **pause the game first** before restarting th
 - A big update based on some new tire telemetry found (thanks Eric!). These new tire values are thought to be the amount of friction each tires has and show much more varied data in different conditions. To take advantage of these I rewrote the entire calculations and forces pipeline to be cleaner and better represent the forces. The forces are approximated into real-life data and force feedback calculations are based on this. The results are more predictable than feedback was based before for oversteer/understeer conditions. Overall the feedback is still missing detail for changes in the road or distinct feeling for going off into the dirt/grass. Hopefully we find more physics values which could be brought in to bring this more to life.
 - At this time 'slip' does not directly factor into the feedback, but because the tires themselves report loss of grip the feeling of oversteer/understeer is still quite present.
 - Fixed pausing/unpausing logic, it should remove force now
-- Fixed a lot of display data to make sure its not flickering/dispalys cleanly
+- Fixed a lot of display data to make sure its not flickering/displays cleanly
 - Log now tracks more things
 - Code cleanup is still needed to remove old slip and lateral calculation code, it is no longer used in constant force
 
