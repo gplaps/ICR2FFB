@@ -1,0 +1,9 @@
+{
+  // requires absolute paths - no variable substitution in settings.json
+  "clangd.arguments": [
+    "--query-driver=/usr/bin/clang++",
+    "--compile-commands-dir=/home/user/Projects/ICR2FFB/build",
+    //"--log=verbose"
+  ],
+  "clangd.path": "/usr/bin/clangd"
+}
